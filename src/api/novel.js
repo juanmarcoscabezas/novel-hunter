@@ -20,29 +20,41 @@ export async function searchNovels(keyword) {
     title: item.data?.title || item.title || item.slug,
     author: item.data?.author || item.author || 'Desconocido',
     chapterCount: item.chapter_count || item.raw_chapter_count || 0,
-    image: item.data?.image || null,
+    image: item.data?.image || item.image || item.cover || item.raw?.image || null,
     description: item.data?.description || ''
   }));
 }
 
 /**
- * Extrae el raw_id y slug a partir de una URL de novela de WTR-LAB.
+ * Extrae el raw_id y slug a partir de una URL de novela o ID directo de WTR-LAB.
  * Formatos admitidos:
  * - https://wtr-lab.com/en/novel/112330/slug-name
- * - https://wtr-lab.com/en/novel/112330/slug-name/chapter-5
+ * - https://wtr-lab.com/en/serie-112330/slug-name
  * - /novel/112330/slug-name
+ * - 112330
  * 
  * @param {string} urlString 
  * @returns {{ rawId: number, slug: string } | null}
  */
 export function parseNovelUrl(urlString) {
   if (!urlString) return null;
+  const trimmed = urlString.trim();
 
-  const match = urlString.match(/\/novel\/(\d+)(?:\/([^\/\?#]+))?/i);
+  // URL completa o parcial: /novel/1234/slug o /serie-1234/slug
+  const match = trimmed.match(/(?:novel|serie|series)[\/-](\d+)(?:[\/-]([^\/\?#]+))?/i);
   if (match) {
     return {
       rawId: parseInt(match[1], 10),
       slug: match[2] || `novel-${match[1]}`
+    };
+  }
+
+  // ID numérico directo (ej: 9779)
+  const idMatch = trimmed.match(/^(\d+)$/);
+  if (idMatch) {
+    return {
+      rawId: parseInt(idMatch[1], 10),
+      slug: `novel-${idMatch[1]}`
     };
   }
 

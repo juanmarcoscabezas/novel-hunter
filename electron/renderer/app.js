@@ -173,7 +173,7 @@ function renderSearchResults(results, query) {
     card.className = 'novel-card';
 
     const coverHtml = novel.image
-      ? `<img src="${escapeHtml(novel.image)}" alt="Cover" class="novel-card-cover" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
+      ? `<img src="${escapeHtml(novel.image)}" alt="Cover" class="novel-card-cover" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
       : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
 
     card.innerHTML = `
@@ -280,6 +280,7 @@ async function openDownloadModal(novel) {
 
   const coverImg = document.getElementById('modal-novel-cover');
   if (novel.image) {
+    coverImg.referrerPolicy = 'no-referrer';
     coverImg.src = novel.image;
     coverImg.classList.remove('hidden');
   } else {
@@ -465,7 +466,7 @@ async function loadLibrary() {
       card.setAttribute('data-author', (item.author || '').toLowerCase());
 
       const coverHtml = item.cover_url
-        ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
+        ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
         : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
 
       const langBadges = (item.languages || 'ninguno')
@@ -546,6 +547,7 @@ async function openChaptersModal(novelItem) {
 
   const coverImg = document.getElementById('chapters-novel-cover');
   if (novelItem.cover_url) {
+    coverImg.referrerPolicy = 'no-referrer';
     coverImg.src = novelItem.cover_url;
     coverImg.classList.remove('hidden');
   } else {

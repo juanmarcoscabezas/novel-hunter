@@ -163,22 +163,90 @@ function setupIpcHandlers() {
       if (!query || !query.trim()) return [];
       const trimmed = query.trim();
 
-      // Verificar si es URL directa
+      // Verificar si es URL directa o ID numérico
       const parsedUrl = parseNovelUrl(trimmed);
       if (parsedUrl) {
+        // 1. Revisar si ya existe en SQLite local con su portada
+        const localNovel = repository.getNovel(parsedUrl.rawId) || (parsedUrl.slug && repository.getNovel(parsedUrl.slug));
+        if (localNovel && localNovel.cover_url) {
+          return [{
+            id: localNovel.id,
+            rawId: localNovel.id,
+            slug: localNovel.slug,
+            title: localNovel.title,
+            author: localNovel.author || 'Desconocido',
+            description: localNovel.synopsis || `Novela en catálogo local (${localNovel.slug})`,
+            image: localNovel.cover_url,
+            chapterCount: localNovel.total_chapters || '?'
+          }];
+        }
+
+        // 2. Buscar por slug en WTR-Lab para obtener la ficha completa con portada real
+        if (parsedUrl.slug && !parsedUrl.slug.startsWith('novel-')) {
+          try {
+            const results = await searchNovels(parsedUrl.slug);
+            const match = results.find(n => n.rawId === parsedUrl.rawId || n.slug === parsedUrl.slug) || results[0];
+            if (match && match.image) {
+              return [match];
+            }
+          } catch (e) {
+            console.warn('Error buscando por slug en WTR-Lab:', e.message);
+          }
+        }
+
+        // 3. Extraer portada y metadatos de la página oficial de WTR-Lab
+        try {
+          const pageUrl = `https://wtr-lab.com/en/novel/${parsedUrl.rawId}/${parsedUrl.slug || ''}`;
+          const res = await fetch(pageUrl, { headers: CONFIG.headers });
+          if (res.ok) {
+            const html = await res.text();
+            const ogImgMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+              || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+            const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)
+              || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+            const authorMatch = html.match(/Author:[^<]*<[^>]+>([^<]+)<\/[^>]+>/i);
+
+            const image = ogImgMatch && !ogImgMatch[1].includes('placeholder.png') ? ogImgMatch[1] : null;
+            let title = ogTitleMatch ? ogTitleMatch[1].replace(/^Read\s+/i, '').replace(/\s+RAW.*$/i, '').trim() : null;
+            if (!title) title = (parsedUrl.slug || `novel-${parsedUrl.rawId}`).replace(/-/g, ' ').toUpperCase();
+
+            return [{
+              id: parsedUrl.rawId,
+              rawId: parsedUrl.rawId,
+              slug: parsedUrl.slug || `novel-${parsedUrl.rawId}`,
+              title,
+              author: authorMatch ? authorMatch[1].trim() : (localNovel?.author || 'WTR-Lab'),
+              description: `Novela detectada por URL directa (${parsedUrl.slug})`,
+              image: image || localNovel?.cover_url || null,
+              chapterCount: localNovel?.total_chapters || '?'
+            }];
+          }
+        } catch (e) {
+          console.warn('Error obteniendo metadata de la página:', e.message);
+        }
+
         return [{
           id: parsedUrl.rawId,
           rawId: parsedUrl.rawId,
-          slug: parsedUrl.slug,
-          title: parsedUrl.slug.replace(/-/g, ' ').toUpperCase(),
-          author: 'WTR-Lab',
+          slug: parsedUrl.slug || `novel-${parsedUrl.rawId}`,
+          title: (parsedUrl.slug || `novel-${parsedUrl.rawId}`).replace(/-/g, ' ').toUpperCase(),
+          author: localNovel?.author || 'WTR-Lab',
           description: `Novela detectada por URL directa (${parsedUrl.slug})`,
-          image: null,
-          chapterCount: '?'
+          image: localNovel?.cover_url || null,
+          chapterCount: localNovel?.total_chapters || '?'
         }];
       }
 
-      return await searchNovels(trimmed);
+      const results = await searchNovels(trimmed);
+      return results.map(n => {
+        if (!n.image) {
+          const local = repository.getNovel(n.rawId) || repository.getNovel(n.slug);
+          if (local && local.cover_url) {
+            n.image = local.cover_url;
+          }
+        }
+        return n;
+      });
     } catch (err) {
       console.error('Error in novel:search:', err);
       throw new Error(err.message || 'Error al buscar novelas');

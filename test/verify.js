@@ -25,13 +25,19 @@ async function runTests() {
   const parsed = parseNovelUrl('https://wtr-lab.com/en/novel/112330/mortal-wonders-of-the-heavens-enjoying-eternal-life');
   assert.strictEqual(parsed.rawId, 112330);
   assert.strictEqual(parsed.slug, 'mortal-wonders-of-the-heavens-enjoying-eternal-life');
-  console.log('   ✓ parseNovelUrl pasó correctamente.');
+  const parsedSerie = parseNovelUrl('https://wtr-lab.com/en/serie-9779/lord-at-the-beginning');
+  assert.strictEqual(parsedSerie.rawId, 9779);
+  assert.strictEqual(parsedSerie.slug, 'lord-at-the-beginning');
+  const parsedNum = parseNovelUrl('9779');
+  assert.strictEqual(parsedNum.rawId, 9779);
+  console.log('   ✓ parseNovelUrl pasó correctamente con URLs completas, formato serie e ID numérico.');
 
   // Test 2: Búsqueda de novelas
   console.log('\n2. Probando searchNovels("mortal")...');
   const searchResults = await searchNovels('mortal');
   assert(searchResults.length > 0, 'Debe encontrar al menos una novela');
-  console.log(`   ✓ searchNovels encontró ${searchResults.length} novelas. Primera: "${searchResults[0].title}"`);
+  assert(searchResults[0].image && searchResults[0].image.startsWith('http'), 'La novela debe tener URL de portada/imagen válida');
+  console.log(`   ✓ searchNovels encontró ${searchResults.length} novelas. Primera: "${searchResults[0].title}" (Portada: ${searchResults[0].image})`);
 
   // Test 3: Listado de capítulos
   console.log('\n3. Probando getChapterList(112330)...');
