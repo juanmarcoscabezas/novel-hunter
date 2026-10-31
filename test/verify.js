@@ -167,7 +167,10 @@ async function runTests() {
   assert(stylesCssContent.includes('.svg-icon'), 'styles.css debe definir estilos para .svg-icon');
   assert(stylesCssContent.includes('.header-actions'), 'styles.css debe definir .header-actions con flex alignment');
   assert(stylesCssContent.includes('height: 36px'), 'styles.css debe definir altura consistente para botones .btn-sm');
-  console.log('   ✓ Cero emojis rotos en la interfaz y alineación vertical de botones verificada al 100%.');
+  assert(stylesCssContent.includes('#quick-open-exports'), 'styles.css debe definir alineación a la izquierda para #quick-open-exports');
+  assert(htmlContent.includes('<h2>Novel Hunter</h2>'), 'index.html debe mostrar el nombre Novel Hunter');
+  assert(htmlContent.includes('<title>Novel Hunter</title>'), 'index.html debe tener el título Novel Hunter');
+  console.log('   ✓ Cero emojis rotos en la interfaz, alineación vertical de botones y botón de exports a la izquierda verificados.');
 
   // Test 17: Hot-Reload y Atajos de Desarrollo
   console.log('\n17. Verificando configuración de Hot-Reload y entorno de desarrollo...');
@@ -181,7 +184,9 @@ async function runTests() {
   assert(mainJsContent.includes('toggleDevTools'), 'main.js debe habilitar atajos de DevTools (F12/Ctrl+Shift+I)');
   assert(preloadContent.includes('hot-reload:css'), 'preload.cjs debe escuchar evento hot-reload:css');
   assert.strictEqual(pkgContent.scripts.dev, 'electron .', 'package.json debe incluir script npm run dev');
-  console.log('   ✓ Hot-Reload para CSS en vivo, UI refresh y DevTools verificado correctamente.');
+  assert.strictEqual(pkgContent.build.productName, 'Novel Hunter', 'package.json debe nombrar el producto como Novel Hunter');
+  assert.strictEqual(mainJsContent.includes("title: 'Novel Hunter'"), true, 'main.js debe tener la ventana titulada Novel Hunter');
+  console.log('   ✓ Hot-Reload para CSS en vivo, UI refresh, DevTools y renombrado a Novel Hunter verificado correctamente.');
 
   console.log('\n🎉 ¡TODAS LAS PRUEBAS (17/17) PASARON EXITOSAMENTE!');
 }

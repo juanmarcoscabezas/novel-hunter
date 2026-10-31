@@ -24,7 +24,7 @@ function createWindow() {
     height: 820,
     minWidth: 900,
     minHeight: 650,
-    title: 'WTR-Lab Novel Downloader & Library',
+    title: 'Novel Hunter',
     icon: path.join(__dirname, 'assets', 'icon.png'),
     backgroundColor: '#0f172a',
     autoHideMenuBar: true,

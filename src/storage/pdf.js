@@ -132,7 +132,7 @@ export async function exportChaptersToPdf(novelSlug, chapters, novelTitle = '', 
       bufferPages: true,
       info: {
         Title: novelTitle || novelSlug,
-        Author: author || 'WTR-Lab Downloader',
+        Author: author || 'Novel Hunter',
         Subject: `Capítulos ${chapters[0].chapterNo} a ${chapters[chapters.length - 1].chapterNo}`
       }
     });

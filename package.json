@@ -19,8 +19,8 @@
     "open:dist": "explorer.exe dist"
   },
   "build": {
-    "appId": "com.wtrlab.downloader",
-    "productName": "WTR-Lab Downloader",
+    "appId": "com.novelhunter.app",
+    "productName": "Novel Hunter",
     "directories": {
       "output": "dist"
     },
@@ -41,7 +41,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "WTR-Lab Downloader"
+      "shortcutName": "Novel Hunter"
     }
   },
   "keywords": [
