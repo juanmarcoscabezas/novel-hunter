@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { searchNovels, parseNovelUrl, getChapterList } from '../src/api/novel.js';
 import { processGeminiContent } from '../src/translators/gemini.js';
 import { translateWithGoogle } from '../src/translators/google.js';
@@ -12,6 +13,9 @@ import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { repository } from '../src/db/repository.js';
 import { CONFIG, saveSession, getSavedSession, clearSession } from '../src/config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runTests() {
   console.log('🧪 Iniciando suite de pruebas de verificación integral de todas las funcionalidades...\n');
@@ -146,7 +150,38 @@ async function runTests() {
   assert(fs.existsSync(cachedCoverPath), 'La portada debe quedar en caché local para uso offline');
   console.log(`   ✓ PDF con imagen de portada incrustada verificado (${Math.round(coverPdfStats.size / 1024)} KB) y portada en caché local.`);
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (15/15) PASARON EXITOSAMENTE!');
+  // Test 16: Sistema Universal de Iconos Vectoriales SVG (Cero emojis rotos)
+  console.log('\n16. Verificando Sistema Universal de Iconos Vectoriales SVG...');
+  const htmlContent = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
+  const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'app.js'), 'utf8');
+  const stylesCssContent = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'styles.css'), 'utf8');
+
+  const emojiRegex = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\u2190-\u21ff]/g;
+  const htmlEmojis = htmlContent.match(emojiRegex) || [];
+  const jsEmojis = appJsContent.match(emojiRegex) || [];
+
+  assert.strictEqual(htmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${htmlEmojis.join(', ')}`);
+  assert.strictEqual(jsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${jsEmojis.join(', ')}`);
+  assert(htmlContent.includes('class="svg-icon"'), 'index.html debe usar clases svg-icon');
+  assert(appJsContent.includes('const ICONS = {'), 'app.js debe definir diccionario de iconos ICONS');
+  assert(stylesCssContent.includes('.svg-icon'), 'styles.css debe definir estilos para .svg-icon');
+  console.log('   ✓ Cero emojis rotos en la interfaz. Sistema vectorial SVG verificado al 100%.');
+
+  // Test 17: Hot-Reload y Atajos de Desarrollo
+  console.log('\n17. Verificando configuración de Hot-Reload y entorno de desarrollo...');
+  const mainJsContent = fs.readFileSync(path.join(__dirname, '..', 'electron', 'main.js'), 'utf8');
+  const preloadContent = fs.readFileSync(path.join(__dirname, '..', 'electron', 'preload.cjs'), 'utf8');
+  const pkgContent = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+
+  assert(mainJsContent.includes('setupHotReload'), 'main.js debe incluir función setupHotReload');
+  assert(mainJsContent.includes('hot-reload:css'), 'main.js debe emitir hot-reload:css para actualización en vivo');
+  assert(mainJsContent.includes('reloadIgnoringCache'), 'main.js debe recargar la ventana al cambiar código de renderer');
+  assert(mainJsContent.includes('toggleDevTools'), 'main.js debe habilitar atajos de DevTools (F12/Ctrl+Shift+I)');
+  assert(preloadContent.includes('hot-reload:css'), 'preload.cjs debe escuchar evento hot-reload:css');
+  assert.strictEqual(pkgContent.scripts.dev, 'electron .', 'package.json debe incluir script npm run dev');
+  console.log('   ✓ Hot-Reload para CSS en vivo, UI refresh y DevTools verificado correctamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (17/17) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

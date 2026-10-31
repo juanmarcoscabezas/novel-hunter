@@ -38,6 +38,20 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
+  // Atajos de teclado para desarrollo (F5/Ctrl+R: Recargar, F12/Ctrl+Shift+I: DevTools)
+  if (!app.isPackaged) {
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F5' || (input.control && input.key.toLowerCase() === 'r') || (input.meta && input.key.toLowerCase() === 'r')) {
+        mainWindow.webContents.reloadIgnoringCache();
+        event.preventDefault();
+      }
+      if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+        mainWindow.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    });
+  }
+
   // Manejar apertura de enlaces externos en el navegador predeterminado
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http:') || url.startsWith('https:')) {
@@ -56,6 +70,7 @@ function createWindow() {
 app.whenReady().then(() => {
   setupIpcHandlers();
   createWindow();
+  setupHotReload();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -69,6 +84,76 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+// Configuración de Hot-Reload (desarrollo)
+function setupHotReload() {
+  if (app.isPackaged) return;
+
+  const projectRoot = path.resolve(__dirname, '..');
+  const rendererDir = path.join(__dirname, 'renderer');
+  const srcDir = path.join(projectRoot, 'src');
+  const mainFile = __filename;
+  const preloadFile = path.join(__dirname, 'preload.cjs');
+
+  let rendererDebounceTimer = null;
+  let mainDebounceTimer = null;
+
+  const shouldIgnore = (filename) => {
+    if (!filename) return true;
+    const base = path.basename(filename);
+    return base.startsWith('.') || base.endsWith('~') || base.endsWith('.tmp') || base.endsWith('.swp');
+  };
+
+  // 1. Hot-Reload para UI (Renderer: HTML, CSS, JS)
+  try {
+    fs.watch(rendererDir, { recursive: true }, (_eventType, filename) => {
+      if (shouldIgnore(filename)) return;
+
+      clearTimeout(rendererDebounceTimer);
+      rendererDebounceTimer = setTimeout(() => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+
+        if (filename && filename.endsWith('.css')) {
+          console.log(`[Hot-Reload] CSS modificado: ${filename} (actualizando estilos en vivo)`);
+          mainWindow.webContents.send('hot-reload:css');
+        } else {
+          console.log(`[Hot-Reload] Renderer modificado: ${filename} (recargando ventana)`);
+          mainWindow.webContents.reloadIgnoringCache();
+        }
+      }, 150);
+    });
+    console.log('[Hot-Reload] Watcher activo en electron/renderer/ (HTML/CSS/JS)');
+  } catch (err) {
+    console.warn('[Hot-Reload] No se pudo activar watcher de renderer:', err.message);
+  }
+
+  // 2. Auto-Restart para proceso principal y backend (src/, electron/main.js, preload.cjs)
+  const triggerRestart = (changedPath) => {
+    clearTimeout(mainDebounceTimer);
+    mainDebounceTimer = setTimeout(() => {
+      console.log(`[Hot-Reload] Código principal modificado: ${changedPath} (reiniciando app...)`);
+      app.relaunch();
+      app.exit(0);
+    }, 350);
+  };
+
+  try {
+    fs.watch(srcDir, { recursive: true }, (_eventType, filename) => {
+      if (shouldIgnore(filename)) return;
+      triggerRestart(`src/${filename}`);
+    });
+    console.log('[Hot-Reload] Watcher activo en src/ (backend auto-restart)');
+  } catch (err) {
+    console.warn('[Hot-Reload] No se pudo activar watcher de src:', err.message);
+  }
+
+  try {
+    fs.watch(mainFile, () => triggerRestart('electron/main.js'));
+    fs.watch(preloadFile, () => triggerRestart('electron/preload.cjs'));
+  } catch (err) {
+    // Watchers individuales
+  }
+}
 
 // Configuración de los canales de comunicación IPC
 function setupIpcHandlers() {

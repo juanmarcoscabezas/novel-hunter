@@ -1,5 +1,20 @@
 // WTR-Lab Novel Downloader - Frontend Application Logic
 
+const ICONS = {
+  book: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>',
+  bookXl: '<svg class="svg-icon" viewBox="0 0 24 24" style="width: 28px; height: 28px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>',
+  bookOpenSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+  user: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+  fileText: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+  fileTextSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+  folderSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+  zapSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+  cpu: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>',
+  edit: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
+  globe: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+  xCircle: '<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+};
+
 let currentSelectedNovel = null;
 let currentNovelChapters = [];
 let currentExportNovel = null;
@@ -145,7 +160,7 @@ function renderSearchResults(results, query) {
   if (!results || results.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">❌</div>
+        <div class="empty-icon">${ICONS.xCircle}</div>
         <h3>No se encontraron resultados</h3>
         <p>No encontramos ninguna novela para "${escapeHtml(query)}". Prueba con otra palabra clave o ingresa la URL directa.</p>
       </div>
@@ -159,15 +174,15 @@ function renderSearchResults(results, query) {
 
     const coverHtml = novel.image
       ? `<img src="${escapeHtml(novel.image)}" alt="Cover" class="novel-card-cover" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
-      : `<div class="novel-card-cover-placeholder">📖</div>`;
+      : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
 
     card.innerHTML = `
       <div class="novel-card-top">
         ${coverHtml}
         <div class="novel-card-info">
           <h3 class="novel-card-title" title="${escapeHtml(novel.title)}">${escapeHtml(novel.title)}</h3>
-          <span class="novel-card-author">👤 ${escapeHtml(novel.author || 'Autor desconocido')}</span>
-          <span class="novel-card-chapters">📑 ${novel.chapterCount || '?'} capítulos</span>
+          <span class="novel-card-author">${ICONS.user} ${escapeHtml(novel.author || 'Autor desconocido')}</span>
+          <span class="novel-card-chapters">${ICONS.fileText} ${novel.chapterCount || '?'} capítulos</span>
           <div class="novel-card-meta-chips">
             <span class="badge badge-secondary">ID: ${novel.rawId || novel.id}</span>
           </div>
@@ -324,7 +339,7 @@ async function startDownload(payload) {
     cancelBtn.classList.add('hidden');
 
     const subtext = document.getElementById('progress-subtext');
-    let summary = `✓ Se descargaron ${res.successCount} de ${res.total} capítulos correctamente.`;
+    let summary = `Se descargaron ${res.successCount} de ${res.total} capítulos correctamente.`;
     if (res.mergedTxt) summary += ` Archivo consolidado creado.`;
     if (res.mergedPdf) summary += ` Libro PDF generado.`;
 
@@ -332,10 +347,10 @@ async function startDownload(payload) {
       <div style="color: #34d399; margin-top: 6px;">${summary}</div>
       <div style="display: flex; gap: 8px; margin-top: 10px;">
         <button id="dl-view-library-btn" class="btn btn-primary btn-xs">
-          📖 Ver en Mi Biblioteca
+          ${ICONS.bookOpenSm} Ver en Mi Biblioteca
         </button>
         <button id="dl-open-folder-btn" class="btn btn-outline btn-xs">
-          📂 Abrir carpeta en Explorador
+          ${ICONS.folderSm} Abrir carpeta en Explorador
         </button>
       </div>
     `;
@@ -426,7 +441,7 @@ async function loadLibrary() {
     if (list.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">${ICONS.bookXl}</div>
           <h3>Tu catálogo local está vacío</h3>
           <p>Usa la pestaña "Buscador & Descarga" para buscar y guardar tus novelas en SQLite.</p>
         </div>
@@ -442,7 +457,7 @@ async function loadLibrary() {
 
       const coverHtml = item.cover_url
         ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
-        : `<div class="novel-card-cover-placeholder">📖</div>`;
+        : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
 
       const langBadges = (item.languages || 'ninguno')
         .split(',')
@@ -454,8 +469,8 @@ async function loadLibrary() {
           ${coverHtml}
           <div class="novel-card-info">
             <h3 class="novel-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h3>
-            <span class="novel-card-author">👤 ${escapeHtml(item.author || 'Desconocido')}</span>
-            <span class="novel-card-chapters">📑 Guardados: <strong>${item.downloaded_chapters}</strong> / ${item.total_chapters || '?'}</span>
+            <span class="novel-card-author">${ICONS.user} ${escapeHtml(item.author || 'Desconocido')}</span>
+            <span class="novel-card-chapters">${ICONS.fileText} Guardados: <strong>${item.downloaded_chapters}</strong> / ${item.total_chapters || '?'}</span>
             <div class="novel-card-meta-chips">
               ${langBadges}
             </div>
@@ -463,13 +478,13 @@ async function loadLibrary() {
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1 1 100%;">
-            📑 Ver Capítulos (${item.downloaded_chapters})
+            ${ICONS.fileTextSm} Ver Capítulos (${item.downloaded_chapters})
           </button>
           <button class="btn btn-outline btn-sm btn-offline-export" style="flex: 1;" title="Exportar TXT/PDF">
-            ⚡ Exportar
+            ${ICONS.zapSm} Exportar
           </button>
           <button class="btn btn-outline btn-sm btn-open-folder" title="Abrir carpeta">
-            📂
+            ${ICONS.folderSm}
           </button>
         </div>
       `;
@@ -566,13 +581,13 @@ async function loadChaptersListForNovel(novelItem, lang) {
       <div class="chapter-item-left">
         <span class="chapter-item-title">Capítulo ${ch.chapter_no}: ${escapeHtml(displayTitle)}</span>
         <div class="chapter-item-meta">
-          <span>⚙️ ${escapeHtml(ch.model || 'Gemini AI')}</span>
-          <span>📝 ${(ch.char_length || 0).toLocaleString()} caracteres</span>
-          <span>🌐 ${ch.language.toUpperCase()}</span>
+          <span>${ICONS.cpu} ${escapeHtml(ch.model || 'Gemini AI')}</span>
+          <span>${ICONS.edit} ${(ch.char_length || 0).toLocaleString()} caracteres</span>
+          <span>${ICONS.globe} ${ch.language.toUpperCase()}</span>
         </div>
       </div>
       <button class="btn btn-primary btn-sm btn-read-ch">
-        📖 Leer
+        ${ICONS.bookOpenSm} Leer
       </button>
     `;
 
@@ -890,7 +905,7 @@ function initSettings() {
     }
     try {
       await window.wtrApi.saveAuth(val);
-      showFeedback(feedback, 'success', '✓ Cookies de sesión guardadas con éxito.');
+      showFeedback(feedback, 'success', 'Cookies de sesión guardadas con éxito.');
       refreshAuthStatus();
     } catch (err) {
       showFeedback(feedback, 'error', `Error al guardar: ${err.message}`);
@@ -901,7 +916,7 @@ function initSettings() {
     showFeedback(feedback, 'info', 'Probando conexión con WTR-Lab...');
     const res = await window.wtrApi.testAuth();
     if (res.ok) {
-      showFeedback(feedback, 'success', '✓ Conexión exitosa con WTR-Lab.');
+      showFeedback(feedback, 'success', 'Conexión exitosa con WTR-Lab.');
     } else {
       showFeedback(feedback, 'error', `Fallo de conexión: ${res.error || 'Código ' + res.status}`);
     }
@@ -1012,6 +1027,6 @@ function hideFeedback(el) {
 window.createPlaceholderCover = function() {
   const div = document.createElement('div');
   div.className = 'novel-card-cover-placeholder';
-  div.textContent = '📖';
+  div.innerHTML = ICONS.book;
   return div;
 };

@@ -40,3 +40,13 @@ contextBridge.exposeInMainWorld('wtrApi', {
     return () => ipcRenderer.removeListener('cli:output', handler);
   }
 });
+
+// Hot-reload en vivo para estilos CSS sin reiniciar la página
+ipcRenderer.on('hot-reload:css', () => {
+  const links = document.querySelectorAll('link[rel="stylesheet"]');
+  links.forEach((link) => {
+    const rawHref = link.getAttribute('href') || '';
+    const cleanHref = rawHref.split('?')[0];
+    link.setAttribute('href', `${cleanHref}?v=${Date.now()}`);
+  });
+});

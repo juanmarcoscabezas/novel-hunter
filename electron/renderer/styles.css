@@ -34,13 +34,53 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol";
   background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.5;
   user-select: none;
   overflow: hidden;
   height: 100vh;
+}
+
+/* SVG Icon System */
+.svg-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.svg-icon.icon-xs {
+  width: 14px;
+  height: 14px;
+}
+
+.svg-icon.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.svg-icon.icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+.svg-icon.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.svg-icon.icon-xl {
+  width: 44px;
+  height: 44px;
+  stroke-width: 1.5;
 }
 
 /* Contenedor Principal */
@@ -69,7 +109,15 @@ body {
 }
 
 .brand-icon {
-  font-size: 28px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .brand-info h2 {
@@ -142,7 +190,11 @@ body {
 }
 
 .nav-icon {
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar-footer {
@@ -230,7 +282,11 @@ body {
 .search-icon {
   position: absolute;
   left: 14px;
-  font-size: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-dim);
   pointer-events: none;
 }
@@ -258,8 +314,20 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.btn-clear:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 /* Botones */
@@ -376,9 +444,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   color: var(--text-dim);
   flex-shrink: 0;
+}
+
+.novel-card-cover-placeholder .svg-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.6;
 }
 
 .novel-card-info {
@@ -402,12 +475,18 @@ body {
 .novel-card-author {
   font-size: 12px;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .novel-card-chapters {
   font-size: 12px;
   color: #38bdf8;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .novel-card-meta-chips {
@@ -469,9 +548,19 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 24px;
   cursor: pointer;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.btn-close:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .modal-body {
@@ -713,7 +802,20 @@ body {
 }
 
 .metric-icon {
-  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.metric-icon .svg-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .metric-content {
@@ -937,9 +1039,20 @@ body {
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.6;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  color: var(--text-dim);
+}
+
+.empty-icon .svg-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .feedback-banner {
@@ -1049,7 +1162,15 @@ body {
   font-size: 12px;
   color: var(--text-muted);
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chapter-item-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Modo Lector (Reader View) */

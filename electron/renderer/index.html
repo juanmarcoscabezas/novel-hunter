@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WTR-Lab Novel Downloader & Library</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="../assets/icon.png">
 </head>
 <body>
   <div class="app-container">
     <!-- Barra Lateral de Navegación -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-icon">📚</div>
+        <div class="brand-icon">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
         <div class="brand-info">
           <h2>WTR-Lab</h2>
           <span class="badge badge-primary">v1.1.0 Desktop</span>
@@ -20,19 +23,19 @@
 
       <nav class="nav-menu">
         <button class="nav-btn active" data-tab="tab-search">
-          <span class="nav-icon">🔍</span>
+          <span class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
           <span class="nav-text">Buscador & Descarga</span>
         </button>
         <button class="nav-btn" data-tab="tab-library">
-          <span class="nav-icon">📖</span>
+          <span class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></span>
           <span class="nav-text">Mi Biblioteca</span>
         </button>
         <button class="nav-btn" data-tab="tab-terminal">
-          <span class="nav-icon">💻</span>
+          <span class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></span>
           <span class="nav-text">Consola Terminal</span>
         </button>
         <button class="nav-btn" data-tab="tab-settings">
-          <span class="nav-icon">⚙️</span>
+          <span class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>
           <span class="nav-text">Configuración</span>
         </button>
       </nav>
@@ -43,7 +46,8 @@
           <span id="session-status-text">Invitado Público</span>
         </div>
         <button id="quick-open-exports" class="btn btn-outline btn-xs" title="Abrir carpeta exports">
-          📂 Abrir Exports
+          <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>Abrir Exports</span>
         </button>
       </div>
     </aside>
@@ -61,9 +65,9 @@
 
         <div class="search-box-container">
           <div class="search-input-wrapper">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
             <input type="text" id="search-input" placeholder="Ej: Lord at the Beginning, o https://wtr-lab.com/en/serie-1234/..." autofocus>
-            <button id="clear-search-btn" class="btn-clear hidden">&times;</button>
+            <button id="clear-search-btn" class="btn-clear hidden" title="Limpiar"><svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
           </div>
           <button id="search-btn" class="btn btn-primary">
             <span class="btn-text">Buscar</span>
@@ -76,7 +80,9 @@
         <!-- Resultados de Búsqueda -->
         <div id="search-results" class="novel-grid">
           <div class="empty-state">
-            <div class="empty-icon">🔎</div>
+            <div class="empty-icon">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
             <h3>Busca una novela para comenzar</h3>
             <p>Ingresa palabras clave o una URL completa de WTR-Lab arriba.</p>
           </div>
@@ -88,7 +94,7 @@
           <div class="modal-card">
             <header class="modal-header">
               <h2 id="modal-novel-title">Configurar Descarga</h2>
-              <button id="close-modal-btn" class="btn-close">&times;</button>
+              <button id="close-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </header>
 
             <div class="modal-body">
@@ -169,28 +175,34 @@
             <p class="subtitle">Capítulos almacenados localmente en Tercera Forma Normal (3NF) listos para exportar sin conexión</p>
           </div>
           <div class="header-actions">
-            <button id="refresh-library-btn" class="btn btn-outline btn-sm">🔄 Actualizar</button>
-            <button id="open-exports-folder-btn" class="btn btn-primary btn-sm">📂 Carpeta Exports</button>
+            <button id="refresh-library-btn" class="btn btn-outline btn-sm">
+              <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>Actualizar</span>
+            </button>
+            <button id="open-exports-folder-btn" class="btn btn-primary btn-sm">
+              <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>Carpeta Exports</span>
+            </button>
           </div>
         </header>
 
         <div class="library-metrics">
           <div class="metric-card">
-            <span class="metric-icon">📚</span>
+            <span class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span>
             <div class="metric-content">
               <span class="metric-value" id="lib-total-novels">0</span>
               <span class="metric-label">Novelas en Catálogo</span>
             </div>
           </div>
           <div class="metric-card">
-            <span class="metric-icon">📑</span>
+            <span class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></span>
             <div class="metric-content">
               <span class="metric-value" id="lib-total-chapters">0</span>
               <span class="metric-label">Capítulos Guardados</span>
             </div>
           </div>
           <div class="metric-card">
-            <span class="metric-icon">💾</span>
+            <span class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>
             <div class="metric-content">
               <span class="metric-value">SQLite 3NF</span>
               <span class="metric-label">data/novels.db</span>
@@ -200,7 +212,7 @@
 
         <div class="search-box-container library-search">
           <div class="search-input-wrapper">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
             <input type="text" id="library-filter-input" placeholder="Filtrar por título o autor en la base de datos...">
           </div>
         </div>
@@ -215,7 +227,7 @@
           <div class="modal-card">
             <header class="modal-header">
               <h2 id="export-modal-title">Exportar desde SQLite</h2>
-              <button id="close-export-modal-btn" class="btn-close">&times;</button>
+              <button id="close-export-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </header>
 
             <div class="modal-body">
@@ -276,7 +288,7 @@
                 <h2 id="chapters-modal-title">Capítulos Guardados</h2>
                 <span id="chapters-modal-subtitle" class="text-muted text-xs">Catálogo SQLite</span>
               </div>
-              <button id="close-chapters-modal-btn" class="btn-close">&times;</button>
+              <button id="close-chapters-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </header>
 
             <div class="modal-body">
@@ -320,7 +332,7 @@
                   <button id="reader-font-decrease" class="btn-icon" title="Reducir fuente">A-</button>
                   <button id="reader-font-increase" class="btn-icon" title="Aumentar fuente">A+</button>
                 </div>
-                <button id="close-reader-modal-btn" class="btn-close">&times;</button>
+                <button id="close-reader-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
               </div>
             </header>
 
@@ -335,9 +347,15 @@
             </div>
 
             <footer class="modal-footer reader-footer">
-              <button id="reader-prev-btn" class="btn btn-outline btn-sm">⬅ Anterior</button>
+              <button id="reader-prev-btn" class="btn btn-outline btn-sm">
+                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Anterior</span>
+              </button>
               <button id="close-reader-bottom-btn" class="btn btn-secondary btn-sm">Cerrar Lector</button>
-              <button id="reader-next-btn" class="btn btn-outline btn-sm">Siguiente ➡</button>
+              <button id="reader-next-btn" class="btn btn-outline btn-sm">
+                <span>Siguiente</span>
+                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
             </footer>
           </div>
         </div>
@@ -395,7 +413,10 @@
           <!-- Tarjeta de Sesión WTR-Lab -->
           <div class="card settings-card">
             <div class="card-header">
-              <h3>🔐 Sesión & Bypass de Cloudflare</h3>
+              <h3 style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>Sesión & Bypass de Cloudflare</span>
+              </h3>
               <span id="settings-session-pill" class="badge badge-secondary">Invitado</span>
             </div>
             <div class="card-body">
@@ -428,7 +449,10 @@
           <!-- Tarjeta de Almacenamiento & Base de Datos -->
           <div class="card settings-card">
             <div class="card-header">
-              <h3>📂 Almacenamiento & Base de Datos SQLite</h3>
+              <h3 style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <span>Almacenamiento & Base de Datos SQLite</span>
+              </h3>
             </div>
             <div class="card-body">
               <div class="setting-item">

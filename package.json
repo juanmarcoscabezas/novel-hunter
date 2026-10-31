@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node bin/cli.js",
     "wtr": "node bin/cli.js",
+    "dev": "electron .",
     "electron": "electron .",
     "test": "node test/verify.js",
     "dist:win": "electron-builder --win portable --x64",
