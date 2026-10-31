@@ -9,6 +9,7 @@ Soporta traducción prioritaria de **Google Gemini**, reemplazo automático de g
 ## 📋 Tabla de Contenidos
 
 - [Características Principales](#-características-principales)
+- [Documentación Adicional (`docs/`)](#-documentación-adicional-en-docs)
 - [Cumplimiento de Requerimientos](#-cumplimiento-de-requerimientos)
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación](#-instalación)
@@ -44,7 +45,16 @@ Soporta traducción prioritaria de **Google Gemini**, reemplazo automático de g
 
 ---
 
-## 📌 Cumplimiento de Requerimientos
+## 📚 Documentación Adicional en `docs/`
+
+Para detalles técnicos avanzados y manuales especializados, consulta los documentos de la carpeta `docs/`:
+
+- [docs/architecture.md](docs/architecture.md): Diagrama de arquitectura, endpoints descubiertos, tokens de glosario y descifrado AES-GCM.
+- [docs/database.md](docs/database.md): Diseño relacional SQLite en 3NF, diagrama ERD y gestión de respaldos.
+- [docs/cli-guide.md](docs/cli-guide.md): Manual completo de uso del CLI interactivo, comandos offline y exportación a TXT/PDF.
+- [docs/anti-detection.md](docs/anti-detection.md): Técnicas de evasión de Cloudflare, huellas de navegador y gestión de cookies.
+
+---
 
 | # | Requerimiento Original (`req.txt`) | Implementación |
 |---|---|---|
