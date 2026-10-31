@@ -12,6 +12,8 @@ export const CONFIG = {
   defaultLanguage: 'en',
   sessionFile: path.join(ROOT_DIR, '.wtr-session.json'),
   downloadsDir: path.join(ROOT_DIR, 'downloads'),
+  dataDir: path.join(ROOT_DIR, 'data'),
+  dbPath: path.join(ROOT_DIR, 'data', 'novels.db'),
   defaultDelayMs: 1500, // Anti-bot jitter delay
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',

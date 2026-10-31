@@ -30,6 +30,9 @@ Soporta traducción prioritaria de **Google Gemini**, reemplazo automático de g
 
 ## ✨ Características Principales
 
+- 💾 **Base de Datos Portable SQLite**: Catálogo relacional normalizado en 3NF (`node:sqlite` nativo) que almacena novelas, autores, glosario, capítulos y párrafos atómicos en un solo archivo `data/novels.db`.
+- ⚡ **Caché Inteligente y Cero Re-Descargas**: Si un capítulo ya está en la base de datos local, se carga en milisegundos sin consumir peticiones ni arriesgar bloqueos de Cloudflare.
+- 📦 **Exportación Offline**: Exporta o fusiona capítulos a TXT o PDF directamente desde la base de datos sin necesidad de conexión a internet.
 - 🔍 **Búsqueda Flexible**: Busca por nombre de novela con menú interactivo o pega directamente la URL completa de WTR-Lab.
 - 🤖 **Prioridad Gemini Nativa**: Descarga directa de la traducción de Google Gemini (`gemini-3.5-flash-lite`) alojada en la plataforma.
 - 📖 **Limpieza de Glosario**: Decodifica y sustituye automáticamente los marcadores `※N⛬` por los nombres de personajes, sectas, píldoras y reinos de cultivo oficiales.
@@ -135,7 +138,30 @@ node bin/cli.js [query] [opciones]
 
 ---
 
-### 3. Gestión de Sesión y Autenticación
+### 3. Biblioteca Local y Exportación Offline (SQLite)
+
+La herramienta almacena todas las novelas y capítulos en una base de datos SQLite portable (`data/novels.db`).
+
+#### Ver tu catálogo descargado:
+```bash
+node bin/cli.js library
+# O también:
+node bin/cli.js list
+```
+Muestra qué novelas tienes guardadas, cuántos capítulos descargados, idiomas disponibles y el último capítulo leído.
+
+#### Exportar directamente desde SQLite (Sin conexión a internet):
+```bash
+# Exportar capítulos 1 al 50 en PDF y TXT fusionados:
+node bin/cli.js export <slug_o_id> --chapters 1-50 --lang en --merge --pdf
+
+# Exportar en español a PDF:
+node bin/cli.js export <slug_o_id> --chapters 1-20 --lang es --merge --pdf
+```
+
+---
+
+### 4. Gestión de Sesión y Autenticación
 
 Para acceder a capítulos bloqueados, novelas reservadas a usuarios registrados o si Cloudflare solicita verificación de usuario:
 

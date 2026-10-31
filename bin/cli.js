@@ -9,13 +9,103 @@ import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { getSavedSession, saveSession, clearSession } from '../src/config.js';
 import { client } from '../src/api/client.js';
+import { repository } from '../src/db/repository.js';
 
 const program = new Command();
 
 program
   .name('wtr')
-  .description('Herramienta CLI para buscar, descargar y fusionar novelas de WTR-LAB con soporte de Gemini, Google Translate, TXT y PDF')
-  .version('1.0.0');
+  .description('Herramienta CLI para buscar, descargar y fusionar novelas de WTR-LAB con SQLite, Gemini, Google Translate, TXT y PDF')
+  .version('1.1.0');
+
+// Subcomando: Catálogo / Biblioteca local SQLite
+program
+  .command('library')
+  .alias('list')
+  .description('Listar todas las novelas y capítulos almacenados en la base de datos local SQLite')
+  .action(() => {
+    const list = repository.listLibrary();
+    if (list.length === 0) {
+      console.log(chalk.yellow('\nℹ Tu biblioteca local está vacía. Descarga tu primera novela con: wtr <nombre_o_url>\n'));
+      return;
+    }
+
+    console.log(chalk.bold.cyan('\n=== Mi Biblioteca Local (SQLite) ===\n'));
+    for (const item of list) {
+      console.log(chalk.bold.white(`📖 ${item.title}`));
+      console.log(chalk.dim(`   ID (raw_id): ${item.raw_id} | Slug: ${item.slug}`));
+      console.log(chalk.dim(`   Autor: ${item.author || 'Desconocido'}`));
+      console.log(chalk.green(`   Capítulos descargados: ${item.downloaded_chapters} / ${item.total_chapters || '?'}`));
+      console.log(chalk.blue(`   Idiomas disponibles: ${item.languages || 'ninguno'}`));
+      if (item.last_read_chapter_no) {
+        console.log(chalk.magenta(`   Último leído: Capítulo ${item.last_read_chapter_no}`));
+      }
+      console.log('');
+    }
+  });
+
+// Subcomando: Exportar directamente desde la base de datos SQLite (Offline)
+program
+  .command('export <novel>')
+  .description('Exportar capítulos a TXT o PDF directamente desde la base de datos local sin conexión')
+  .option('-c, --chapters <range>', 'Rango de capítulos a exportar (ej: "1-50", "all")', 'all')
+  .option('-l, --lang <language>', 'Idioma a exportar ("en" o "es")', 'en')
+  .option('-m, --merge', 'Fusionar los capítulos exportados en un solo archivo compilado')
+  .option('-p, --pdf', 'Generar versión en documento PDF')
+  .action(async (novelIdentifier, options) => {
+    try {
+      const novel = repository.getNovel(novelIdentifier);
+      if (!novel) {
+        console.log(chalk.red(`\n✖ No se encontró la novela "${novelIdentifier}" en la base de datos local.`));
+        console.log(chalk.dim('Usa "wtr library" para ver las novelas guardadas.\n'));
+        return;
+      }
+
+      const downloadedNumbers = repository.getDownloadedChapterNumbers(novel.id, options.lang);
+      if (downloadedNumbers.length === 0) {
+        console.log(chalk.yellow(`\nℹ No hay capítulos descargados en idioma [${options.lang.toUpperCase()}] para "${novel.title}".\n`));
+        return;
+      }
+
+      const requestedNumbers = parseChapterSpec(options.chapters, Math.max(...downloadedNumbers));
+      const targetNumbers = requestedNumbers.filter(num => downloadedNumbers.includes(num));
+
+      if (targetNumbers.length === 0) {
+        console.log(chalk.red('\n✖ Ninguno de los capítulos solicitados se encuentra en la base de datos local.\n'));
+        return;
+      }
+
+      console.log(chalk.cyan(`\nExportando ${targetNumbers.length} capítulos desde SQLite en idioma [${options.lang.toUpperCase()}]...`));
+
+      const chapters = [];
+      for (const num of targetNumbers) {
+        const ch = repository.getChapterTranslation(novel.id, num, options.lang);
+        if (ch) {
+          saveChapterAsTxt(novel.slug, ch, novel.title);
+          chapters.push(ch);
+          if (options.pdf && !options.merge) {
+            await exportChaptersToPdf(novel.slug, [ch], novel.title);
+          }
+        }
+      }
+
+      if (options.merge && chapters.length > 1) {
+        const mergedTxt = mergeChaptersToTxt(novel.slug, chapters, novel.title);
+        console.log(chalk.green(`✓ Archivo fusionado TXT creado:`));
+        console.log(chalk.dim(`  ${mergedTxt}`));
+
+        if (options.pdf) {
+          const mergedPdf = await exportChaptersToPdf(novel.slug, chapters, novel.title);
+          console.log(chalk.green(`✓ Archivo fusionado PDF creado:`));
+          console.log(chalk.dim(`  ${mergedPdf}`));
+        }
+      }
+
+      console.log(chalk.bold.green(`\n✓ ¡Exportación completada con éxito desde la base de datos!\n`));
+    } catch (err) {
+      console.error(chalk.red('\n✖ Error al exportar:'), err.message);
+    }
+  });
 
 // Subcomando: Autenticación / Guardado de Cookies
 program
@@ -63,9 +153,10 @@ program
     }
   });
 
-// Comando principal de descarga y búsqueda
+// Comando principal de descarga y búsqueda (por defecto)
 program
-  .argument('[query]', 'Nombre de la novela o URL directa de WTR-Lab')
+  .command('download [query]', { isDefault: true })
+  .description('Buscar y descargar capítulos de WTR-Lab (por defecto si no se especifica subcomando)')
   .option('-c, --chapters <range>', 'Rango o lista de capítulos a descargar (ej: "1-10", "5", "1,3,7-9", "all")')
   .option('-l, --lang <language>', 'Idioma de traducción ("en" o "es")', 'en')
   .option('-m, --merge', 'Fusionar los capítulos descargados en un único archivo')
@@ -197,8 +288,10 @@ async function runDownloader(query, options) {
     if (langRes.lang) targetLang = langRes.lang;
   }
 
-  let shouldMerge = options.merge;
-  if (shouldMerge === undefined && selectedOrders.length > 1 && process.stdout.isTTY) {
+  const isInteractive = !query && !options.chapters && process.stdout.isTTY;
+
+  let shouldMerge = !!options.merge;
+  if (options.merge === undefined && selectedOrders.length > 1 && isInteractive) {
     const mergeRes = await prompts({
       type: 'confirm',
       name: 'merge',
@@ -208,8 +301,8 @@ async function runDownloader(query, options) {
     shouldMerge = !!mergeRes.merge;
   }
 
-  let shouldExportPdf = options.pdf;
-  if (shouldExportPdf === undefined && process.stdout.isTTY) {
+  let shouldExportPdf = !!options.pdf;
+  if (options.pdf === undefined && isInteractive) {
     const pdfRes = await prompts({
       type: 'confirm',
       name: 'pdf',
@@ -228,19 +321,29 @@ async function runDownloader(query, options) {
     process.stdout.write(chalk.dim(`[${i + 1}/${selectedOrders.length}] Descargando capítulo ${chNum}... `));
 
     try {
-      const chapterData = await fetchChapter(novelInfo.rawId, chNum, { targetLang });
+      const chapterData = await fetchChapter(novelInfo.rawId, chNum, {
+        targetLang,
+        novelMeta: novelInfo
+      });
       const txtPath = saveChapterAsTxt(novelInfo.slug, chapterData, novelInfo.title);
       downloadedChapters.push(chapterData);
 
-      console.log(chalk.green(`✓ [${chapterData.model}] "${chapterData.title}"`));
+      // Registrar progreso de lectura en SQLite
+      repository.updateReadingProgress(novelInfo.rawId, chNum);
+
+      const sourceLabel = chapterData.fromDb
+        ? chalk.magenta('[Caché SQLite]')
+        : chalk.cyan(`[${chapterData.model}]`);
+
+      console.log(chalk.green(`✓ ${sourceLabel} "${chapterData.title}"`));
 
       // Si se solicitó PDF individual sin merge
       if (shouldExportPdf && !shouldMerge) {
         await exportChaptersToPdf(novelInfo.slug, [chapterData], novelInfo.title);
       }
 
-      // Pausa anti-detección si hay más capítulos por descargar
-      if (i < selectedOrders.length - 1) {
+      // Si vino de la red y no de la BD local, aplicar pausa de cortesía anti-detección
+      if (!chapterData.fromDb && i < selectedOrders.length - 1) {
         await client.delay(900, 1900);
       }
     } catch (err) {

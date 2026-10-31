@@ -12,7 +12,7 @@ export async function translateWithGoogle(textInput, targetLang = 'en', sourceLa
   if (paragraphs.length === 0) return [];
 
   const translatedParagraphs = [];
-  const BATCH_CHAR_LIMIT = 2000; // Límite seguro para la URL de Google Translate
+  const BATCH_CHAR_LIMIT = 800; // Límite seguro para caracteres multibyte y URL de Google Translate
   let currentBatch = [];
   let currentLength = 0;
 
