@@ -250,7 +250,7 @@ body {
 .content-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
 }
 
@@ -264,6 +264,13 @@ body {
   color: var(--text-muted);
   font-size: 14px;
   margin-top: 4px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* Buscador & Inputs */
@@ -337,12 +344,20 @@ body {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  line-height: 1;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.btn span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .btn-primary {
@@ -384,12 +399,14 @@ body {
 }
 
 .btn-sm {
-  padding: 6px 12px;
+  padding: 0 14px;
+  height: 36px;
   font-size: 13px;
 }
 
 .btn-xs {
-  padding: 4px 8px;
+  padding: 0 10px;
+  height: 28px;
   font-size: 11px;
 }
 

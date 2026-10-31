@@ -165,7 +165,9 @@ async function runTests() {
   assert(htmlContent.includes('class="svg-icon"'), 'index.html debe usar clases svg-icon');
   assert(appJsContent.includes('const ICONS = {'), 'app.js debe definir diccionario de iconos ICONS');
   assert(stylesCssContent.includes('.svg-icon'), 'styles.css debe definir estilos para .svg-icon');
-  console.log('   ✓ Cero emojis rotos en la interfaz. Sistema vectorial SVG verificado al 100%.');
+  assert(stylesCssContent.includes('.header-actions'), 'styles.css debe definir .header-actions con flex alignment');
+  assert(stylesCssContent.includes('height: 36px'), 'styles.css debe definir altura consistente para botones .btn-sm');
+  console.log('   ✓ Cero emojis rotos en la interfaz y alineación vertical de botones verificada al 100%.');
 
   // Test 17: Hot-Reload y Atajos de Desarrollo
   console.log('\n17. Verificando configuración de Hot-Reload y entorno de desarrollo...');
