@@ -370,6 +370,14 @@ function handleGlobalProgress(data) {
   if (bar) bar.style.width = `${data.percent || 0}%`;
   if (statusLabel && data.status) statusLabel.textContent = data.status;
   if (percentLabel) percentLabel.textContent = `${data.percent || 0}%`;
+
+  // También actualizar barra de progreso de exportación
+  const exportFill = document.getElementById('export-progress-fill');
+  const exportStatus = document.getElementById('export-progress-status');
+  const exportPercent = document.getElementById('export-progress-percent');
+  if (exportFill) exportFill.style.width = `${data.percent || 0}%`;
+  if (exportStatus && data.status) exportStatus.textContent = data.status;
+  if (exportPercent) exportPercent.textContent = `${data.percent || 0}%`;
 }
 
 /* ==========================================================================
@@ -710,7 +718,7 @@ function initExportModal() {
     const pdf = document.getElementById('export-pdf-checkbox').checked;
 
     const stats = await window.wtrApi.getNovelStats(currentExportNovel.slug);
-    const available = lang === 'es' ? stats.esChapters : stats.enChapters;
+    const available = (stats && (lang === 'es' ? stats.esChapters : stats.enChapters)) || [];
 
     if (!available || available.length === 0) {
       alert(`No hay capítulos guardados en [${lang.toUpperCase()}] para esta novela.`);

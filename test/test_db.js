@@ -108,6 +108,23 @@ async function runDbTests() {
   assert.strictEqual(updatedLib[0].last_read_chapter_no, 2);
   console.log('   ✓ Progreso de lectura registrado.');
 
+  // 8. Estadísticas detalladas de la novela (getNovelStats)
+  console.log('\n8. Probando getNovelStats...');
+  const stats = repo.getNovelStats('legendary-mechanic');
+  assert(stats !== null);
+  assert.strictEqual(stats.title, 'The Legendary Mechanic');
+  assert.strictEqual(stats.languages.length, 2);
+  console.log('   ✓ getNovelStats devolvió estadísticas por idioma.');
+
+  // 9. Listado detallado de capítulos para la UI (getDownloadedChapters)
+  console.log('\n9. Probando getDownloadedChapters...');
+  const detailedChapters = repo.getDownloadedChapters(1001, 'en');
+  assert.strictEqual(detailedChapters.length, 2);
+  assert.strictEqual(detailedChapters[0].chapter_no, 1);
+  assert.strictEqual(detailedChapters[0].title, 'Chapter 1: Transmigration');
+  assert(detailedChapters[0].char_length > 0);
+  console.log('   ✓ getDownloadedChapters devolvió metadatos completos para lector y explorador.');
+
   console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS PASARON EXITOSAMENTE!');
 }
 

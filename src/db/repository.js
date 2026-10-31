@@ -216,6 +216,34 @@ export class NovelRepository {
   }
 
   /**
+   * Obtiene estadísticas de capítulos e idiomas de una novela en la base de datos.
+   */
+  getNovelStats(identifier) {
+    const novel = this.getNovel(identifier);
+    if (!novel) return null;
+
+    const stmt = this.db.prepare(`
+      SELECT 
+        ct.language,
+        COUNT(DISTINCT c.chapter_no) as chapter_count,
+        MIN(c.chapter_no) as min_chapter,
+        MAX(c.chapter_no) as max_chapter
+      FROM chapters c
+      JOIN chapter_translations ct ON ct.chapter_id = c.id
+      WHERE c.novel_id = ?
+      GROUP BY ct.language
+    `);
+    const langStats = stmt.all(novel.id);
+
+    return {
+      novelId: novel.id,
+      title: novel.title,
+      slug: novel.slug,
+      languages: langStats
+    };
+  }
+
+  /**
    * Lista todas las novelas en la base de datos con conteo de capítulos descargados por idioma.
    */
   listLibrary() {
