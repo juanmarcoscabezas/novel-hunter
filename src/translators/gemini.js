@@ -23,8 +23,8 @@ export function processGeminiContent(rawBody, glossaryData = null) {
       continue;
     }
 
-    // Reemplazo de marcadores de glosario: ※123⛬ o ※123〓
-    const replaced = paragraph.replace(/※(\d+)[⛬〓]/g, (match, indexStr) => {
+    // Reemplazo de marcadores de glosario: ※123⛬, ※123〓, ※123〘, etc.
+    const replaced = paragraph.replace(/※(\d+)[⛬〓〘〙【】]?/g, (match, indexStr) => {
       const idx = parseInt(indexStr, 10);
       const termEntry = terms[idx];
       if (termEntry && termEntry[0]) {

@@ -90,16 +90,24 @@ export function exportChaptersToPdf(novelSlug, chapters, novelTitle = '', custom
       }
     }
 
-    // Agregar número de página en el pie de página
+    // Agregar número de página en el pie de página sin desbordar el margen inferior
     const totalPages = doc.bufferedPageRange().count;
     for (let i = 0; i < totalPages; i++) {
       doc.switchToPage(i);
+      const oldBottom = doc.page.margins.bottom;
+      // Desactivar temporalmente el margen inferior para evitar que PDFKit cree páginas en blanco
+      doc.page.margins.bottom = 0;
       doc.fontSize(9).font('Helvetica').fillColor('#888888').text(
         `Página ${i + 1} de ${totalPages}`,
         54,
-        doc.page.height - 40,
-        { align: 'center', width: doc.page.width - 108 }
+        doc.page.height - 35,
+        {
+          align: 'center',
+          width: doc.page.width - 108,
+          lineBreak: false
+        }
       );
+      doc.page.margins.bottom = oldBottom;
     }
 
     doc.end();

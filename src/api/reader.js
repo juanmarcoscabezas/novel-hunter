@@ -41,6 +41,10 @@ export async function fetchChapter(rawId, chapterNo, options = {}) {
         let paragraphs = processGeminiContent(rawBody, chapterData.glossary_data);
         const modelName = chapterData.model || 'Gemini 3.5 Flash';
         let title = chapterData.title || aiRes.chapter?.title || `Capítulo ${chapterNo}`;
+        if (title && chapterData.glossary_data) {
+          const [cleanedTitle] = processGeminiContent([title], chapterData.glossary_data);
+          if (cleanedTitle) title = cleanedTitle;
+        }
 
         // Si se solicitó español, traducir el texto en inglés al español
         if (targetLang === 'es' && paragraphs.length > 0) {
