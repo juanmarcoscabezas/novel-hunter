@@ -298,12 +298,23 @@ body {
 .btn-continue-novel {
   background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
   color: #ffffff;
-  border: none;
+  border: 1px solid transparent;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  box-sizing: border-box;
 }
 
 .btn-continue-novel:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
+.btn-view-chapters {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  box-sizing: border-box;
 }
 
 .sidebar-footer {
@@ -518,7 +529,13 @@ body {
 .btn-sm {
   padding: 0 14px;
   height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  box-sizing: border-box;
   font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-xs {

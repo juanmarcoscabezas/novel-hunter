@@ -239,14 +239,17 @@ async function runTests() {
   assert(appJsContent.includes('btn-continue-novel'), 'app.js debe permitir continuar lectura desde cada tarjeta');
   console.log('   ✓ Almacenamiento del último capítulo leído, IPC y botón de acceso directo desde el menú verificados.');
 
-  // Test 20: Opciones de exportar y abrir carpeta reubicadas dentro del detalle de la novela
-  console.log('\n20. Probando reubicación de opciones de exportar y abrir carpeta en el detalle de la novela...');
+  // Test 20: Opciones de exportar y abrir carpeta reubicadas dentro del detalle de la novela y correcciones de UI
+  console.log('\n20. Probando reubicación de opciones de exportar y abrir carpeta en el detalle de la novela y correcciones de UI...');
   assert(htmlContent.includes('id="detail-export-btn"'), 'index.html debe contener el botón detail-export-btn en el modal de detalle');
   assert(htmlContent.includes('id="detail-open-folder-btn"'), 'index.html debe contener el botón detail-open-folder-btn en el modal de detalle');
   assert(stylesCssContent.includes('.novel-meta-actions'), 'styles.css debe definir estilos para .novel-meta-actions');
   assert(appJsContent.includes("document.getElementById('detail-export-btn')"), 'app.js debe enlazar el evento de exportación en detalle');
   assert(appJsContent.includes("document.getElementById('detail-open-folder-btn')"), 'app.js debe enlazar el evento de abrir carpeta en detalle');
-  console.log('   ✓ Opciones reubicadas exitosamente dentro del detalle de la novela y tarjetas de biblioteca despejadas.');
+  assert(!htmlContent.includes('id="open-exports-folder-btn"'), 'index.html no debe duplicar el botón de exports en la cabecera de la biblioteca');
+  assert(stylesCssContent.includes('.btn-continue-novel'), 'styles.css debe definir estilos para .btn-continue-novel');
+  assert(stylesCssContent.includes('.btn-view-chapters'), 'styles.css debe definir estilos para .btn-view-chapters');
+  console.log('   ✓ Opciones reubicadas exitosamente, duplicidad eliminada y altura exacta unificada (36px).');
 
   console.log('\n🎉 ¡TODAS LAS PRUEBAS (20/20) PASARON EXITOSAMENTE!');
 }

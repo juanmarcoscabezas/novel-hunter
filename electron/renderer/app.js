@@ -402,13 +402,9 @@ function handleGlobalProgress(data) {
    ========================================================================== */
 function initLibrary() {
   const refreshBtn = document.getElementById('refresh-library-btn');
-  const openExportsBtn = document.getElementById('open-exports-folder-btn');
   const filterInput = document.getElementById('library-filter-input');
 
   refreshBtn.addEventListener('click', loadLibrary);
-  openExportsBtn.addEventListener('click', () => {
-    window.wtrApi?.openFolder('exports');
-  });
 
   filterInput.addEventListener('input', () => {
     const filter = filterInput.value.toLowerCase().trim();
@@ -477,8 +473,8 @@ async function loadLibrary() {
 
       const continueBtnHtml = item.last_read_chapter_no
         ? `
-          <button class="btn btn-sm btn-continue-novel" style="flex: 1 1 100%;" title="Ir al último capítulo visto">
-            <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <button class="btn btn-sm btn-continue-novel" style="width: 100%;" title="Ir al último capítulo visto">
+            <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             <span>Continuar: Cap. ${item.last_read_chapter_no}</span>
           </button>
         `
@@ -499,7 +495,8 @@ async function loadLibrary() {
         <div style="display: flex; gap: 8px; flex-direction: column;">
           ${continueBtnHtml}
           <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
-            ${ICONS.fileTextSm} Ver Capítulos (${item.downloaded_chapters})
+            ${ICONS.fileTextSm}
+            <span>Ver Capítulos (${item.downloaded_chapters})</span>
           </button>
         </div>
       `;
