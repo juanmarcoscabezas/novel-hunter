@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WTR-Lab Novel Downloader & Library</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Barra Lateral de Navegación -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">📚</div>
+        <div class="brand-info">
+          <h2>WTR-Lab</h2>
+          <span class="badge badge-primary">v1.1.0 Desktop</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-tab="tab-search">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-text">Buscador & Descarga</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-library">
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">Mi Biblioteca</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-terminal">
+          <span class="nav-icon">💻</span>
+          <span class="nav-text">Consola Terminal</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Configuración</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status">
+          <div class="status-indicator online"></div>
+          <span id="session-status-text">Invitado Público</span>
+        </div>
+        <button id="quick-open-exports" class="btn btn-outline btn-xs" title="Abrir carpeta exports">
+          📂 Abrir Exports
+        </button>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+      <!-- PESTAÑA 1: BUSCADOR & DESCARGA -->
+      <section id="tab-search" class="tab-pane active">
+        <header class="content-header">
+          <div>
+            <h1>Descargar Novelas Ligeras</h1>
+            <p class="subtitle">Busca por nombre o pega la URL directa de WTR-Lab para descargar con Gemini AI y Google Translate</p>
+          </div>
+        </header>
+
+        <div class="search-box-container">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Ej: Lord at the Beginning, o https://wtr-lab.com/en/serie-1234/..." autofocus>
+            <button id="clear-search-btn" class="btn-clear hidden">&times;</button>
+          </div>
+          <button id="search-btn" class="btn btn-primary">
+            <span class="btn-text">Buscar</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </div>
+
+        <div id="search-feedback" class="feedback-banner hidden"></div>
+
+        <!-- Resultados de Búsqueda -->
+        <div id="search-results" class="novel-grid">
+          <div class="empty-state">
+            <div class="empty-icon">🔎</div>
+            <h3>Busca una novela para comenzar</h3>
+            <p>Ingresa palabras clave o una URL completa de WTR-Lab arriba.</p>
+          </div>
+        </div>
+
+        <!-- Modal / Panel de Descarga de Novela Seleccionada -->
+        <div id="download-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card">
+            <header class="modal-header">
+              <h2 id="modal-novel-title">Configurar Descarga</h2>
+              <button id="close-modal-btn" class="btn-close">&times;</button>
+            </header>
+
+            <div class="modal-body">
+              <div class="novel-meta-preview">
+                <img id="modal-novel-cover" src="" alt="Portada" class="cover-thumb hidden">
+                <div class="novel-meta-details">
+                  <p><strong>Autor:</strong> <span id="modal-novel-author">-</span></p>
+                  <p><strong>Capítulos en WTR-Lab:</strong> <span id="modal-novel-chapters">-</span></p>
+                  <p id="modal-novel-desc" class="novel-desc-clamped"></p>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="chapter-range-input">Rango de Capítulos:</label>
+                <div class="input-with-chips">
+                  <input type="text" id="chapter-range-input" value="1-5" placeholder="Ej: 1-10, 15, 20-30">
+                  <div class="chips-row">
+                    <button class="chip" data-range="1-5">1-5</button>
+                    <button class="chip" data-range="1-10">1-10</button>
+                    <button class="chip" data-range="1-25">1-25</button>
+                    <button class="chip" data-range="1-50">1-50</button>
+                    <button class="chip" data-range="all">Todos</button>
+                  </div>
+                </div>
+                <small class="form-hint">Capítulos disponibles: <span id="modal-total-avail">-</span></small>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="lang-select">Idioma de Traducción:</label>
+                  <select id="lang-select" class="form-control">
+                    <option value="en" selected>Inglés (Gemini AI MTL con Glosario)</option>
+                    <option value="es">Español (Gemini AI + Google Translate)</option>
+                  </select>
+                </div>
+
+                <div class="form-group half checkboxes-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="merge-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Fusionar en un solo archivo
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="pdf-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Exportar a libro digital PDF
+                  </label>
+                </div>
+              </div>
+
+              <!-- Barra de Progreso Activa -->
+              <div id="progress-container" class="progress-box hidden">
+                <div class="progress-header">
+                  <span id="progress-status-label">Iniciando descarga...</span>
+                  <span id="progress-percent-label">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-subtext" id="progress-subtext"></div>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="cancel-download-btn" class="btn btn-danger hidden">Detener</button>
+              <button id="close-modal-bottom-btn" class="btn btn-secondary">Cerrar</button>
+              <button id="start-download-btn" class="btn btn-primary">Iniciar Descarga</button>
+            </footer>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 2: MI BIBLIOTECA (SQLITE) -->
+      <section id="tab-library" class="tab-pane">
+        <header class="content-header">
+          <div>
+            <h1>Catálogo Local SQLite</h1>
+            <p class="subtitle">Capítulos almacenados localmente en Tercera Forma Normal (3NF) listos para exportar sin conexión</p>
+          </div>
+          <div class="header-actions">
+            <button id="refresh-library-btn" class="btn btn-outline btn-sm">🔄 Actualizar</button>
+            <button id="open-exports-folder-btn" class="btn btn-primary btn-sm">📂 Carpeta Exports</button>
+          </div>
+        </header>
+
+        <div class="library-metrics">
+          <div class="metric-card">
+            <span class="metric-icon">📚</span>
+            <div class="metric-content">
+              <span class="metric-value" id="lib-total-novels">0</span>
+              <span class="metric-label">Novelas en Catálogo</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">📑</span>
+            <div class="metric-content">
+              <span class="metric-value" id="lib-total-chapters">0</span>
+              <span class="metric-label">Capítulos Guardados</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">💾</span>
+            <div class="metric-content">
+              <span class="metric-value">SQLite 3NF</span>
+              <span class="metric-label">data/novels.db</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-box-container library-search">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="library-filter-input" placeholder="Filtrar por título o autor en la base de datos...">
+          </div>
+        </div>
+
+        <div id="library-novel-grid" class="novel-grid">
+          <!-- Tarjetas renderizadas dinámicamente -->
+        </div>
+
+        <!-- Modal de Exportación Offline desde SQLite -->
+        <div id="export-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card">
+            <header class="modal-header">
+              <h2 id="export-modal-title">Exportar desde SQLite</h2>
+              <button id="close-export-modal-btn" class="btn-close">&times;</button>
+            </header>
+
+            <div class="modal-body">
+              <p>Exporta capítulos directamente desde la base de datos SQLite sin conexión a internet ni consumo de cuota.</p>
+              
+              <div class="form-group">
+                <label for="export-range-input">Capítulos a exportar:</label>
+                <input type="text" id="export-range-input" value="all" placeholder="Ej: 1-10, 15 o 'all'">
+                <small class="form-hint" id="export-avail-hint">Capítulos descargados: -</small>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="export-lang-select">Idioma:</label>
+                  <select id="export-lang-select" class="form-control">
+                    <option value="en">Inglés (EN)</option>
+                    <option value="es">Español (ES)</option>
+                  </select>
+                </div>
+                <div class="form-group half checkboxes-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="export-merge-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Fusionar en un solo archivo
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="export-pdf-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Exportar a libro digital PDF
+                  </label>
+                </div>
+              </div>
+
+              <div id="export-progress-box" class="progress-box hidden">
+                <div class="progress-header">
+                  <span id="export-progress-status">Exportando...</span>
+                  <span id="export-progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="export-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="cancel-export-btn" class="btn btn-secondary">Cerrar</button>
+              <button id="start-export-btn" class="btn btn-primary">Exportar Ahora</button>
+            </footer>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 3: TERMINAL CLI -->
+      <section id="tab-terminal" class="tab-pane">
+        <header class="content-header">
+          <div>
+            <h1>Consola de Comandos WTR</h1>
+            <p class="subtitle">Ejecuta comandos CLI con sintaxis idéntica a la terminal directamente desde la interfaz</p>
+          </div>
+          <div class="terminal-actions">
+            <button class="terminal-quick-btn" data-cmd="help">help</button>
+            <button class="terminal-quick-btn" data-cmd="wtr library">wtr library</button>
+            <button class="terminal-quick-btn" data-cmd="wtr status">wtr status</button>
+            <button class="terminal-quick-btn" data-cmd="clear">clear</button>
+          </div>
+        </header>
+
+        <div class="terminal-container">
+          <div class="terminal-window">
+            <div class="terminal-titlebar">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+              <span class="terminal-title">wtr-lab-cli (v1.1.0)</span>
+            </div>
+            <div id="terminal-output" class="terminal-body">
+              <div class="term-line term-dim">===============================================================</div>
+              <div class="term-line term-cyan">  WTR-Lab CLI & Database Integrated Console</div>
+              <div class="term-line term-dim">  Escribe "help" para ver los comandos disponibles.</div>
+              <div class="term-line term-dim">===============================================================</div>
+              <br>
+            </div>
+            <div class="terminal-input-bar">
+              <span class="terminal-prompt">wtr-lab&gt;</span>
+              <input type="text" id="terminal-input" placeholder="Escribe un comando (ej: wtr &quot;lord at the beginning&quot; -c 1-2 -l es --pdf)" autocomplete="off">
+              <button id="terminal-run-btn" class="btn btn-primary btn-sm">Ejecutar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 4: CONFIGURACIÓN -->
+      <section id="tab-settings" class="tab-pane">
+        <header class="content-header">
+          <div>
+            <h1>Configuración & Credenciales</h1>
+            <p class="subtitle">Administra la sesión de WTR-Lab, el bypass de Cloudflare y los directorios de almacenamiento</p>
+          </div>
+        </header>
+
+        <div class="settings-grid">
+          <!-- Tarjeta de Sesión WTR-Lab -->
+          <div class="card settings-card">
+            <div class="card-header">
+              <h3>🔐 Sesión & Bypass de Cloudflare</h3>
+              <span id="settings-session-pill" class="badge badge-secondary">Invitado</span>
+            </div>
+            <div class="card-body">
+              <p>WTR-Lab permite lectura y descargas públicas sin registro. Si deseas utilizar tu cuenta personal o superar desafíos de Cloudflare, pega tu cookie de sesión aquí:</p>
+              
+              <div class="session-guide">
+                <strong>¿Cómo obtener tu cookie en el navegador?</strong>
+                <ol>
+                  <li>Abre <a href="https://wtr-lab.com/en" target="_blank">wtr-lab.com</a> en Chrome / Edge / Firefox.</li>
+                  <li>Inicia sesión si lo deseas, o simplemente supera el Cloudflare turnstile.</li>
+                  <li>Presiona <code>F12</code> -&gt; pestaña <strong>Red (Network)</strong> o <strong>Almacenamiento (Storage) -&gt; Cookies</strong>.</li>
+                  <li>Copia el valor de la cabecera <code>Cookie</code> completa o los tokens de sesión.</li>
+                </ol>
+              </div>
+
+              <div class="form-group">
+                <label for="cookie-input">Cadena de Cookies (formato key=value; ...):</label>
+                <textarea id="cookie-input" rows="3" placeholder="wtr_session=...; cf_clearance=..."></textarea>
+              </div>
+
+              <div class="settings-actions">
+                <button id="save-cookie-btn" class="btn btn-primary">Guardar Cookies</button>
+                <button id="test-session-btn" class="btn btn-outline">Probar Conexión</button>
+                <button id="clear-cookie-btn" class="btn btn-danger">Borrar Sesión</button>
+              </div>
+              <div id="session-feedback" class="feedback-banner hidden"></div>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Almacenamiento & Base de Datos -->
+          <div class="card settings-card">
+            <div class="card-header">
+              <h3>📂 Almacenamiento & Base de Datos SQLite</h3>
+            </div>
+            <div class="card-body">
+              <div class="setting-item">
+                <div class="setting-item-info">
+                  <strong>Carpeta de Exportaciones:</strong>
+                  <code>exports/</code>
+                  <p class="setting-desc">Donde se guardan los archivos TXT y libros digitales PDF compilados.</p>
+                </div>
+                <button id="open-exports-action-btn" class="btn btn-outline btn-sm">Abrir Carpeta</button>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-item-info">
+                  <strong>Base de Datos Portátil:</strong>
+                  <code>data/novels.db</code>
+                  <p class="setting-desc">Base de datos relacional SQLite 3NF integrada. Puedes transportarla a cualquier máquina.</p>
+                </div>
+                <button id="open-data-action-btn" class="btn btn-outline btn-sm">Abrir Directorio</button>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-item-info">
+                  <strong>Generación de Ejecutable Windows (.exe):</strong>
+                  <p class="setting-desc">Ejecuta <code>npm run dist:win</code> para generar el instalador y la versión portable para Windows.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
