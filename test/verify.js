@@ -219,7 +219,27 @@ async function runTests() {
   assert(htmlContent.includes('src="../assets/icon.png"'), 'index.html debe mostrar el logo en la barra de marca');
   console.log(`   ✓ Icono personalizado verificado (${Math.round(iconStats.size / 1024)} KB), cabecera PNG válida e integrado en ventana y marca.`);
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (18/18) PASARON EXITOSAMENTE!');
+  // Test 19: Almacenar último capítulo visto y botón de acceso directo desde el menú
+  console.log('\n19. Probando almacenamiento de último capítulo visto y botón en el menú...');
+  // 19a. Base de datos
+  repository.updateReadingProgress(9779, 1, 'es');
+  const lastReadGlobal = repository.getGlobalLastRead();
+  assert(lastReadGlobal !== null, 'Debe existir un registro de último capítulo leído');
+  assert.strictEqual(lastReadGlobal.novel_id, 9779);
+  assert.strictEqual(lastReadGlobal.last_read_chapter_no, 1);
+  assert.strictEqual(lastReadGlobal.last_read_language, 'es');
+
+  // 19b. Integración IPC y Renderer
+  assert(preloadContent.includes('getLastRead: () => ipcRenderer.invoke'), 'preload.cjs debe exponer getLastRead');
+  assert(htmlContent.includes('id="sidebar-last-read"'), 'index.html debe contener el contenedor sidebar-last-read');
+  assert(htmlContent.includes('id="menu-continue-reading-btn"'), 'index.html debe contener el botón menu-continue-reading-btn');
+  assert(stylesCssContent.includes('.sidebar-last-read'), 'styles.css debe definir estilos para .sidebar-last-read');
+  assert(stylesCssContent.includes('.last-read-card'), 'styles.css debe definir estilos para .last-read-card');
+  assert(appJsContent.includes('updateLastReadWidget'), 'app.js debe implementar updateLastReadWidget');
+  assert(appJsContent.includes('btn-continue-novel'), 'app.js debe permitir continuar lectura desde cada tarjeta');
+  console.log('   ✓ Almacenamiento del último capítulo leído, IPC y botón de acceso directo desde el menú verificados.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (19/19) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

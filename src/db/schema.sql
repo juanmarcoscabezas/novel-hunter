@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS paragraphs (
 CREATE TABLE IF NOT EXISTS reading_progress (
     novel_id INTEGER PRIMARY KEY REFERENCES novels(id) ON DELETE CASCADE,
     last_read_chapter_no INTEGER NOT NULL,
+    last_read_language TEXT DEFAULT 'en',
     last_read_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

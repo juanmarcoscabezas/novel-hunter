@@ -261,7 +261,9 @@ export class NovelRepository {
         n.synopsis,
         COUNT(DISTINCT c.chapter_no) as downloaded_chapters,
         GROUP_CONCAT(DISTINCT ct.language) as languages,
-        rp.last_read_chapter_no
+        rp.last_read_chapter_no,
+        rp.last_read_language,
+        rp.last_read_at
       FROM novels n
       LEFT JOIN authors a ON n.author_id = a.id
       LEFT JOIN chapters c ON c.novel_id = n.id
@@ -312,17 +314,53 @@ export class NovelRepository {
   }
 
   /**
-   * Actualiza el progreso de lectura.
+   * Actualiza el progreso de lectura de una novela.
    */
-  updateReadingProgress(novelRawId, chapterNo) {
+  updateReadingProgress(novelRawId, chapterNo, language = 'en') {
     const stmt = this.db.prepare(`
-      INSERT INTO reading_progress (novel_id, last_read_chapter_no, last_read_at)
-      VALUES (?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO reading_progress (novel_id, last_read_chapter_no, last_read_language, last_read_at)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(novel_id) DO UPDATE SET
         last_read_chapter_no = excluded.last_read_chapter_no,
+        last_read_language = excluded.last_read_language,
         last_read_at = CURRENT_TIMESTAMP
     `);
-    stmt.run(novelRawId, chapterNo);
+    stmt.run(novelRawId, chapterNo, language);
+  }
+
+  /**
+   * Obtiene el último capítulo leído globalmente en la aplicación.
+   */
+  getGlobalLastRead() {
+    const stmt = this.db.prepare(`
+      SELECT 
+        rp.novel_id,
+        rp.last_read_chapter_no,
+        rp.last_read_language,
+        rp.last_read_at,
+        n.slug,
+        n.title,
+        n.cover_url,
+        a.name as author
+      FROM reading_progress rp
+      JOIN novels n ON rp.novel_id = n.id
+      LEFT JOIN authors a ON n.author_id = a.id
+      ORDER BY rp.last_read_at DESC
+      LIMIT 1
+    `);
+    return stmt.get() || null;
+  }
+
+  /**
+   * Obtiene el progreso de lectura de una novela específica.
+   */
+  getReadingProgress(novelRawId) {
+    const stmt = this.db.prepare(`
+      SELECT novel_id, last_read_chapter_no, last_read_language, last_read_at
+      FROM reading_progress
+      WHERE novel_id = ?
+    `);
+    return stmt.get(novelRawId) || null;
   }
 
   /**

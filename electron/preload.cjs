@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('wtrApi', {
   getLibrary: () => ipcRenderer.invoke('library:list'),
   getStorageStats: () => ipcRenderer.invoke('library:getStorageStats'),
   getNovelStats: (slug) => ipcRenderer.invoke('library:getNovelStats', slug),
+  getLastRead: () => ipcRenderer.invoke('library:getLastRead'),
+  updateProgress: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:updateProgress', novelId, chapterNo, lang),
   getDownloadedChapters: (novelId, lang) => ipcRenderer.invoke('library:getChapters', novelId, lang),
   readChapter: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:readChapter', novelId, chapterNo, lang),
   exportLibrary: (payload) => ipcRenderer.invoke('library:export', payload),

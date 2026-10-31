@@ -203,6 +203,109 @@ body {
   height: 20px;
 }
 
+/* Widget de Continuar Última Lectura en Sidebar */
+.sidebar-last-read {
+  margin: 0 12px 12px 12px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-last-read:hover {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.last-read-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.last-read-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #60a5fa;
+  text-transform: uppercase;
+}
+
+.last-read-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.last-read-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.last-read-card:hover .last-read-icon {
+  transform: scale(1.08);
+}
+
+.last-read-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 2px;
+  flex: 1;
+}
+
+.last-read-novel {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f1f5f9;
+}
+
+.last-read-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.last-read-ch {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-continue-novel {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+}
+
+.btn-continue-novel:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
 .sidebar-footer {
   padding: 14px 16px;
   border-top: 1px solid var(--border-color);

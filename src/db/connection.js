@@ -40,6 +40,13 @@ export function getDb(customPath = null) {
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schemaSql);
 
+  // Migraciones incrementales automáticas
+  try {
+    db.exec(`ALTER TABLE reading_progress ADD COLUMN last_read_language TEXT DEFAULT 'en';`);
+  } catch {
+    // Columna ya existe
+  }
+
   if (!customPath) {
     instance = db;
   }

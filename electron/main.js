@@ -340,9 +340,6 @@ function setupIpcHandlers() {
           downloadedChapters.push(chapterData);
           results.successCount++;
 
-          // Actualizar progreso de lectura
-          repository.updateReadingProgress(novel.rawId || novel.id, chapterNo);
-
           // Exportar PDF individual si se solicitó y no es fusión
           if (pdf && !merge) {
             await exportChaptersToPdf(novel.slug, [chapterData], novel.title, {
@@ -455,12 +452,33 @@ function setupIpcHandlers() {
     try {
       const ch = repository.getChapterTranslation(novelId, chapterNo, lang);
       if (ch) {
-        repository.updateReadingProgress(novelId, chapterNo);
+        repository.updateReadingProgress(novelId, chapterNo, lang);
       }
       return ch;
     } catch (err) {
       console.error('Error in library:readChapter:', err);
       return null;
+    }
+  });
+
+  // 6d. Obtener último capítulo leído globalmente
+  ipcMain.handle('library:getLastRead', async () => {
+    try {
+      return repository.getGlobalLastRead();
+    } catch (err) {
+      console.error('Error in library:getLastRead:', err);
+      return null;
+    }
+  });
+
+  // 6e. Actualizar progreso de lectura manualmente
+  ipcMain.handle('library:updateProgress', async (_event, novelId, chapterNo, lang = 'en') => {
+    try {
+      repository.updateReadingProgress(novelId, chapterNo, lang);
+      return true;
+    } catch (err) {
+      console.error('Error in library:updateProgress:', err);
+      return false;
     }
   });
 

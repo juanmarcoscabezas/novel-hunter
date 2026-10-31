@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Cargar estado inicial
   refreshAuthStatus();
   loadLibrary();
+  updateLastReadWidget();
 });
 
 /* ==========================================================================
@@ -474,6 +475,15 @@ async function loadLibrary() {
         .map(l => `<span class="badge badge-primary">${escapeHtml(l.trim().toUpperCase())}</span>`)
         .join(' ');
 
+      const continueBtnHtml = item.last_read_chapter_no
+        ? `
+          <button class="btn btn-sm btn-continue-novel" style="flex: 1 1 100%;" title="Ir al último capítulo visto">
+            <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Continuar: Cap. ${item.last_read_chapter_no}</span>
+          </button>
+        `
+        : '';
+
       card.innerHTML = `
         <div class="novel-card-top">
           ${coverHtml}
@@ -487,6 +497,7 @@ async function loadLibrary() {
           </div>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          ${continueBtnHtml}
           <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1 1 100%;">
             ${ICONS.fileTextSm} Ver Capítulos (${item.downloaded_chapters})
           </button>
@@ -498,6 +509,15 @@ async function loadLibrary() {
           </button>
         </div>
       `;
+
+      if (item.last_read_chapter_no) {
+        card.querySelector('.btn-continue-novel')?.addEventListener('click', async () => {
+          const lang = item.last_read_language || (item.languages ? item.languages.split(',')[0].trim() : 'en');
+          const chapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, lang);
+          currentReadingChaptersList = chapters || [];
+          openReaderModal(item, item.last_read_chapter_no, lang);
+        });
+      }
 
       card.querySelector('.btn-view-chapters').addEventListener('click', () => {
         openChaptersModal(item);
@@ -513,6 +533,8 @@ async function loadLibrary() {
 
       grid.appendChild(card);
     });
+
+    updateLastReadWidget();
   } catch (err) {
     console.error('Error loading library:', err);
   }
@@ -527,7 +549,10 @@ function initChaptersModal() {
   const closeBottomBtn = document.getElementById('close-chapters-bottom-btn');
   const langFilter = document.getElementById('chapters-lang-filter');
 
-  const closeModal = () => modal.classList.add('hidden');
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    loadLibrary();
+  };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
 
@@ -622,7 +647,10 @@ function initReaderModal() {
   const decFontBtn = document.getElementById('reader-font-decrease');
   const incFontBtn = document.getElementById('reader-font-increase');
 
-  const closeModal = () => modal.classList.add('hidden');
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    loadLibrary();
+  };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
 
@@ -697,6 +725,7 @@ async function openReaderModal(novelItem, chapterNo, lang) {
 
     document.querySelector('.reader-body')?.scrollTo({ top: 0, behavior: 'instant' });
     updateReaderNavButtons();
+    updateLastReadWidget();
   } catch (err) {
     titleEl.textContent = 'Error al cargar capítulo';
     articleEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">Error: ${escapeHtml(err.message)}</div>`;
@@ -722,6 +751,49 @@ function updateReaderNavButtons() {
   } else {
     nextBtn.disabled = true;
     nextBtn.style.opacity = '0.4';
+  }
+}
+
+async function updateLastReadWidget() {
+  try {
+    const lastRead = await window.wtrApi.getLastRead();
+    const container = document.getElementById('sidebar-last-read');
+    if (!container) return;
+
+    if (!lastRead || !lastRead.last_read_chapter_no) {
+      container.classList.add('hidden');
+      return;
+    }
+
+    container.classList.remove('hidden');
+    const titleEl = document.getElementById('last-read-title');
+    const chEl = document.getElementById('last-read-chapter');
+    const langEl = document.getElementById('last-read-lang');
+
+    if (titleEl) titleEl.textContent = lastRead.title || 'Novela';
+    if (chEl) chEl.textContent = `Capítulo ${lastRead.last_read_chapter_no}`;
+    if (langEl) langEl.textContent = (lastRead.last_read_language || 'en').toUpperCase();
+
+    const btn = document.getElementById('menu-continue-reading-btn');
+    if (btn) {
+      btn.onclick = async (e) => {
+        e.preventDefault();
+        const novelObj = {
+          raw_id: lastRead.novel_id,
+          id: lastRead.novel_id,
+          slug: lastRead.slug,
+          title: lastRead.title,
+          cover_url: lastRead.cover_url,
+          author: lastRead.author
+        };
+        const lang = lastRead.last_read_language || 'en';
+        const chapters = await window.wtrApi.getDownloadedChapters(lastRead.novel_id, lang);
+        currentReadingChaptersList = chapters || [];
+        openReaderModal(novelObj, lastRead.last_read_chapter_no, lang);
+      };
+    }
+  } catch (err) {
+    console.warn('Error al actualizar widget de última lectura:', err);
   }
 }
 

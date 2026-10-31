@@ -134,7 +134,23 @@ async function runDbTests() {
   assert(storage.formatted.includes('B'), 'storage.formatted debe contener unidad de bytes (KB/MB)');
   console.log(`   ✓ getStorageStats devolvió tamaño real en disco: ${storage.formatted} (${storage.bytes} bytes).`);
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (10/10) PASARON EXITOSAMENTE!');
+  // 11. Recuperación del último capítulo leído globalmente y por novela
+  console.log('\n11. Probando getGlobalLastRead y getReadingProgress...');
+  repo.updateReadingProgress(1001, 2, 'es');
+  const globalLast = repo.getGlobalLastRead();
+  assert(globalLast !== null, 'Debe devolver el último leído');
+  assert.strictEqual(globalLast.novel_id, 1001);
+  assert.strictEqual(globalLast.last_read_chapter_no, 2);
+  assert.strictEqual(globalLast.last_read_language, 'es');
+  assert.strictEqual(globalLast.title, 'The Legendary Mechanic');
+
+  const prog = repo.getReadingProgress(1001);
+  assert(prog !== null);
+  assert.strictEqual(prog.last_read_chapter_no, 2);
+  assert.strictEqual(prog.last_read_language, 'es');
+  console.log(`   ✓ Último capítulo leído recuperado con éxito: "${globalLast.title}" Cap. ${globalLast.last_read_chapter_no} [${globalLast.last_read_language}].`);
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (11/11) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {
