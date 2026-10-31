@@ -266,6 +266,81 @@
             </footer>
           </div>
         </div>
+
+        <!-- Modal para Explorar Capítulos Guardados en SQLite -->
+        <div id="chapters-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card modal-lg">
+            <header class="modal-header">
+              <div>
+                <h2 id="chapters-modal-title">Capítulos Guardados</h2>
+                <span id="chapters-modal-subtitle" class="text-muted text-xs">Catálogo SQLite</span>
+              </div>
+              <button id="close-chapters-modal-btn" class="btn-close">&times;</button>
+            </header>
+
+            <div class="modal-body">
+              <div class="novel-meta-preview">
+                <img id="chapters-novel-cover" src="" alt="Portada" class="cover-thumb hidden">
+                <div class="novel-meta-details">
+                  <p><strong>Autor:</strong> <span id="chapters-novel-author">-</span></p>
+                  <p><strong>Total en WTR-Lab:</strong> <span id="chapters-novel-total">-</span></p>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                    <label for="chapters-lang-filter" style="margin-bottom: 0; font-size: 13px;">Idioma:</label>
+                    <select id="chapters-lang-filter" class="form-control" style="width: auto; padding: 4px 10px; font-size: 13px;">
+                      <option value="en">Inglés (EN)</option>
+                      <option value="es">Español (ES)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="chapters-list-container" class="chapters-list-wrapper">
+                <!-- Se llena dinámicamente con los capítulos -->
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="close-chapters-bottom-btn" class="btn btn-secondary">Cerrar</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Modal de Lectura Integrada (Reader View) -->
+        <div id="reader-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card modal-xl reader-card">
+            <header class="modal-header reader-header">
+              <div class="reader-header-left">
+                <h2 id="reader-chapter-title">Título del Capítulo</h2>
+                <span id="reader-novel-title" class="reader-novel-subtitle">Nombre de la novela</span>
+              </div>
+              <div class="reader-header-controls">
+                <div class="font-size-controls">
+                  <button id="reader-font-decrease" class="btn-icon" title="Reducir fuente">A-</button>
+                  <button id="reader-font-increase" class="btn-icon" title="Aumentar fuente">A+</button>
+                </div>
+                <button id="close-reader-modal-btn" class="btn-close">&times;</button>
+              </div>
+            </header>
+
+            <div class="modal-body reader-body">
+              <div class="reader-meta-bar">
+                <span id="reader-model-badge" class="badge badge-primary">Gemini AI</span>
+                <span id="reader-paragraphs-info" class="text-muted text-xs">Párrafos: -</span>
+              </div>
+              <article id="reader-article-content" class="reader-article">
+                <!-- Párrafos del capítulo -->
+              </article>
+            </div>
+
+            <footer class="modal-footer reader-footer">
+              <button id="reader-prev-btn" class="btn btn-outline btn-sm">⬅ Anterior</button>
+              <button id="close-reader-bottom-btn" class="btn btn-secondary btn-sm">Cerrar Lector</button>
+              <button id="reader-next-btn" class="btn btn-outline btn-sm">Siguiente ➡</button>
+            </footer>
+          </div>
+        </div>
       </section>
 
       <!-- PESTAÑA 3: TERMINAL CLI -->

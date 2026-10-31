@@ -994,3 +994,146 @@ body {
 .term-green { color: #34d399; }
 .term-yellow { color: #fbbf24; }
 .term-red { color: #f87171; }
+
+/* Modal Grandes & Lista de Capítulos */
+.modal-card.modal-lg {
+  width: 750px;
+  max-width: 92vw;
+}
+
+.modal-card.modal-xl {
+  width: 920px;
+  max-width: 95vw;
+}
+
+.chapters-list-wrapper {
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chapter-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.chapter-item:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.chapter-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.chapter-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.chapter-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+}
+
+/* Modo Lector (Reader View) */
+.reader-card {
+  height: 88vh;
+}
+
+.reader-header {
+  padding: 14px 24px;
+}
+
+.reader-novel-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reader-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.font-size-controls {
+  display: flex;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.btn-icon:hover {
+  color: #fff;
+}
+
+.reader-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 40px;
+  background-color: #0b1120;
+}
+
+.reader-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+  max-width: 780px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.reader-article {
+  max-width: 780px;
+  margin: 0 auto;
+  font-size: var(--reader-font-size, 16px);
+  line-height: 1.85;
+  color: #cbd5e1;
+  letter-spacing: 0.01em;
+}
+
+.reader-article p {
+  margin-bottom: 1.4em;
+  text-indent: 1.2em;
+}
+
+.reader-article p:empty {
+  display: none;
+}
+
+.reader-footer {
+  justify-content: space-between;
+}
+

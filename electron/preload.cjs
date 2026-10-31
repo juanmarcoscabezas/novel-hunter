@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('wtrApi', {
   // Biblioteca SQLite
   getLibrary: () => ipcRenderer.invoke('library:list'),
   getNovelStats: (slug) => ipcRenderer.invoke('library:getNovelStats', slug),
+  getDownloadedChapters: (novelId, lang) => ipcRenderer.invoke('library:getChapters', novelId, lang),
+  readChapter: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:readChapter', novelId, chapterNo, lang),
   exportLibrary: (payload) => ipcRenderer.invoke('library:export', payload),
 
   // Autenticación y configuración

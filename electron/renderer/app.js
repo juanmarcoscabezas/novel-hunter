@@ -5,6 +5,14 @@ let currentNovelChapters = [];
 let currentExportNovel = null;
 let isDownloading = false;
 
+// Estado para exploración de capítulos y modo lector
+let currentChaptersNovel = null;
+let currentReadingNovel = null;
+let currentReadingChapterNo = 1;
+let currentReadingLang = 'en';
+let currentReadingChaptersList = [];
+let readerFontSize = 16;
+
 // Historial de comandos en la terminal
 const commandHistory = [];
 let historyIndex = -1;
@@ -14,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initDownloadModal();
   initLibrary();
+  initChaptersModal();
+  initReaderModal();
   initTerminal();
   initSettings();
   initGlobalShortcuts();
@@ -320,10 +330,26 @@ async function startDownload(payload) {
 
     subtext.innerHTML = `
       <div style="color: #34d399; margin-top: 6px;">${summary}</div>
-      <button class="btn btn-outline btn-xs" style="margin-top: 8px;" onclick="window.wtrApi.openFolder('${payload.novel.slug}')">
-        📂 Abrir carpeta en Explorador
-      </button>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button id="dl-view-library-btn" class="btn btn-primary btn-xs">
+          📖 Ver en Mi Biblioteca
+        </button>
+        <button id="dl-open-folder-btn" class="btn btn-outline btn-xs">
+          📂 Abrir carpeta en Explorador
+        </button>
+      </div>
     `;
+
+    document.getElementById('dl-open-folder-btn')?.addEventListener('click', () => {
+      window.wtrApi?.openFolder(payload.novel.slug);
+    });
+
+    document.getElementById('dl-view-library-btn')?.addEventListener('click', () => {
+      document.getElementById('download-modal').classList.add('hidden');
+      resetDownloadProgress();
+      const libTabBtn = document.querySelector('[data-tab="tab-library"]');
+      if (libTabBtn) libTabBtn.click();
+    });
 
     // Recargar biblioteca SQLite
     loadLibrary();
@@ -403,8 +429,12 @@ async function loadLibrary() {
     list.forEach((item) => {
       const card = document.createElement('div');
       card.className = 'novel-card';
-      card.setAttribute('data-title', item.title.toLowerCase());
+      card.setAttribute('data-title', (item.title || '').toLowerCase());
       card.setAttribute('data-author', (item.author || '').toLowerCase());
+
+      const coverHtml = item.cover_url
+        ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
+        : `<div class="novel-card-cover-placeholder">📖</div>`;
 
       const langBadges = (item.languages || 'ninguno')
         .split(',')
@@ -413,25 +443,32 @@ async function loadLibrary() {
 
       card.innerHTML = `
         <div class="novel-card-top">
-          <div class="novel-card-cover-placeholder">📖</div>
+          ${coverHtml}
           <div class="novel-card-info">
-            <h3 class="novel-card-title">${escapeHtml(item.title)}</h3>
+            <h3 class="novel-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h3>
             <span class="novel-card-author">👤 ${escapeHtml(item.author || 'Desconocido')}</span>
-            <span class="novel-card-chapters">📑 Guardados: ${item.downloaded_chapters} / ${item.total_chapters || '?'}</span>
+            <span class="novel-card-chapters">📑 Guardados: <strong>${item.downloaded_chapters}</strong> / ${item.total_chapters || '?'}</span>
             <div class="novel-card-meta-chips">
               ${langBadges}
             </div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-primary btn-sm btn-offline-export" style="flex: 1;">
-            ⚡ Exportar Offline
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1 1 100%;">
+            📑 Ver Capítulos (${item.downloaded_chapters})
+          </button>
+          <button class="btn btn-outline btn-sm btn-offline-export" style="flex: 1;" title="Exportar TXT/PDF">
+            ⚡ Exportar
           </button>
           <button class="btn btn-outline btn-sm btn-open-folder" title="Abrir carpeta">
             📂
           </button>
         </div>
       `;
+
+      card.querySelector('.btn-view-chapters').addEventListener('click', () => {
+        openChaptersModal(item);
+      });
 
       card.querySelector('.btn-offline-export').addEventListener('click', () => {
         openExportModal(item);
@@ -445,6 +482,212 @@ async function loadLibrary() {
     });
   } catch (err) {
     console.error('Error loading library:', err);
+  }
+}
+
+/* ==========================================================================
+   4b. MODAL DE CAPÍTULOS DE LA NOVELA
+   ========================================================================== */
+function initChaptersModal() {
+  const modal = document.getElementById('chapters-modal');
+  const closeBtn = document.getElementById('close-chapters-modal-btn');
+  const closeBottomBtn = document.getElementById('close-chapters-bottom-btn');
+  const langFilter = document.getElementById('chapters-lang-filter');
+
+  const closeModal = () => modal.classList.add('hidden');
+  closeBtn?.addEventListener('click', closeModal);
+  closeBottomBtn?.addEventListener('click', closeModal);
+
+  langFilter?.addEventListener('change', () => {
+    if (currentChaptersNovel) {
+      loadChaptersListForNovel(currentChaptersNovel, langFilter.value);
+    }
+  });
+}
+
+async function openChaptersModal(novelItem) {
+  currentChaptersNovel = novelItem;
+  const modal = document.getElementById('chapters-modal');
+  document.getElementById('chapters-modal-title').textContent = novelItem.title;
+  document.getElementById('chapters-novel-author').textContent = novelItem.author || 'Desconocido';
+  document.getElementById('chapters-novel-total').textContent = `${novelItem.total_chapters || '?'} en WTR-Lab`;
+
+  const coverImg = document.getElementById('chapters-novel-cover');
+  if (novelItem.cover_url) {
+    coverImg.src = novelItem.cover_url;
+    coverImg.classList.remove('hidden');
+  } else {
+    coverImg.classList.add('hidden');
+  }
+
+  const langFilter = document.getElementById('chapters-lang-filter');
+  const langs = (novelItem.languages || 'en').split(',').map(s => s.trim());
+  if (langs.includes('es') && !langs.includes('en')) {
+    langFilter.value = 'es';
+  } else {
+    langFilter.value = 'en';
+  }
+
+  await loadChaptersListForNovel(novelItem, langFilter.value);
+  modal.classList.remove('hidden');
+}
+
+async function loadChaptersListForNovel(novelItem, lang) {
+  const container = document.getElementById('chapters-list-container');
+  container.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Cargando capítulos...</div>';
+
+  const chapters = await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, lang);
+  currentReadingChaptersList = chapters;
+  container.innerHTML = '';
+
+  if (!chapters || chapters.length === 0) {
+    container.innerHTML = `
+      <div style="color: var(--text-muted); padding: 24px; text-align: center;">
+        No hay capítulos descargados en [${lang.toUpperCase()}] para esta novela.
+      </div>
+    `;
+    return;
+  }
+
+  chapters.forEach((ch) => {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'chapter-item';
+    const displayTitle = ch.title || ch.raw_title || `Capítulo ${ch.chapter_no}`;
+
+    itemEl.innerHTML = `
+      <div class="chapter-item-left">
+        <span class="chapter-item-title">Capítulo ${ch.chapter_no}: ${escapeHtml(displayTitle)}</span>
+        <div class="chapter-item-meta">
+          <span>⚙️ ${escapeHtml(ch.model || 'Gemini AI')}</span>
+          <span>📝 ${(ch.char_length || 0).toLocaleString()} caracteres</span>
+          <span>🌐 ${ch.language.toUpperCase()}</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm btn-read-ch">
+        📖 Leer
+      </button>
+    `;
+
+    itemEl.querySelector('.btn-read-ch').addEventListener('click', () => {
+      openReaderModal(novelItem, ch.chapter_no, lang);
+    });
+
+    container.appendChild(itemEl);
+  });
+}
+
+/* ==========================================================================
+   4c. MODAL DE LECTURA (READER VIEW)
+   ========================================================================== */
+function initReaderModal() {
+  const modal = document.getElementById('reader-modal');
+  const closeBtn = document.getElementById('close-reader-modal-btn');
+  const closeBottomBtn = document.getElementById('close-reader-bottom-btn');
+  const prevBtn = document.getElementById('reader-prev-btn');
+  const nextBtn = document.getElementById('reader-next-btn');
+  const decFontBtn = document.getElementById('reader-font-decrease');
+  const incFontBtn = document.getElementById('reader-font-increase');
+
+  const closeModal = () => modal.classList.add('hidden');
+  closeBtn?.addEventListener('click', closeModal);
+  closeBottomBtn?.addEventListener('click', closeModal);
+
+  decFontBtn?.addEventListener('click', () => {
+    if (readerFontSize > 12) {
+      readerFontSize -= 2;
+      const art = document.getElementById('reader-article-content');
+      if (art) art.style.fontSize = `${readerFontSize}px`;
+    }
+  });
+
+  incFontBtn?.addEventListener('click', () => {
+    if (readerFontSize < 28) {
+      readerFontSize += 2;
+      const art = document.getElementById('reader-article-content');
+      if (art) art.style.fontSize = `${readerFontSize}px`;
+    }
+  });
+
+  prevBtn?.addEventListener('click', () => {
+    const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
+    if (idx > 0) {
+      const prevCh = currentReadingChaptersList[idx - 1];
+      openReaderModal(currentReadingNovel, prevCh.chapter_no, currentReadingLang);
+    }
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
+    if (idx !== -1 && idx < currentReadingChaptersList.length - 1) {
+      const nextCh = currentReadingChaptersList[idx + 1];
+      openReaderModal(currentReadingNovel, nextCh.chapter_no, currentReadingLang);
+    }
+  });
+}
+
+async function openReaderModal(novelItem, chapterNo, lang) {
+  currentReadingNovel = novelItem;
+  currentReadingChapterNo = chapterNo;
+  currentReadingLang = lang;
+
+  const modal = document.getElementById('reader-modal');
+  const titleEl = document.getElementById('reader-chapter-title');
+  const novelTitleEl = document.getElementById('reader-novel-title');
+  const articleEl = document.getElementById('reader-article-content');
+  const modelBadge = document.getElementById('reader-model-badge');
+  const paragraphsInfo = document.getElementById('reader-paragraphs-info');
+
+  novelTitleEl.textContent = novelItem.title;
+  titleEl.textContent = `Cargando Capítulo ${chapterNo}...`;
+  articleEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px;">Cargando contenido...</div>';
+  modal.classList.remove('hidden');
+
+  try {
+    const chapterData = await window.wtrApi.readChapter(novelItem.raw_id || novelItem.id, chapterNo, lang);
+    if (!chapterData) {
+      titleEl.textContent = `Capítulo ${chapterNo} no encontrado`;
+      articleEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">No se encontró el capítulo ${chapterNo} en la base de datos.</div>`;
+      return;
+    }
+
+    titleEl.textContent = chapterData.title || `Capítulo ${chapterNo}`;
+    modelBadge.textContent = chapterData.model || 'Gemini AI';
+    paragraphsInfo.textContent = `${chapterData.paragraphs?.length || 0} párrafos (${lang.toUpperCase()})`;
+
+    articleEl.innerHTML = '';
+    (chapterData.paragraphs || []).forEach((pText) => {
+      const p = document.createElement('p');
+      p.textContent = pText;
+      articleEl.appendChild(p);
+    });
+
+    document.querySelector('.reader-body')?.scrollTo({ top: 0, behavior: 'instant' });
+    updateReaderNavButtons();
+  } catch (err) {
+    titleEl.textContent = 'Error al cargar capítulo';
+    articleEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function updateReaderNavButtons() {
+  const prevBtn = document.getElementById('reader-prev-btn');
+  const nextBtn = document.getElementById('reader-next-btn');
+
+  const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
+  if (idx > 0) {
+    prevBtn.disabled = false;
+    prevBtn.style.opacity = '1';
+  } else {
+    prevBtn.disabled = true;
+    prevBtn.style.opacity = '0.4';
+  }
+
+  if (idx !== -1 && idx < currentReadingChaptersList.length - 1) {
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+  } else {
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.4';
   }
 }
 

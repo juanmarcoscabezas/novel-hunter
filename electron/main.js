@@ -139,6 +139,15 @@ function setupIpcHandlers() {
       cancelled: false
     };
 
+    // Asegurar que la novela y sus metadatos existan en SQLite
+    if (novel) {
+      try {
+        repository.upsertNovel(novel);
+      } catch (err) {
+        console.warn('Aviso al registrar novela en SQLite:', err.message);
+      }
+    }
+
     const sender = event.sender;
 
     for (let i = 0; i < total; i++) {
@@ -166,9 +175,9 @@ function setupIpcHandlers() {
       });
 
       try {
-        const chapterData = await fetchChapter(novel.rawId || novel.id, chapterNo, novel.slug, {
+        const chapterData = await fetchChapter(novel.rawId || novel.id, chapterNo, {
           targetLang: lang,
-          saveToDb: true
+          novelMeta: novel
         });
 
         if (chapterData) {
@@ -177,6 +186,9 @@ function setupIpcHandlers() {
           results.savedTxtFiles.push(txtPath);
           downloadedChapters.push(chapterData);
           results.successCount++;
+
+          // Actualizar progreso de lectura
+          repository.updateReadingProgress(novel.rawId || novel.id, chapterNo);
 
           // Exportar PDF individual si se solicitó y no es fusión
           if (pdf && !merge) {
@@ -256,6 +268,30 @@ function setupIpcHandlers() {
       };
     } catch (err) {
       console.error('Error in library:getNovelStats:', err);
+      return null;
+    }
+  });
+
+  // 6b. Listado detallado de capítulos descargados
+  ipcMain.handle('library:getChapters', async (_event, novelId, lang = 'en') => {
+    try {
+      return repository.getDownloadedChapters(novelId, lang);
+    } catch (err) {
+      console.error('Error in library:getChapters:', err);
+      return [];
+    }
+  });
+
+  // 6c. Leer un capítulo desde la base de datos
+  ipcMain.handle('library:readChapter', async (_event, novelId, chapterNo, lang = 'en') => {
+    try {
+      const ch = repository.getChapterTranslation(novelId, chapterNo, lang);
+      if (ch) {
+        repository.updateReadingProgress(novelId, chapterNo);
+      }
+      return ch;
+    } catch (err) {
+      console.error('Error in library:readChapter:', err);
       return null;
     }
   });
@@ -553,6 +589,9 @@ async function executeCliCommand(cmdLine, write) {
 
       const selected = results[0];
       write(`\x1b[32m✓ Encontrada: ${selected.title} (${selected.chapterCount} capítulos)\x1b[0m\n`);
+      try {
+        repository.upsertNovel(selected);
+      } catch (e) {}
 
       const chapSpec = getOptionValue(restArgs, ['-c', '--chapters'], '1-3');
       const lang = getOptionValue(restArgs, ['-l', '--lang'], 'en');
@@ -569,9 +608,9 @@ async function executeCliCommand(cmdLine, write) {
       for (let i = 0; i < targetNumbers.length; i++) {
         const num = targetNumbers[i];
         write(`  [${i + 1}/${targetNumbers.length}] Descargando Capítulo ${num}...`);
-        const ch = await fetchChapter(selected.rawId, num, selected.slug, {
+        const ch = await fetchChapter(selected.rawId, num, {
           targetLang: lang,
-          saveToDb: true
+          novelMeta: selected
         });
         if (ch) {
           saveChapterAsTxt(selected.slug, ch, selected.title);

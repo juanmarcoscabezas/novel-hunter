@@ -226,6 +226,8 @@ export class NovelRepository {
         n.title,
         a.name as author,
         n.total_chapters,
+        n.cover_url,
+        n.synopsis,
         COUNT(DISTINCT c.chapter_no) as downloaded_chapters,
         GROUP_CONCAT(DISTINCT ct.language) as languages,
         rp.last_read_chapter_no
@@ -238,6 +240,30 @@ export class NovelRepository {
       ORDER BY n.updated_at DESC
     `);
     return stmt.all();
+  }
+
+  /**
+   * Obtiene la lista completa de capítulos descargados para una novela e idioma.
+   */
+  getDownloadedChapters(novelRawId, language = 'en') {
+    const stmt = this.db.prepare(`
+      SELECT 
+        c.chapter_no,
+        c.raw_title,
+        ct.id as translation_id,
+        ct.title,
+        ct.language,
+        ct.source_service,
+        e.name as model,
+        ct.translated_at,
+        length(ct.full_text) as char_length
+      FROM chapters c
+      JOIN chapter_translations ct ON ct.chapter_id = c.id
+      JOIN translation_engines e ON ct.engine_id = e.id
+      WHERE c.novel_id = ? AND ct.language = ?
+      ORDER BY c.chapter_no ASC
+    `);
+    return stmt.all(novelRawId, language);
   }
 
   /**
