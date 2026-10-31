@@ -197,7 +197,25 @@ async function runTests() {
   assert.strictEqual(mainJsContent.includes("title: 'Novel Hunter'"), true, 'main.js debe tener la ventana titulada Novel Hunter');
   console.log('   ✓ Hot-Reload para CSS en vivo, UI refresh, DevTools y renombrado a Novel Hunter verificado correctamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (17/17) PASARON EXITOSAMENTE!');
+  // Test 18: Icono personalizado de la aplicación (Novel Hunter)
+  console.log('\n18. Verificando icono personalizado de la aplicación...');
+  const iconPath = path.join(__dirname, '..', 'electron', 'assets', 'icon.png');
+  assert(fs.existsSync(iconPath), 'El archivo electron/assets/icon.png debe existir');
+  const iconStats = fs.statSync(iconPath);
+  assert(iconStats.size > 50000, `El icono debe ser de alta resolución (tamaño actual: ${iconStats.size} bytes)`);
+
+  const iconBuffer = fs.readFileSync(iconPath);
+  // PNG Magic bytes: \x89 P N G \r \n \x1a \n
+  const isPng = iconBuffer[0] === 0x89 && iconBuffer[1] === 0x50 && iconBuffer[2] === 0x4E && iconBuffer[3] === 0x47;
+  assert(isPng, 'El icono debe ser un archivo de imagen PNG válido con transparencia');
+
+  assert(pkgContent.build.win.icon === 'electron/assets/icon.png', 'package.json debe configurar win.icon con el icono PNG');
+  assert(mainJsContent.includes("icon: path.join(__dirname, 'assets', 'icon.png')"), 'main.js debe cargar el icono en la ventana principal');
+  assert(htmlContent.includes('<link rel="icon" type="image/png" href="../assets/icon.png">'), 'index.html debe tener el favicon enlazado');
+  assert(htmlContent.includes('src="../assets/icon.png"'), 'index.html debe mostrar el logo en la barra de marca');
+  console.log(`   ✓ Icono personalizado verificado (${Math.round(iconStats.size / 1024)} KB), cabecera PNG válida e integrado en ventana y marca.`);
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (18/18) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

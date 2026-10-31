@@ -12,6 +12,7 @@
     "wtr": "node bin/cli.js",
     "dev": "electron .",
     "electron": "electron .",
+    "build:icon": "electron scripts/generate_icon.cjs --no-sandbox --headless",
     "test": "node test/verify.js",
     "dist:win": "electron-builder --win portable --x64",
     "dist:win:installer": "electron-builder --win nsis --x64",
