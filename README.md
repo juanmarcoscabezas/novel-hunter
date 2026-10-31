@@ -273,7 +273,8 @@ nasser_18/
 │       ├── writer.js        # Escritura de capítulos individuales en TXT
 │       ├── merger.js        # Fusión de capítulos con índice de contenidos
 │       └── pdf.js           # Generador de documentos PDF con portada y paginación
-├── downloads/               # Directorio de salida de novelas descargadas
+├── data/                    # Base de datos SQLite (novels.db)
+├── exports/                 # Directorio de salida de novelas exportadas (TXT / PDF)
 ├── test/
 │   └── verify.js            # Suite de pruebas automatizadas
 ├── package.json             # Manifiesto y dependencias del proyecto

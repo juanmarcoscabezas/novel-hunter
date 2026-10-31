@@ -11,7 +11,8 @@ export const CONFIG = {
   aesKey: 'IJAFUUxjM25hyzL2AZrn0wl7cESED6Ru',
   defaultLanguage: 'en',
   sessionFile: path.join(ROOT_DIR, '.wtr-session.json'),
-  downloadsDir: path.join(ROOT_DIR, 'downloads'),
+  exportsDir: path.join(ROOT_DIR, 'exports'),
+  downloadsDir: path.join(ROOT_DIR, 'exports'), // Alias retrocompatible
   dataDir: path.join(ROOT_DIR, 'data'),
   dbPath: path.join(ROOT_DIR, 'data', 'novels.db'),
   defaultDelayMs: 1500, // Anti-bot jitter delay

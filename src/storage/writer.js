@@ -20,7 +20,7 @@ export function sanitizeFilename(str) {
  */
 export function saveChapterAsTxt(novelSlug, chapter, novelTitle = '') {
   const safeSlug = sanitizeFilename(novelSlug);
-  const targetDir = path.join(CONFIG.downloadsDir, safeSlug);
+  const targetDir = path.join(CONFIG.exportsDir, safeSlug);
 
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });

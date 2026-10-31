@@ -1,4 +1,5 @@
 node_modules/
 .wtr-session.json
 data/*.db*
+exports/
 
