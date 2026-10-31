@@ -125,7 +125,16 @@ async function runDbTests() {
   assert(detailedChapters[0].char_length > 0);
   console.log('   ✓ getDownloadedChapters devolvió metadatos completos para lector y explorador.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS PASARON EXITOSAMENTE!');
+  // 10. Estadísticas de almacenamiento en disco (getStorageStats)
+  console.log('\n10. Probando getStorageStats...');
+  const storage = repo.getStorageStats();
+  assert(typeof storage.bytes === 'number', 'storage.bytes debe ser un número');
+  assert(storage.bytes > 0, 'storage.bytes debe ser mayor a 0');
+  assert(typeof storage.formatted === 'string', 'storage.formatted debe ser un string');
+  assert(storage.formatted.includes('B'), 'storage.formatted debe contener unidad de bytes (KB/MB)');
+  console.log(`   ✓ getStorageStats devolvió tamaño real en disco: ${storage.formatted} (${storage.bytes} bytes).`);
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (10/10) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {

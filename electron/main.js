@@ -343,6 +343,15 @@ function setupIpcHandlers() {
     }
   });
 
+  ipcMain.handle('library:getStorageStats', async () => {
+    try {
+      return repository.getStorageStats();
+    } catch (err) {
+      console.error('Error in library:getStorageStats:', err);
+      return { bytes: 0, formatted: '0 KB', path: 'data' };
+    }
+  });
+
   // 6. Estadísticas e información de una novela en SQLite
   ipcMain.handle('library:getNovelStats', async (_event, slug) => {
     try {

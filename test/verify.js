@@ -170,7 +170,10 @@ async function runTests() {
   assert(stylesCssContent.includes('#quick-open-exports'), 'styles.css debe definir alineación a la izquierda para #quick-open-exports');
   assert(htmlContent.includes('<h2>Novel Hunter</h2>'), 'index.html debe mostrar el nombre Novel Hunter');
   assert(htmlContent.includes('<title>Novel Hunter</title>'), 'index.html debe tener el título Novel Hunter');
-  console.log('   ✓ Cero emojis rotos en la interfaz, alineación vertical de botones y botón de exports a la izquierda verificados.');
+  assert(htmlContent.includes('id="lib-storage-size"'), 'index.html debe contener el contador dinámico lib-storage-size');
+  assert(!htmlContent.includes('<span class="metric-value">SQLite 3NF</span>'), 'la tarjeta de métrica ya no debe ser estática SQLite 3NF');
+  assert(appJsContent.includes('getStorageStats'), 'app.js debe cargar el tamaño de almacenamiento dinámico');
+  console.log('   ✓ Cero emojis rotos en la interfaz, alineación vertical y métrica dinámica de almacenamiento verificadas.');
 
   // Test 17: Hot-Reload y Atajos de Desarrollo
   console.log('\n17. Verificando configuración de Hot-Reload y entorno de desarrollo...');

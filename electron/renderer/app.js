@@ -429,9 +429,18 @@ async function loadLibrary() {
   const grid = document.getElementById('library-novel-grid');
   const totalNovelsEl = document.getElementById('lib-total-novels');
   const totalChaptersEl = document.getElementById('lib-total-chapters');
+  const storageSizeEl = document.getElementById('lib-storage-size');
 
   try {
     const list = await window.wtrApi.getLibrary();
+    if (window.wtrApi.getStorageStats && storageSizeEl) {
+      try {
+        const storage = await window.wtrApi.getStorageStats();
+        storageSizeEl.textContent = storage?.formatted || '0 KB';
+      } catch {
+        storageSizeEl.textContent = '0 KB';
+      }
+    }
     grid.innerHTML = '';
 
     totalNovelsEl.textContent = list.length;

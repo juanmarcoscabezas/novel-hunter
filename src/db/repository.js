@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { getDb } from './connection.js';
+import { CONFIG } from '../config.js';
 
 export class NovelRepository {
   constructor(dbInstance = null) {
@@ -320,6 +323,46 @@ export class NovelRepository {
         last_read_at = CURRENT_TIMESTAMP
     `);
     stmt.run(novelRawId, chapterNo);
+  }
+
+  /**
+   * Obtiene el tamaño total ocupado en disco por la base de datos y recursos locales.
+   */
+  getStorageStats() {
+    try {
+      const dataDir = CONFIG.dataDir;
+      const getDirSize = (dir) => {
+        let total = 0;
+        if (!fs.existsSync(dir)) return 0;
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            total += getDirSize(fullPath);
+          } else if (entry.isFile()) {
+            total += fs.statSync(fullPath).size;
+          }
+        }
+        return total;
+      };
+
+      const bytes = getDirSize(dataDir);
+      const formatBytes = (b) => {
+        if (!b || b <= 0) return '0 KB';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(b) / Math.log(k));
+        return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      };
+
+      return {
+        bytes,
+        formatted: formatBytes(bytes),
+        path: dataDir
+      };
+    } catch {
+      return { bytes: 0, formatted: '0 KB', path: 'data' };
+    }
   }
 }
 
