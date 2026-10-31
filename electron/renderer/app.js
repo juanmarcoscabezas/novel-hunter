@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLibrary();
   initChaptersModal();
   initReaderModal();
+  initTtsControls();
   initTerminal();
   initSettings();
   initGlobalShortcuts();
@@ -533,6 +534,7 @@ function initChaptersModal() {
   const langFilter = document.getElementById('chapters-lang-filter');
 
   const closeModal = () => {
+    stopTts();
     modal.classList.add('hidden');
     loadLibrary();
   };
@@ -646,6 +648,7 @@ function initReaderModal() {
   const incFontBtn = document.getElementById('reader-font-increase');
 
   const closeModal = () => {
+    stopTts();
     modal.classList.add('hidden');
     loadLibrary();
   };
@@ -714,10 +717,46 @@ async function openReaderModal(novelItem, chapterNo, lang) {
     modelBadge.textContent = chapterData.model || 'Gemini AI';
     paragraphsInfo.textContent = `${chapterData.paragraphs?.length || 0} párrafos (${lang.toUpperCase()})`;
 
+    stopTts();
+    currentTtsParagraphs = chapterData.paragraphs || [];
+    currentTtsParagraphIndex = 0;
+
+    // Seleccionar automáticamente una voz adecuada al idioma del capítulo
+    const voiceSelect = document.getElementById('tts-voice-select');
+    if (voiceSelect && voiceSelect.options.length > 0) {
+      if (lang === 'es') {
+        const esVoice = Array.from(voiceSelect.options).find(o => o.value.startsWith('es-'));
+        if (esVoice) voiceSelect.value = esVoice.value;
+      } else {
+        const enVoice = Array.from(voiceSelect.options).find(o => o.value.startsWith('en-'));
+        if (enVoice) voiceSelect.value = enVoice.value;
+      }
+    }
+
     articleEl.innerHTML = '';
-    (chapterData.paragraphs || []).forEach((pText) => {
+    currentTtsParagraphs.forEach((pText, pIdx) => {
       const p = document.createElement('p');
-      p.textContent = pText;
+      p.className = 'reader-paragraph';
+      p.setAttribute('data-pindex', pIdx);
+
+      // Dividir el texto conservando espacios para hacer clic en cualquier palabra
+      const tokens = pText.split(/(\s+)/);
+      tokens.forEach((token) => {
+        if (!token.trim()) {
+          p.appendChild(document.createTextNode(token));
+        } else {
+          const span = document.createElement('span');
+          span.className = 'reader-word';
+          span.setAttribute('data-pindex', pIdx);
+          span.textContent = token;
+          span.title = 'Clic para escuchar desde aquí';
+          span.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playFromWord(pIdx, token);
+          });
+          p.appendChild(span);
+        }
+      });
       articleEl.appendChild(p);
     });
 
@@ -792,6 +831,261 @@ async function updateLastReadWidget() {
     }
   } catch (err) {
     console.warn('Error al actualizar widget de última lectura:', err);
+  }
+}
+
+/* ==========================================================================
+   4d. MOTOR DE LECTURA NATURAL EN VOZ ALTA (TTS) Y REPRODUCTOR
+   ========================================================================== */
+let currentTtsAudio = null;
+let isTtsPlaying = false;
+let currentTtsParagraphIndex = 0;
+let currentTtsParagraphs = [];
+let ttsPlaybackSessionId = 0;
+
+async function initTtsControls() {
+  const playBtn = document.getElementById('tts-play-btn');
+  const stopBtn = document.getElementById('tts-stop-btn');
+  const exportBtn = document.getElementById('tts-export-btn');
+  const voiceSelect = document.getElementById('tts-voice-select');
+
+  try {
+    const voices = await window.wtrApi.ttsGetVoices();
+    if (voiceSelect && voices && voices.length > 0) {
+      voiceSelect.innerHTML = '';
+      voices.forEach((v) => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = `${v.flag} ${v.name} (${v.gender} - ${v.desc})`;
+        voiceSelect.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.warn('Error al cargar voces naturales:', err);
+  }
+
+  playBtn?.addEventListener('click', () => {
+    if (isTtsPlaying) {
+      pauseTts();
+    } else {
+      resumeOrStartTts();
+    }
+  });
+
+  stopBtn?.addEventListener('click', () => {
+    stopTts();
+  });
+
+  exportBtn?.addEventListener('click', async () => {
+    await exportCurrentChapterAudio();
+  });
+}
+
+function updateTtsUiPlayingState(playing) {
+  const playBtn = document.getElementById('tts-play-btn');
+  const playLabel = document.getElementById('tts-play-label');
+  const stopBtn = document.getElementById('tts-stop-btn');
+
+  if (playing) {
+    playBtn?.classList.add('playing');
+    if (playLabel) playLabel.textContent = 'Pausar';
+    stopBtn?.classList.remove('hidden');
+  } else {
+    playBtn?.classList.remove('playing');
+    if (playLabel) playLabel.textContent = 'Escuchar';
+  }
+}
+
+function updateTtsStatus(msg) {
+  const el = document.getElementById('tts-status-text');
+  if (el) el.textContent = msg;
+}
+
+function clearWordHighlights() {
+  document.querySelectorAll('.reader-word.active-word').forEach(el => el.classList.remove('active-word'));
+}
+
+function clearParagraphHighlights() {
+  document.querySelectorAll('.reader-paragraph.active-paragraph').forEach(el => el.classList.remove('active-paragraph'));
+}
+
+function highlightActiveParagraph(pIndex) {
+  clearParagraphHighlights();
+  const p = document.querySelector(`.reader-paragraph[data-pindex="${pIndex}"]`);
+  if (p) {
+    p.classList.add('active-paragraph');
+    p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function pauseTts() {
+  if (currentTtsAudio) {
+    currentTtsAudio.pause();
+    isTtsPlaying = false;
+    updateTtsUiPlayingState(false);
+    updateTtsStatus('En pausa. Haz clic en Escuchar para reanudar.');
+  }
+}
+
+function resumeOrStartTts() {
+  if (currentTtsAudio && currentTtsAudio.paused && currentTtsAudio.currentTime > 0) {
+    currentTtsAudio.play();
+    isTtsPlaying = true;
+    updateTtsUiPlayingState(true);
+    updateTtsStatus(`Leyendo párrafo ${currentTtsParagraphIndex + 1}/${currentTtsParagraphs.length}...`);
+  } else {
+    playParagraphTts(currentTtsParagraphIndex || 0);
+  }
+}
+
+function stopTts() {
+  ttsPlaybackSessionId++;
+  if (currentTtsAudio) {
+    currentTtsAudio.pause();
+    currentTtsAudio = null;
+  }
+  isTtsPlaying = false;
+  clearWordHighlights();
+  clearParagraphHighlights();
+  updateTtsUiPlayingState(false);
+  updateTtsStatus('Clic en cualquier palabra para iniciar');
+}
+
+function playFromWord(pIndex, wordText) {
+  stopTts();
+  playParagraphTts(pIndex, wordText);
+}
+
+async function playParagraphTts(pIndex, targetWord = null) {
+  if (pIndex < 0 || pIndex >= currentTtsParagraphs.length) {
+    stopTts();
+    return;
+  }
+
+  currentTtsParagraphIndex = pIndex;
+  const thisSession = ++ttsPlaybackSessionId;
+  const text = currentTtsParagraphs[pIndex];
+  if (!text || !text.trim()) {
+    playParagraphTts(pIndex + 1);
+    return;
+  }
+
+  highlightActiveParagraph(pIndex);
+  updateTtsStatus(`Generando voz: párrafo ${pIndex + 1}/${currentTtsParagraphs.length}...`);
+
+  const voiceSelect = document.getElementById('tts-voice-select');
+  const rateSelect = document.getElementById('tts-rate-select');
+  const voice = voiceSelect ? voiceSelect.value : 'es-ES-AlvaroNeural';
+  const rate = rateSelect ? rateSelect.value : 'default';
+
+  try {
+    const result = await window.wtrApi.ttsSynthesize(text, { voice, rate });
+    if (thisSession !== ttsPlaybackSessionId) return;
+
+    if (!result || !result.audioBase64) {
+      playParagraphTts(pIndex + 1);
+      return;
+    }
+
+    if (currentTtsAudio) {
+      currentTtsAudio.pause();
+      currentTtsAudio = null;
+    }
+
+    const audio = new Audio('data:audio/mp3;base64,' + result.audioBase64);
+    currentTtsAudio = audio;
+    isTtsPlaying = true;
+    updateTtsUiPlayingState(true);
+    updateTtsStatus(`Leyendo párrafo ${pIndex + 1}/${currentTtsParagraphs.length}...`);
+
+    const wordList = result.words || [];
+    const pElement = document.querySelector(`.reader-paragraph[data-pindex="${pIndex}"]`);
+    const wordSpans = pElement ? Array.from(pElement.querySelectorAll('.reader-word')) : [];
+
+    audio.ontimeupdate = () => {
+      const currentMs = audio.currentTime * 1000;
+      const matched = wordList.find(w => currentMs >= w.start && currentMs <= w.end);
+      if (matched && pElement) {
+        const cleanMatch = matched.part.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase();
+        wordSpans.forEach(span => {
+          const cleanSpan = span.textContent.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase();
+          if (cleanSpan === cleanMatch) {
+            span.classList.add('active-word');
+          } else {
+            span.classList.remove('active-word');
+          }
+        });
+      }
+    };
+
+    if (targetWord) {
+      const cleanTarget = targetWord.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase();
+      const wordMatch = wordList.find(w => w.part.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase() === cleanTarget);
+      if (wordMatch && wordMatch.start) {
+        audio.currentTime = Math.max(0, (wordMatch.start / 1000) - 0.05);
+      }
+    }
+
+    audio.onended = () => {
+      clearWordHighlights();
+      if (currentTtsParagraphIndex + 1 < currentTtsParagraphs.length) {
+        playParagraphTts(currentTtsParagraphIndex + 1);
+      } else {
+        stopTts();
+        updateTtsStatus('Lectura del capítulo finalizada');
+      }
+    };
+
+    audio.onerror = (err) => {
+      console.warn('Error en reproducción:', err);
+      playParagraphTts(pIndex + 1);
+    };
+
+    await audio.play();
+  } catch (err) {
+    if (thisSession === ttsPlaybackSessionId) {
+      console.error('Error al sintetizar párrafo:', err);
+      updateTtsStatus('Error al sintetizar voz');
+      stopTts();
+    }
+  }
+}
+
+async function exportCurrentChapterAudio() {
+  if (!currentReadingNovel || !currentTtsParagraphs || currentTtsParagraphs.length === 0) {
+    alert('No hay párrafos disponibles para exportar audio.');
+    return;
+  }
+
+  const exportBtn = document.getElementById('tts-export-btn');
+  const originalHtml = exportBtn.innerHTML;
+  exportBtn.disabled = true;
+  exportBtn.innerHTML = `<span>Exportando MP3...</span>`;
+  updateTtsStatus('Generando archivo de audio completo...');
+
+  const voiceSelect = document.getElementById('tts-voice-select');
+  const rateSelect = document.getElementById('tts-rate-select');
+  const voice = voiceSelect ? voiceSelect.value : 'es-ES-AlvaroNeural';
+  const rate = rateSelect ? rateSelect.value : 'default';
+
+  try {
+    const res = await window.wtrApi.ttsExportChapter({
+      slug: currentReadingNovel.slug,
+      chapterNo: currentReadingChapterNo,
+      title: document.getElementById('reader-chapter-title').textContent,
+      paragraphs: currentTtsParagraphs,
+      options: { voice, rate }
+    });
+
+    updateTtsStatus(`¡Audio exportado! (${res.formattedSize})`);
+    alert(`Capítulo exportado exitosamente como audio MP3:\n${res.filePath} (${res.formattedSize})`);
+  } catch (err) {
+    console.error('Error al exportar audio:', err);
+    alert(`Error al exportar audio: ${err.message}`);
+    updateTtsStatus('Error al exportar audio');
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = originalHtml;
   }
 }
 
@@ -1016,6 +1310,68 @@ function initSettings() {
 
   openDataAction.addEventListener('click', () => {
     window.wtrApi.openFolder('data');
+  });
+
+  // Configuración de Gemini API Key
+  const geminiInput = document.getElementById('gemini-key-input');
+  const toggleGeminiBtn = document.getElementById('toggle-gemini-key-btn');
+  const saveGeminiBtn = document.getElementById('save-gemini-key-btn');
+  const clearGeminiBtn = document.getElementById('clear-gemini-key-btn');
+  const geminiFeedback = document.getElementById('gemini-key-feedback');
+  const geminiPill = document.getElementById('gemini-key-status-pill');
+
+  async function loadGeminiKeyStatus() {
+    try {
+      const info = await window.wtrApi.getGeminiKey();
+      if (info && info.hasKey) {
+        if (geminiInput) geminiInput.value = info.key;
+        if (geminiPill) {
+          geminiPill.textContent = 'Configurada';
+          geminiPill.className = 'badge badge-success';
+        }
+      } else {
+        if (geminiInput) geminiInput.value = '';
+        if (geminiPill) {
+          geminiPill.textContent = 'Sin Configurar';
+          geminiPill.className = 'badge badge-secondary';
+        }
+      }
+    } catch {}
+  }
+
+  loadGeminiKeyStatus();
+
+  toggleGeminiBtn?.addEventListener('click', () => {
+    if (!geminiInput) return;
+    if (geminiInput.type === 'password') {
+      geminiInput.type = 'text';
+      toggleGeminiBtn.textContent = 'Ocultar';
+    } else {
+      geminiInput.type = 'password';
+      toggleGeminiBtn.textContent = 'Ver';
+    }
+  });
+
+  saveGeminiBtn?.addEventListener('click', async () => {
+    const key = geminiInput ? geminiInput.value.trim() : '';
+    if (!key) {
+      showFeedback(geminiFeedback, 'error', 'Ingresa una API Key válida.');
+      return;
+    }
+    try {
+      await window.wtrApi.saveGeminiKey(key);
+      showFeedback(geminiFeedback, 'success', 'API Key de Gemini guardada correctamente.');
+      loadGeminiKeyStatus();
+    } catch (err) {
+      showFeedback(geminiFeedback, 'error', `Error al guardar: ${err.message}`);
+    }
+  });
+
+  clearGeminiBtn?.addEventListener('click', async () => {
+    await window.wtrApi.saveGeminiKey('');
+    if (geminiInput) geminiInput.value = '';
+    showFeedback(geminiFeedback, 'info', 'API Key de Gemini eliminada.');
+    loadGeminiKeyStatus();
   });
 }
 

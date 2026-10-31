@@ -25,6 +25,15 @@ contextBridge.exposeInMainWorld('wtrApi', {
   clearAuth: () => ipcRenderer.invoke('auth:clear'),
   testAuth: () => ipcRenderer.invoke('auth:test'),
 
+  // Configuración de Gemini AI Key
+  getGeminiKey: () => ipcRenderer.invoke('settings:getGeminiKey'),
+  saveGeminiKey: (key) => ipcRenderer.invoke('settings:saveGeminiKey', key),
+
+  // Motor de Lectura en Voz Alta Natural (TTS) y Audio
+  ttsGetVoices: () => ipcRenderer.invoke('tts:getVoices'),
+  ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', text, options),
+  ttsExportChapter: (payload) => ipcRenderer.invoke('tts:exportChapter', payload),
+
   // Sistema de archivos
   openFolder: (target) => ipcRenderer.invoke('shell:openFolder', target),
 

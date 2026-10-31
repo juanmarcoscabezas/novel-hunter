@@ -361,6 +361,45 @@
               </div>
             </header>
 
+            <!-- Barra de Audio y Lectura en Voz Alta Natural (TTS) -->
+            <div class="reader-audio-bar">
+              <div class="audio-controls-left">
+                <button id="tts-play-btn" class="btn btn-primary btn-sm btn-tts" title="Reproducir narración en voz alta">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span id="tts-play-label">Escuchar</span>
+                </button>
+                <button id="tts-stop-btn" class="btn btn-outline btn-sm btn-tts hidden" title="Detener narración">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                  <span>Detener</span>
+                </button>
+              </div>
+
+              <div class="audio-controls-center">
+                <div class="tts-voice-wrapper">
+                  <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                  <select id="tts-voice-select" class="tts-select" title="Selecciona la voz y acento natural">
+                    <!-- Opciones de voces cargadas dinámicamente -->
+                  </select>
+                </div>
+                <div class="tts-rate-wrapper">
+                  <select id="tts-rate-select" class="tts-select-rate" title="Velocidad de reproducción">
+                    <option value="-20%">0.8x</option>
+                    <option value="default" selected>1.0x</option>
+                    <option value="+20%">1.2x</option>
+                    <option value="+40%">1.4x</option>
+                  </select>
+                </div>
+                <span id="tts-status-text" class="tts-status-text">Clic en cualquier palabra para iniciar</span>
+              </div>
+
+              <div class="audio-controls-right">
+                <button id="tts-export-btn" class="btn btn-outline btn-sm btn-tts" title="Exportar audio completo del capítulo a archivo MP3">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Exportar MP3</span>
+                </button>
+              </div>
+            </div>
+
             <div class="modal-body reader-body">
               <div class="reader-meta-bar">
                 <span id="reader-model-badge" class="badge badge-primary">Gemini AI</span>
@@ -468,6 +507,34 @@
                 <button id="clear-cookie-btn" class="btn btn-danger">Borrar Sesión</button>
               </div>
               <div id="session-feedback" class="feedback-banner hidden"></div>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Inteligencia Artificial (Google Gemini) -->
+          <div class="card settings-card">
+            <div class="card-header">
+              <h3 style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>Inteligencia Artificial (Google Gemini)</span>
+              </h3>
+              <span id="gemini-key-status-pill" class="badge badge-secondary">Sin Configurar</span>
+            </div>
+            <div class="card-body">
+              <p>WTR-Lab y Novel Hunter funcionan con síntesis y descargas automáticas locales. Si deseas utilizar tu propia API Key de Google Gemini para traducción o modelos dedicados, ingrésala aquí:</p>
+              
+              <div class="form-group" style="margin-top: 12px;">
+                <label for="gemini-key-input">Gemini API Key (Google AI Studio):</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="password" id="gemini-key-input" class="form-control" placeholder="AIzaSy..." style="flex: 1;">
+                  <button id="toggle-gemini-key-btn" class="btn btn-outline btn-sm" type="button" title="Mostrar/Ocultar clave">Ver</button>
+                </div>
+              </div>
+
+              <div class="settings-actions">
+                <button id="save-gemini-key-btn" class="btn btn-primary">Guardar Clave</button>
+                <button id="clear-gemini-key-btn" class="btn btn-danger">Eliminar Clave</button>
+              </div>
+              <div id="gemini-key-feedback" class="feedback-banner hidden"></div>
             </div>
           </div>
 

@@ -62,3 +62,32 @@ export function clearSession() {
     fs.unlinkSync(CONFIG.sessionFile);
   }
 }
+
+/**
+ * Obtiene la API Key de Gemini configurada.
+ */
+export function getGeminiApiKey() {
+  try {
+    const settingsPath = path.join(CONFIG.dataDir, 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      return data.geminiApiKey || process.env.GEMINI_API_KEY || null;
+    }
+  } catch {}
+  return process.env.GEMINI_API_KEY || null;
+}
+
+/**
+ * Guarda la API Key de Gemini para uso con IA.
+ */
+export function saveGeminiApiKey(key) {
+  const settingsPath = path.join(CONFIG.dataDir, 'settings.json');
+  let current = {};
+  try {
+    if (fs.existsSync(settingsPath)) {
+      current = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    }
+  } catch {}
+  current.geminiApiKey = (key || '').trim();
+  fs.writeFileSync(settingsPath, JSON.stringify(current, null, 2), 'utf8');
+}

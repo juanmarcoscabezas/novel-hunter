@@ -8,7 +8,8 @@ import { fetchChapter } from '../src/api/reader.js';
 import { saveChapterAsTxt } from '../src/storage/writer.js';
 import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
-import { CONFIG, getSavedSession, saveSession, clearSession } from '../src/config.js';
+import { CONFIG, getSavedSession, saveSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
+import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
 import { repository } from '../src/db/repository.js';
 import { client } from '../src/api/client.js';
 
@@ -606,7 +607,41 @@ function setupIpcHandlers() {
     return { success: true, path: folderPath };
   });
 
-  // 10. Ejecución de comandos en la consola integrada (Terminal Tab)
+  // 10. Motor de Lectura en Voz Alta Natural (TTS) y Audio
+  ipcMain.handle('tts:getVoices', async () => {
+    return getAvailableVoices();
+  });
+
+  ipcMain.handle('tts:synthesize', async (_event, text, options) => {
+    try {
+      return await synthesizeParagraph(text, options);
+    } catch (err) {
+      console.error('Error in tts:synthesize:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('tts:exportChapter', async (_event, payload) => {
+    const { slug, chapterNo, title, paragraphs, options } = payload;
+    return await exportChapterAudio(slug, chapterNo, title, paragraphs, options);
+  });
+
+  // 11. Configuración de API Key de Gemini
+  ipcMain.handle('settings:getGeminiKey', async () => {
+    const key = getGeminiApiKey();
+    return {
+      hasKey: Boolean(key),
+      preview: key ? key.slice(0, 8) + '...' + key.slice(-4) : '',
+      key: key || ''
+    };
+  });
+
+  ipcMain.handle('settings:saveGeminiKey', async (_event, key) => {
+    saveGeminiApiKey(key);
+    return { success: true };
+  });
+
+  // 12. Ejecución de comandos en la consola integrada (Terminal Tab)
   ipcMain.handle('cli:exec', async (event, cmdLine) => {
     const sender = event.sender;
     const write = (text) => sender.send('cli:output', text);

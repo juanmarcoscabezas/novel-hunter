@@ -12,7 +12,8 @@ import { saveChapterAsTxt } from '../src/storage/writer.js';
 import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { repository } from '../src/db/repository.js';
-import { CONFIG, saveSession, getSavedSession, clearSession } from '../src/config.js';
+import { CONFIG, saveSession, getSavedSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
+import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -251,7 +252,70 @@ async function runTests() {
   assert(stylesCssContent.includes('.btn-view-chapters'), 'styles.css debe definir estilos para .btn-view-chapters');
   console.log('   ✓ Opciones reubicadas exitosamente, duplicidad eliminada y altura exacta unificada (36px).');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (20/20) PASARON EXITOSAMENTE!');
+  // Test 21: Motor de Lectura Natural (TTS), Voces multilingües, marcas de palabra y exportación de audio MP3
+  console.log('\n21. Probando Motor de Lectura Natural (TTS), voces y exportación de audio MP3...');
+  const voices = getAvailableVoices();
+  assert(Array.isArray(voices) && voices.length >= 8, 'Debe haber al menos 8 voces naturales disponibles');
+  const maleVoices = voices.filter(v => v.gender === 'Hombre' || v.gender === 'Male');
+  const femaleVoices = voices.filter(v => v.gender === 'Mujer' || v.gender === 'Female');
+  const esVoices = voices.filter(v => v.lang.startsWith('es-'));
+  const enVoices = voices.filter(v => v.lang.startsWith('en-'));
+  assert(maleVoices.length > 0, 'Debe incluir voces masculinas');
+  assert(femaleVoices.length > 0, 'Debe incluir voces femeninas');
+  assert(esVoices.length > 0, 'Debe incluir voces en español con diferentes acentos');
+  assert(enVoices.length > 0, 'Debe incluir voces en inglés');
+
+  console.log(`   ✓ Catálogo de ${voices.length} voces naturales validado (${maleVoices.length} masculinas, ${femaleVoices.length} femeninas, acentos ES/MX/AR/CO/US/GB).`);
+
+  console.log('   -> Sintetizando fragmento de prueba con marcas temporales por palabra...');
+  const ttsRes = await synthesizeParagraph('Prueba de audio para Novel Hunter.', { voice: 'es-ES-AlvaroNeural' });
+  assert(typeof ttsRes.audioBase64 === 'string' && ttsRes.audioBase64.length > 1000, 'Debe devolver datos de audio en Base64');
+  assert(Array.isArray(ttsRes.words) && ttsRes.words.length > 0, 'Debe devolver marcas de tiempo por palabra');
+  assert(typeof ttsRes.words[0].start === 'number' && typeof ttsRes.words[0].end === 'number', 'Las marcas de palabra deben incluir start y end en ms');
+  console.log(`   ✓ Síntesis exitosa: ${Math.round(ttsRes.audioBase64.length / 1024)} KB en base64 con ${ttsRes.words.length} palabras sincronizadas.`);
+
+  console.log('   -> Probando exportación de capítulo completo a archivo MP3...');
+  const exportRes = await exportChapterAudio('audio-test-novel', 1, 'Capítulo de prueba', ['Primer párrafo narrado con voz fluida.', 'Segundo párrafo que continúa la historia.'], { voice: 'es-ES-AlvaroNeural' });
+  assert(fs.existsSync(exportRes.filePath), 'El archivo MP3 exportado debe existir');
+  assert(exportRes.sizeBytes > 10000, 'El archivo MP3 debe contener el audio completo');
+  console.log(`   ✓ Archivo de audio MP3 exportado correctamente: ${exportRes.filePath} (${exportRes.formattedSize}).`);
+
+  // Test 22: Interfaz de Audio en Lector, Clic en Palabras y Configuración de Gemini API Key
+  console.log('\n22. Verificando Interfaz de Audio, Clic en Palabras y Configuración de Gemini AI...');
+  saveGeminiApiKey('test-gemini-key-xyz123');
+  const savedKey = getGeminiApiKey();
+  assert.strictEqual(savedKey, 'test-gemini-key-xyz123', 'getGeminiApiKey debe devolver la clave guardada');
+  saveGeminiApiKey(''); // Limpiar después de la prueba
+
+  // Verificaciones en index.html y preload
+  const updatedHtml = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
+  const updatedPreload = fs.readFileSync(path.join(__dirname, '..', 'electron', 'preload.cjs'), 'utf8');
+  const updatedStyles = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'styles.css'), 'utf8');
+  const updatedAppJs = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'app.js'), 'utf8');
+
+  assert(updatedHtml.includes('class="reader-audio-bar"'), 'index.html debe incluir la barra de audio reader-audio-bar');
+  assert(updatedHtml.includes('id="tts-play-btn"'), 'index.html debe incluir botón tts-play-btn');
+  assert(updatedHtml.includes('id="tts-voice-select"'), 'index.html debe incluir selector de voces tts-voice-select');
+  assert(updatedHtml.includes('id="tts-export-btn"'), 'index.html debe incluir botón de exportar MP3');
+  assert(updatedHtml.includes('id="gemini-key-input"'), 'index.html debe incluir campo para Gemini API Key');
+
+  assert(updatedPreload.includes('ttsGetVoices: () => ipcRenderer.invoke'), 'preload.cjs debe exponer ttsGetVoices');
+  assert(updatedPreload.includes('ttsSynthesize: (text, options) => ipcRenderer.invoke'), 'preload.cjs debe exponer ttsSynthesize');
+  assert(updatedPreload.includes('ttsExportChapter: (payload) => ipcRenderer.invoke'), 'preload.cjs debe exponer ttsExportChapter');
+  assert(updatedPreload.includes('saveGeminiKey: (key) => ipcRenderer.invoke'), 'preload.cjs debe exponer saveGeminiKey');
+
+  assert(updatedStyles.includes('.reader-audio-bar'), 'styles.css debe definir estilos para .reader-audio-bar');
+  assert(updatedStyles.includes('.reader-word'), 'styles.css debe definir estilos interactivos para .reader-word');
+  assert(updatedStyles.includes('.active-word'), 'styles.css debe definir resaltado para .active-word');
+  assert(updatedStyles.includes('.active-paragraph'), 'styles.css debe definir resaltado para .active-paragraph');
+
+  assert(updatedAppJs.includes('initTtsControls'), 'app.js debe implementar initTtsControls');
+  assert(updatedAppJs.includes('playFromWord'), 'app.js debe permitir comenzar el audio desde cualquier palabra al hacer clic');
+  assert(updatedAppJs.includes('exportCurrentChapterAudio'), 'app.js debe implementar la exportación de audio');
+  assert(updatedAppJs.includes('reader-word'), 'app.js debe envolver cada palabra con clase reader-word para interacción');
+  console.log('   ✓ Barra de audio, sincronización por palabra, exportación MP3 y Gemini Key verificados en toda la app.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (22/22) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

@@ -2,6 +2,7 @@ node_modules/
 .wtr-session.json
 data/*.db*
 data/covers/
+data/*.json
 exports/
 dist/
 

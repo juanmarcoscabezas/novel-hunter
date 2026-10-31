@@ -1417,3 +1417,144 @@ body {
   justify-content: space-between;
 }
 
+/* Barra de Audio y Lectura Natural (TTS) */
+.reader-audio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 24px;
+  background-color: #162032;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.audio-controls-left,
+.audio-controls-center,
+.audio-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audio-controls-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.tts-voice-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+}
+
+.tts-voice-wrapper .svg-icon {
+  color: #60a5fa;
+  flex-shrink: 0;
+}
+
+.tts-select {
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-size: 13px;
+  padding: 6px 4px;
+  outline: none;
+  cursor: pointer;
+  max-width: 220px;
+}
+
+.tts-select option {
+  background-color: #0f172a;
+  color: #fff;
+}
+
+.tts-rate-wrapper {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+}
+
+.tts-select-rate {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 6px 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.tts-select-rate option {
+  background-color: #0f172a;
+  color: #fff;
+}
+
+.tts-status-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.btn-tts {
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-tts.playing {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+}
+
+/* Párrafos interactivos y seguimiento de lectura */
+.reader-paragraph {
+  position: relative;
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin-bottom: 1.2em;
+  border-left: 3px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.reader-paragraph.active-paragraph {
+  background: rgba(59, 130, 246, 0.12);
+  border-left-color: #3b82f6;
+}
+
+/* Palabras interactivas (Clic para escuchar desde aquí) */
+.reader-word {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 2px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.reader-word:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: #60a5fa;
+}
+
+.reader-word.active-word {
+  background: rgba(234, 179, 8, 0.4);
+  color: #fef08a;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
+}
+
