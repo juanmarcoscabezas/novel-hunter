@@ -743,6 +743,14 @@ body {
   color: var(--text-main);
 }
 
+.novel-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
 .novel-desc-clamped {
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -496,16 +496,10 @@ async function loadLibrary() {
             </div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-direction: column;">
           ${continueBtnHtml}
-          <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1 1 100%;">
+          <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
             ${ICONS.fileTextSm} Ver Capítulos (${item.downloaded_chapters})
-          </button>
-          <button class="btn btn-outline btn-sm btn-offline-export" style="flex: 1;" title="Exportar TXT/PDF">
-            ${ICONS.zapSm} Exportar
-          </button>
-          <button class="btn btn-outline btn-sm btn-open-folder" title="Abrir carpeta">
-            ${ICONS.folderSm}
           </button>
         </div>
       `;
@@ -521,14 +515,6 @@ async function loadLibrary() {
 
       card.querySelector('.btn-view-chapters').addEventListener('click', () => {
         openChaptersModal(item);
-      });
-
-      card.querySelector('.btn-offline-export').addEventListener('click', () => {
-        openExportModal(item);
-      });
-
-      card.querySelector('.btn-open-folder').addEventListener('click', () => {
-        window.wtrApi.openFolder(item.slug);
       });
 
       grid.appendChild(card);
@@ -555,6 +541,21 @@ function initChaptersModal() {
   };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
+
+  const exportBtn = document.getElementById('detail-export-btn');
+  const openFolderBtn = document.getElementById('detail-open-folder-btn');
+
+  exportBtn?.addEventListener('click', () => {
+    if (currentChaptersNovel) {
+      openExportModal(currentChaptersNovel);
+    }
+  });
+
+  openFolderBtn?.addEventListener('click', () => {
+    if (currentChaptersNovel) {
+      window.wtrApi.openFolder(currentChaptersNovel.slug);
+    }
+  });
 
   langFilter?.addEventListener('change', () => {
     if (currentChaptersNovel) {

@@ -239,7 +239,16 @@ async function runTests() {
   assert(appJsContent.includes('btn-continue-novel'), 'app.js debe permitir continuar lectura desde cada tarjeta');
   console.log('   ✓ Almacenamiento del último capítulo leído, IPC y botón de acceso directo desde el menú verificados.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (19/19) PASARON EXITOSAMENTE!');
+  // Test 20: Opciones de exportar y abrir carpeta reubicadas dentro del detalle de la novela
+  console.log('\n20. Probando reubicación de opciones de exportar y abrir carpeta en el detalle de la novela...');
+  assert(htmlContent.includes('id="detail-export-btn"'), 'index.html debe contener el botón detail-export-btn en el modal de detalle');
+  assert(htmlContent.includes('id="detail-open-folder-btn"'), 'index.html debe contener el botón detail-open-folder-btn en el modal de detalle');
+  assert(stylesCssContent.includes('.novel-meta-actions'), 'styles.css debe definir estilos para .novel-meta-actions');
+  assert(appJsContent.includes("document.getElementById('detail-export-btn')"), 'app.js debe enlazar el evento de exportación en detalle');
+  assert(appJsContent.includes("document.getElementById('detail-open-folder-btn')"), 'app.js debe enlazar el evento de abrir carpeta en detalle');
+  console.log('   ✓ Opciones reubicadas exitosamente dentro del detalle de la novela y tarjetas de biblioteca despejadas.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (20/20) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {
