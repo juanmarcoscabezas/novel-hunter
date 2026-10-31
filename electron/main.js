@@ -10,6 +10,7 @@ import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { CONFIG, getSavedSession, saveSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
 import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
+import { translateChapterToSpanish, batchTranslateNovelToSpanish } from '../src/services/translator.js';
 import { repository } from '../src/db/repository.js';
 import { client } from '../src/api/client.js';
 
@@ -554,6 +555,41 @@ function setupIpcHandlers() {
       mergedTxt,
       mergedPdf
     };
+  });
+
+  // 7b. Traducción de capítulos a Español (on-demand individual y por lotes)
+  ipcMain.handle('chapter:translateToSpanish', async (_event, novelId, chapterNo) => {
+    try {
+      const chapter = await translateChapterToSpanish(novelId, chapterNo, { force: true });
+      if (chapter) {
+        repository.updateReadingProgress(novelId, chapterNo, 'es');
+      }
+      return { success: true, chapter };
+    } catch (err) {
+      console.error('Error in chapter:translateToSpanish:', err);
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('novel:getUntranslatedChapters', async (_event, novelId, sourceLang = 'en', targetLang = 'es') => {
+    try {
+      return repository.getUntranslatedChapterNumbers(novelId, sourceLang, targetLang);
+    } catch (err) {
+      console.error('Error in novel:getUntranslatedChapters:', err);
+      return [];
+    }
+  });
+
+  ipcMain.handle('novel:batchTranslateToSpanish', async (event, payload) => {
+    const { novelId, chapterNumbers, force } = payload;
+    activeDownloadAbort = false;
+    const sender = event.sender;
+    return await batchTranslateNovelToSpanish(
+      novelId,
+      { chapterNumbers, force },
+      (progressData) => sender.send('download:progress', progressData),
+      () => activeDownloadAbort
+    );
   });
 
   // 8. Gestión de sesión y cookies

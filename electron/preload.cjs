@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('wtrApi', {
   readChapter: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:readChapter', novelId, chapterNo, lang),
   exportLibrary: (payload) => ipcRenderer.invoke('library:export', payload),
 
+  // Traducción on-demand a Español
+  translateChapterToSpanish: (novelId, chapterNo) => ipcRenderer.invoke('chapter:translateToSpanish', novelId, chapterNo),
+  getUntranslatedChapters: (novelId, sourceLang, targetLang) => ipcRenderer.invoke('novel:getUntranslatedChapters', novelId, sourceLang, targetLang),
+  batchTranslateToSpanish: (payload) => ipcRenderer.invoke('novel:batchTranslateToSpanish', payload),
+
   // Autenticación y configuración
   getAuth: () => ipcRenderer.invoke('auth:get'),
   saveAuth: (cookie) => ipcRenderer.invoke('auth:save', cookie),

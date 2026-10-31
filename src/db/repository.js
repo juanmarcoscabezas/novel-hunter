@@ -314,6 +314,25 @@ export class NovelRepository {
   }
 
   /**
+   * Obtiene los números de capítulos descargados en sourceLang pero no en targetLang.
+   */
+  getUntranslatedChapterNumbers(novelRawId, sourceLang = 'en', targetLang = 'es') {
+    const stmt = this.db.prepare(`
+      SELECT DISTINCT c.chapter_no
+      FROM chapters c
+      JOIN chapter_translations ct_src ON ct_src.chapter_id = c.id AND ct_src.language = ?
+      WHERE c.novel_id = ?
+        AND c.id NOT IN (
+          SELECT ct_tgt.chapter_id
+          FROM chapter_translations ct_tgt
+          WHERE ct_tgt.language = ?
+        )
+      ORDER BY c.chapter_no ASC
+    `);
+    return stmt.all(sourceLang, novelRawId, targetLang).map(r => r.chapter_no);
+  }
+
+  /**
    * Actualiza el progreso de lectura de una novela.
    */
   updateReadingProgress(novelRawId, chapterNo, language = 'en') {

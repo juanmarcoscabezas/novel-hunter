@@ -150,7 +150,13 @@ async function runDbTests() {
   assert.strictEqual(prog.last_read_language, 'es');
   console.log(`   ✓ Último capítulo leído recuperado con éxito: "${globalLast.title}" Cap. ${globalLast.last_read_chapter_no} [${globalLast.last_read_language}].`);
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (11/11) PASARON EXITOSAMENTE!');
+  // 12. Detección de capítulos en inglés no traducidos al español
+  console.log('\n12. Probando getUntranslatedChapterNumbers (EN -> ES)...');
+  const untranslated = repo.getUntranslatedChapterNumbers(1001, 'en', 'es');
+  assert.deepStrictEqual(untranslated, [2], 'El capítulo 2 debe ser detectado como pendiente de traducir a español');
+  console.log(`   ✓ getUntranslatedChapterNumbers detectó correctamente los capítulos pendientes: [${untranslated.join(', ')}].`);
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (12/12) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {

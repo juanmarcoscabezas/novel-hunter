@@ -1,20 +1,74 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const ROOT_DIR = path.resolve(__dirname, '..');
 
+/**
+ * Resuelve el directorio base para almacenar datos de usuario (base de datos SQLite, descargas, sesiones).
+ * En desarrollo y CLI usa la raíz del proyecto.
+ * En modo empaquetado (Electron asar / Windows portable / instalador), utiliza un directorio con permisos
+ * de escritura reales fuera del archivo .asar para evitar errores ENOTDIR.
+ */
+export function resolveStorageDir() {
+  if (process.versions && process.versions.electron) {
+    try {
+      const require = createRequire(import.meta.url);
+      const electron = require('electron');
+      const app = electron.app || electron?.default?.app;
+
+      if (app) {
+        // En desarrollo local (no empaquetado y fuera de app.asar), usar ROOT_DIR del proyecto
+        if (!app.isPackaged && !__dirname.includes('app.asar')) {
+          return ROOT_DIR;
+        }
+
+        // Si es ejecutable portable de Windows (electron-builder define PORTABLE_EXECUTABLE_DIR)
+        if (process.env.PORTABLE_EXECUTABLE_DIR) {
+          try {
+            const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+            fs.accessSync(portableDir, fs.constants.W_OK);
+            return portableDir;
+          } catch {
+            // Si el directorio portable no es escribible, recurrir a userData
+          }
+        }
+
+        // Si está instalado o es una app empaquetada estándar, usar el directorio userData
+        return app.getPath('userData');
+      }
+    } catch {
+      // Ignorar error de importación si ocurriese
+    }
+  }
+
+  // Fallback si la ruta está dentro de app.asar pero sin la API app de Electron
+  if (__dirname.includes('app.asar')) {
+    if (process.env.PORTABLE_EXECUTABLE_DIR) {
+      return process.env.PORTABLE_EXECUTABLE_DIR;
+    }
+    const fallbackBase = process.env.APPDATA || process.env.HOME || process.cwd();
+    return path.join(fallbackBase, 'Novel Hunter');
+  }
+
+  // CLI estándar, scripts o suites de prueba de Node
+  return ROOT_DIR;
+}
+
+export const STORAGE_DIR = resolveStorageDir();
+
 export const CONFIG = {
   baseUrl: 'https://wtr-lab.com',
   aesKey: 'IJAFUUxjM25hyzL2AZrn0wl7cESED6Ru',
   defaultLanguage: 'en',
-  sessionFile: path.join(ROOT_DIR, '.wtr-session.json'),
-  exportsDir: path.join(ROOT_DIR, 'exports'),
-  downloadsDir: path.join(ROOT_DIR, 'exports'), // Alias retrocompatible
-  dataDir: path.join(ROOT_DIR, 'data'),
-  dbPath: path.join(ROOT_DIR, 'data', 'novels.db'),
+  sessionFile: path.join(STORAGE_DIR, '.wtr-session.json'),
+  exportsDir: path.join(STORAGE_DIR, 'exports'),
+  downloadsDir: path.join(STORAGE_DIR, 'exports'), // Alias retrocompatible
+  dataDir: path.join(STORAGE_DIR, 'data'),
+  dbPath: path.join(STORAGE_DIR, 'data', 'novels.db'),
   defaultDelayMs: 1500, // Anti-bot jitter delay
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',

@@ -19,7 +19,13 @@ export function getDb(customPath = null) {
     return instance;
   }
 
-  const dbPath = customPath || CONFIG.dbPath;
+  let dbPath = customPath || CONFIG.dbPath;
+
+  // Medida defensiva: nunca permitir una ruta dentro del archivo .asar
+  if (dbPath && dbPath !== ':memory:' && dbPath.includes('app.asar')) {
+    const fallbackDir = process.env.PORTABLE_EXECUTABLE_DIR || process.env.APPDATA || process.env.HOME || process.cwd();
+    dbPath = path.join(fallbackDir, 'data', 'novels.db');
+  }
 
   if (dbPath !== ':memory:') {
     const dir = path.dirname(dbPath);

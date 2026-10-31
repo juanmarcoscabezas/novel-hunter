@@ -14,6 +14,7 @@ import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { repository } from '../src/db/repository.js';
 import { CONFIG, saveSession, getSavedSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
 import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
+import { translateChapterToSpanish, batchTranslateNovelToSpanish } from '../src/services/translator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,13 +136,22 @@ async function runTests() {
 
   // Test 14: Gestión de Sesión y Cookies
   console.log('\n14. Probando gestión de sesión y cookies...');
-  saveSession('wtr_test_session=abcdef123456');
-  const session = getSavedSession();
-  assert.strictEqual(session.cookie, 'wtr_test_session=abcdef123456');
-  clearSession();
-  const cleared = getSavedSession();
-  assert.strictEqual(cleared, null);
-  console.log('   ✓ Guardado, lectura y limpieza de sesión validados.');
+  const originalSession = getSavedSession();
+  try {
+    saveSession('wtr_test_session=abcdef123456');
+    const session = getSavedSession();
+    assert.strictEqual(session.cookie, 'wtr_test_session=abcdef123456');
+    clearSession();
+    const cleared = getSavedSession();
+    assert.strictEqual(cleared, null);
+    console.log('   ✓ Guardado, lectura y limpieza de sesión validados.');
+  } finally {
+    if (originalSession) {
+      saveSession(originalSession);
+    } else {
+      clearSession();
+    }
+  }
 
   // Test 15: Exportación de PDF con Imagen de Portada incrustada y caché
   console.log('\n15. Probando exportación a PDF con imagen de portada y caché...');
@@ -222,13 +232,26 @@ async function runTests() {
 
   // Test 19: Almacenar último capítulo visto y botón de acceso directo desde el menú
   console.log('\n19. Probando almacenamiento de último capítulo visto y botón en el menú...');
-  // 19a. Base de datos
-  repository.updateReadingProgress(9779, 1, 'es');
-  const lastReadGlobal = repository.getGlobalLastRead();
-  assert(lastReadGlobal !== null, 'Debe existir un registro de último capítulo leído');
-  assert.strictEqual(lastReadGlobal.novel_id, 9779);
-  assert.strictEqual(lastReadGlobal.last_read_chapter_no, 1);
-  assert.strictEqual(lastReadGlobal.last_read_language, 'es');
+  // 19a. Base de datos (preservando estado original del usuario)
+  const originalReadingProgress = repository.db.prepare('SELECT * FROM reading_progress').all();
+  try {
+    repository.updateReadingProgress(9779, 1, 'es');
+    const lastReadGlobal = repository.getGlobalLastRead();
+    assert(lastReadGlobal !== null, 'Debe existir un registro de último capítulo leído');
+    assert.strictEqual(lastReadGlobal.novel_id, 9779);
+    assert.strictEqual(lastReadGlobal.last_read_chapter_no, 1);
+    assert.strictEqual(lastReadGlobal.last_read_language, 'es');
+  } finally {
+    // Restaurar el progreso de lectura previo para no alterar la base de datos de usuario ni reiniciar su lectura a 1
+    repository.db.prepare('DELETE FROM reading_progress').run();
+    const restoreStmt = repository.db.prepare(`
+      INSERT INTO reading_progress (novel_id, last_read_chapter_no, last_read_language, last_read_at)
+      VALUES (?, ?, ?, ?)
+    `);
+    for (const row of originalReadingProgress) {
+      restoreStmt.run(row.novel_id, row.last_read_chapter_no, row.last_read_language, row.last_read_at);
+    }
+  }
 
   // 19b. Integración IPC y Renderer
   assert(preloadContent.includes('getLastRead: () => ipcRenderer.invoke'), 'preload.cjs debe exponer getLastRead');
@@ -282,10 +305,14 @@ async function runTests() {
 
   // Test 22: Interfaz de Audio en Lector, Clic en Palabras y Configuración de Gemini API Key
   console.log('\n22. Verificando Interfaz de Audio, Clic en Palabras y Configuración de Gemini AI...');
-  saveGeminiApiKey('test-gemini-key-xyz123');
-  const savedKey = getGeminiApiKey();
-  assert.strictEqual(savedKey, 'test-gemini-key-xyz123', 'getGeminiApiKey debe devolver la clave guardada');
-  saveGeminiApiKey(''); // Limpiar después de la prueba
+  const originalApiKey = getGeminiApiKey();
+  try {
+    saveGeminiApiKey('test-gemini-key-xyz123');
+    const savedKey = getGeminiApiKey();
+    assert.strictEqual(savedKey, 'test-gemini-key-xyz123', 'getGeminiApiKey debe devolver la clave guardada');
+  } finally {
+    saveGeminiApiKey(originalApiKey || '');
+  }
 
   // Verificaciones en index.html y preload
   const updatedHtml = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
@@ -315,7 +342,116 @@ async function runTests() {
   assert(updatedAppJs.includes('reader-word'), 'app.js debe envolver cada palabra con clase reader-word para interacción');
   console.log('   ✓ Barra de audio, sincronización por palabra, exportación MP3 y Gemini Key verificados en toda la app.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (22/22) PASARON EXITOSAMENTE!');
+  // Test 23: Traducción on-demand de capítulos a español (Individual, Lote y UI)
+  console.log('\n23. Probando Traducción de Capítulos a Español (Offline/Local desde inglés)...');
+  const testNovelId = 999901;
+  const testNovelMeta = {
+    rawId: testNovelId,
+    slug: 'translation-test-novel',
+    title: 'The Great Awakening',
+    author: 'Lin Wei'
+  };
+
+  const cleanupTestNovel = () => {
+    try {
+      repository.db.prepare('DELETE FROM novels WHERE id = ?').run(testNovelId);
+    } catch {}
+  };
+
+  // Limpiar antes y después de la prueba para no ensuciar la biblioteca del usuario ni fallar en re-ejecuciones
+  cleanupTestNovel();
+
+  try {
+    // Registrar novela y capítulos en inglés
+    repository.upsertNovel(testNovelMeta);
+    repository.saveChapterTranslation(testNovelId, 1, {
+      language: 'en',
+      title: 'Chapter 1: The First Step',
+      model: 'Gemini 3.5 Flash',
+      source: 'gemini',
+      rawTitle: '第1章 第一步',
+      paragraphs: [
+        'The morning mist covered the quiet mountain.',
+        'He took a deep breath and began his spiritual journey.'
+      ]
+    }, testNovelMeta);
+
+    repository.saveChapterTranslation(testNovelId, 2, {
+      language: 'en',
+      title: 'Chapter 2: The Mysterious Cave',
+      model: 'Gemini 3.5 Flash',
+      source: 'gemini',
+      rawTitle: '第2章 神秘洞穴',
+      paragraphs: [
+        'Inside the dark cave, a blue crystal was glowing quietly.',
+        'Ancient runes were inscribed upon the cold stone floor.'
+      ]
+    }, testNovelMeta);
+
+    // Verificar capítulos no traducidos (deben ser [1, 2])
+    const pendingBefore = repository.getUntranslatedChapterNumbers(testNovelId, 'en', 'es');
+    assert.deepStrictEqual(pendingBefore, [1, 2], 'Ambos capítulos deben estar pendientes de traducir a español');
+
+    // Probar traducción de capítulo 1 a español
+    console.log('   -> Traduciendo Capítulo 1 de inglés a español...');
+    const esCh1 = await translateChapterToSpanish(testNovelId, 1);
+    assert(esCh1 !== null, 'El capítulo traducido no debe ser nulo');
+    assert.strictEqual(esCh1.language, 'es', 'El idioma debe ser español');
+    assert(esCh1.paragraphs && esCh1.paragraphs.length === 2, 'Debe contener los 2 párrafos traducidos');
+    assert(esCh1.paragraphs[0].length > 0, 'El párrafo traducido no debe estar vacío');
+
+    // Verificar que se guardó en SQLite sin perder la versión en inglés
+    const retrievedEs = repository.getChapterTranslation(testNovelId, 1, 'es');
+    const retrievedEn = repository.getChapterTranslation(testNovelId, 1, 'en');
+    assert(retrievedEs !== null, 'Debe existir la traducción en español en SQLite');
+    assert(retrievedEn !== null, 'Debe conservarse la traducción original en inglés en SQLite');
+    assert.strictEqual(retrievedEs.language, 'es');
+    assert.strictEqual(retrievedEn.language, 'en');
+
+    // Verificar que ahora solo queda el capítulo 2 pendiente
+    const pendingAfter1 = repository.getUntranslatedChapterNumbers(testNovelId, 'en', 'es');
+    assert.deepStrictEqual(pendingAfter1, [2], 'Solo debe quedar el capítulo 2 pendiente');
+
+    // Probar traducción por lote (batchTranslateNovelToSpanish)
+    console.log('   -> Probando traducción por lote (batchTranslateNovelToSpanish)...');
+    let progressEvents = [];
+    const batchRes = await batchTranslateNovelToSpanish(testNovelId, {}, (p) => {
+      progressEvents.push(p);
+    });
+
+    assert.strictEqual(batchRes.translatedCount, 1, 'Debe haber traducido 1 capítulo pendiente (el 2)');
+    assert(progressEvents.length > 0, 'Debe haber emitido eventos de progreso');
+    const pendingFinal = repository.getUntranslatedChapterNumbers(testNovelId, 'en', 'es');
+    assert.deepStrictEqual(pendingFinal, [], 'No debe quedar ningún capítulo pendiente de traducir');
+  } finally {
+    cleanupTestNovel();
+  }
+
+  // Verificar UI en archivos del proyecto
+  const updatedMainJs = fs.readFileSync(path.join(__dirname, '..', 'electron', 'main.js'), 'utf8');
+  assert(updatedMainJs.includes("ipcMain.handle('chapter:translateToSpanish'"), 'main.js debe registrar IPC chapter:translateToSpanish');
+  assert(updatedMainJs.includes("ipcMain.handle('novel:getUntranslatedChapters'"), 'main.js debe registrar IPC novel:getUntranslatedChapters');
+  assert(updatedMainJs.includes("ipcMain.handle('novel:batchTranslateToSpanish'"), 'main.js debe registrar IPC novel:batchTranslateToSpanish');
+
+  assert(updatedPreload.includes('translateChapterToSpanish:'), 'preload.cjs debe exponer translateChapterToSpanish');
+  assert(updatedPreload.includes('getUntranslatedChapters:'), 'preload.cjs debe exponer getUntranslatedChapters');
+  assert(updatedPreload.includes('batchTranslateToSpanish:'), 'preload.cjs debe exponer batchTranslateToSpanish');
+
+  assert(updatedHtml.includes('id="detail-translate-btn"'), 'index.html debe contener el botón detail-translate-btn');
+  assert(updatedHtml.includes('id="chapters-translate-progress"'), 'index.html debe incluir la barra de progreso chapters-translate-progress');
+  assert(updatedHtml.includes('id="reader-translate-btn"'), 'index.html debe incluir el botón reader-translate-btn en el lector');
+  assert(updatedHtml.includes('id="reader-lang-badge"'), 'index.html debe incluir el badge reader-lang-badge');
+
+  assert(updatedStyles.includes('.btn-reader-translate'), 'styles.css debe definir estilos para .btn-reader-translate');
+  assert(updatedStyles.includes('.translate-progress-box'), 'styles.css debe definir estilos para .translate-progress-box');
+  assert(updatedStyles.includes('.btn-translate-novel'), 'styles.css debe definir estilos para .btn-translate-novel');
+
+  assert(updatedAppJs.includes('detail-translate-btn'), 'app.js debe enlazar el botón de traducción en el modal de novela');
+  assert(updatedAppJs.includes('reader-translate-btn'), 'app.js debe enlazar el botón de traducción en el lector');
+  assert(updatedAppJs.includes('btn-translate-ch'), 'app.js debe soportar traducción individual desde la lista de capítulos');
+  console.log('   ✓ Traducción individual, traducción por lotes, SQLite 3NF y UI integradas correctamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (23/23) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

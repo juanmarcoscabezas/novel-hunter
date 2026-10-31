@@ -396,6 +396,14 @@ function handleGlobalProgress(data) {
   if (exportFill) exportFill.style.width = `${data.percent || 0}%`;
   if (exportStatus && data.status) exportStatus.textContent = data.status;
   if (exportPercent) exportPercent.textContent = `${data.percent || 0}%`;
+
+  // Y actualizar barra de progreso de traducción de capítulos
+  const transFill = document.getElementById('translate-progress-fill');
+  const transStatus = document.getElementById('translate-progress-status');
+  const transPercent = document.getElementById('translate-progress-percent');
+  if (transFill) transFill.style.width = `${data.percent || 0}%`;
+  if (transStatus && data.status) transStatus.textContent = data.status;
+  if (transPercent) transPercent.textContent = `${data.percent || 0}%`;
 }
 
 /* ==========================================================================
@@ -504,10 +512,22 @@ async function loadLibrary() {
 
       if (item.last_read_chapter_no) {
         card.querySelector('.btn-continue-novel')?.addEventListener('click', async () => {
-          const lang = item.last_read_language || (item.languages ? item.languages.split(',')[0].trim() : 'en');
-          const chapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, lang);
+          let lang = item.last_read_language || (item.languages ? item.languages.split(',')[0].trim() : 'en');
+          let chapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, lang);
+          if (!chapters || chapters.length === 0) {
+            const altLang = lang === 'es' ? 'en' : 'es';
+            const altChapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, altLang);
+            if (altChapters && altChapters.length > 0) {
+              lang = altLang;
+              chapters = altChapters;
+            }
+          }
           currentReadingChaptersList = chapters || [];
-          openReaderModal(item, item.last_read_chapter_no, lang);
+          let targetChNo = item.last_read_chapter_no;
+          if (chapters && chapters.length > 0 && !chapters.some(c => c.chapter_no === targetChNo)) {
+            targetChNo = chapters[0].chapter_no;
+          }
+          openReaderModal(item, targetChNo, lang);
         });
       }
 
@@ -543,6 +563,7 @@ function initChaptersModal() {
 
   const exportBtn = document.getElementById('detail-export-btn');
   const openFolderBtn = document.getElementById('detail-open-folder-btn');
+  const translateBtn = document.getElementById('detail-translate-btn');
 
   exportBtn?.addEventListener('click', () => {
     if (currentChaptersNovel) {
@@ -553,6 +574,62 @@ function initChaptersModal() {
   openFolderBtn?.addEventListener('click', () => {
     if (currentChaptersNovel) {
       window.wtrApi.openFolder(currentChaptersNovel.slug);
+    }
+  });
+
+  translateBtn?.addEventListener('click', async () => {
+    if (!currentChaptersNovel) return;
+    const novelId = currentChaptersNovel.raw_id || currentChaptersNovel.id;
+    
+    // Consultar capítulos en inglés pendientes de traducir al español
+    const untranslated = await window.wtrApi.getUntranslatedChapters(novelId, 'en', 'es');
+    const progressBox = document.getElementById('chapters-translate-progress');
+    const statusLabel = document.getElementById('translate-progress-status');
+    const percentLabel = document.getElementById('translate-progress-percent');
+    const fillBar = document.getElementById('translate-progress-fill');
+
+    if (!untranslated || untranslated.length === 0) {
+      const allEs = await window.wtrApi.getDownloadedChapters(novelId, 'es');
+      if (allEs && allEs.length > 0) {
+        showFeedback('Todos los capítulos descargados de esta novela ya están disponibles en español.', 'info');
+        langFilter.value = 'es';
+        await loadChaptersListForNovel(currentChaptersNovel, 'es');
+      } else {
+        showFeedback('No hay capítulos descargados para traducir.', 'error');
+      }
+      return;
+    }
+
+    // Iniciar traducción en lote
+    translateBtn.disabled = true;
+    if (progressBox) progressBox.classList.remove('hidden');
+    if (fillBar) fillBar.style.width = '0%';
+    if (statusLabel) statusLabel.textContent = `Iniciando traducción de ${untranslated.length} capítulos a español...`;
+    if (percentLabel) percentLabel.textContent = '0%';
+
+    try {
+      const result = await window.wtrApi.batchTranslateToSpanish({
+        novelId,
+        chapterNumbers: untranslated
+      });
+
+      if (result && !result.cancelled) {
+        if (statusLabel) statusLabel.textContent = `¡Listo! ${result.translatedCount} capítulos traducidos a español.`;
+        if (fillBar) fillBar.style.width = '100%';
+        if (percentLabel) percentLabel.textContent = '100%';
+
+        langFilter.value = 'es';
+        await loadChaptersListForNovel(currentChaptersNovel, 'es');
+        loadLibrary();
+
+        setTimeout(() => {
+          if (progressBox) progressBox.classList.add('hidden');
+        }, 3500);
+      }
+    } catch (err) {
+      if (statusLabel) statusLabel.textContent = `Error: ${err.message}`;
+    } finally {
+      translateBtn.disabled = false;
     }
   });
 
@@ -613,6 +690,7 @@ async function loadChaptersListForNovel(novelItem, lang) {
     itemEl.className = 'chapter-item';
     const displayTitle = ch.title || ch.raw_title || `Capítulo ${ch.chapter_no}`;
 
+    const isEn = lang === 'en';
     itemEl.innerHTML = `
       <div class="chapter-item-left">
         <span class="chapter-item-title">Capítulo ${ch.chapter_no}: ${escapeHtml(displayTitle)}</span>
@@ -622,10 +700,43 @@ async function loadChaptersListForNovel(novelItem, lang) {
           <span>${ICONS.globe} ${ch.language.toUpperCase()}</span>
         </div>
       </div>
-      <button class="btn btn-primary btn-sm btn-read-ch">
-        ${ICONS.bookOpenSm} Leer
-      </button>
+      <div class="chapter-item-actions">
+        ${isEn ? `
+          <button class="btn btn-outline btn-sm btn-translate-ch" title="Traducir solo este capítulo a Español">
+            ${ICONS.globe} <span>Traducir</span>
+          </button>
+        ` : ''}
+        <button class="btn btn-primary btn-sm btn-read-ch">
+          ${ICONS.bookOpenSm} <span>Leer</span>
+        </button>
+      </div>
     `;
+
+    if (isEn) {
+      const translateChBtn = itemEl.querySelector('.btn-translate-ch');
+      translateChBtn?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        translateChBtn.disabled = true;
+        translateChBtn.innerHTML = `<span>Traduciendo...</span>`;
+        try {
+          const res = await window.wtrApi.translateChapterToSpanish(novelItem.raw_id || novelItem.id, ch.chapter_no);
+          if (res && res.success) {
+            const langFilterEl = document.getElementById('chapters-lang-filter');
+            if (langFilterEl) langFilterEl.value = 'es';
+            await loadChaptersListForNovel(novelItem, 'es');
+            loadLibrary();
+          } else {
+            alert(res?.error || 'No se pudo traducir el capítulo.');
+            translateChBtn.disabled = false;
+            translateChBtn.innerHTML = `${ICONS.globe} <span>Traducir</span>`;
+          }
+        } catch (err) {
+          alert(`Error al traducir: ${err.message}`);
+          translateChBtn.disabled = false;
+          translateChBtn.innerHTML = `${ICONS.globe} <span>Traducir</span>`;
+        }
+      });
+    }
 
     itemEl.querySelector('.btn-read-ch').addEventListener('click', () => {
       openReaderModal(novelItem, ch.chapter_no, lang);
@@ -646,6 +757,8 @@ function initReaderModal() {
   const nextBtn = document.getElementById('reader-next-btn');
   const decFontBtn = document.getElementById('reader-font-decrease');
   const incFontBtn = document.getElementById('reader-font-increase');
+  const translateBtn = document.getElementById('reader-translate-btn');
+  const translateLabel = document.getElementById('reader-translate-label');
 
   const closeModal = () => {
     stopTts();
@@ -654,6 +767,44 @@ function initReaderModal() {
   };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
+
+  translateBtn?.addEventListener('click', async () => {
+    if (!currentReadingNovel || !currentReadingChapterNo) return;
+    
+    // Si ya estamos viendo la traducción en español, ofrecer alternar a inglés si existe
+    if (currentReadingLang === 'es') {
+      const enChapter = await window.wtrApi.readChapter(currentReadingNovel.raw_id || currentReadingNovel.id, currentReadingChapterNo, 'en');
+      if (enChapter) {
+        await openReaderModal(currentReadingNovel, currentReadingChapterNo, 'en');
+        return;
+      }
+    }
+
+    // Traducir capítulo actual a español
+    translateBtn.disabled = true;
+    if (translateLabel) translateLabel.textContent = 'Traduciendo...';
+
+    try {
+      const res = await window.wtrApi.translateChapterToSpanish(
+        currentReadingNovel.raw_id || currentReadingNovel.id,
+        currentReadingChapterNo
+      );
+
+      if (res && res.success) {
+        currentReadingLang = 'es';
+        await openReaderModal(currentReadingNovel, currentReadingChapterNo, 'es');
+        loadLibrary();
+      } else {
+        alert(res?.error || 'No se pudo traducir el capítulo a español.');
+        if (translateLabel) translateLabel.textContent = 'Traducir a Español';
+      }
+    } catch (err) {
+      alert(`Error al traducir a español: ${err.message}`);
+      if (translateLabel) translateLabel.textContent = 'Traducir a Español';
+    } finally {
+      translateBtn.disabled = false;
+    }
+  });
 
   decFontBtn?.addEventListener('click', () => {
     if (readerFontSize > 12) {
@@ -706,16 +857,74 @@ async function openReaderModal(novelItem, chapterNo, lang) {
   modal.classList.remove('hidden');
 
   try {
-    const chapterData = await window.wtrApi.readChapter(novelItem.raw_id || novelItem.id, chapterNo, lang);
+    let chapterData = await window.wtrApi.readChapter(novelItem.raw_id || novelItem.id, chapterNo, lang);
+    if (!chapterData) {
+      // Fallback automático al idioma alternativo si el capítulo existe localmente
+      const altLang = lang === 'es' ? 'en' : 'es';
+      const altData = await window.wtrApi.readChapter(novelItem.raw_id || novelItem.id, chapterNo, altLang);
+      if (altData) {
+        chapterData = altData;
+        lang = altLang;
+        currentReadingLang = altLang;
+      }
+    }
+
     if (!chapterData) {
       titleEl.textContent = `Capítulo ${chapterNo} no encontrado`;
-      articleEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">No se encontró el capítulo ${chapterNo} en la base de datos.</div>`;
+      // Buscar si existen otros capítulos descargados para orientar al usuario
+      const availChapters = (await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, lang))
+        || (await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, lang === 'es' ? 'en' : 'es'))
+        || [];
+
+      if (availChapters.length > 0) {
+        const firstCh = availChapters[0];
+        articleEl.innerHTML = `
+          <div style="text-align: center; padding: 40px;">
+            <p style="color: #f87171; font-weight: 600; margin-bottom: 12px;">No se encontró el capítulo ${chapterNo} en la base de datos (${lang.toUpperCase()}).</p>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Hay ${availChapters.length} capítulo(s) disponibles para esta novela.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+              <button class="btn btn-primary btn-sm" id="reader-jump-first-btn">Leer Capítulo ${firstCh.chapter_no} (${(firstCh.language || lang).toUpperCase()})</button>
+              <button class="btn btn-outline btn-sm" id="reader-view-all-btn">Ver lista de capítulos</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('reader-jump-first-btn')?.addEventListener('click', () => {
+          currentReadingChaptersList = availChapters;
+          openReaderModal(novelItem, firstCh.chapter_no, firstCh.language || lang);
+        });
+        document.getElementById('reader-view-all-btn')?.addEventListener('click', () => {
+          modal.classList.add('hidden');
+          openChaptersModal(novelItem);
+        });
+      } else {
+        articleEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 40px;">No se encontró el capítulo ${chapterNo} ni hay capítulos guardados para esta novela.</div>`;
+      }
       return;
     }
 
     titleEl.textContent = chapterData.title || `Capítulo ${chapterNo}`;
     modelBadge.textContent = chapterData.model || 'Gemini AI';
     paragraphsInfo.textContent = `${chapterData.paragraphs?.length || 0} párrafos (${lang.toUpperCase()})`;
+
+    const langBadge = document.getElementById('reader-lang-badge');
+    if (langBadge) {
+      langBadge.textContent = lang.toUpperCase();
+    }
+
+    const readerTranslateBtn = document.getElementById('reader-translate-btn');
+    const readerTranslateLabel = document.getElementById('reader-translate-label');
+    if (readerTranslateBtn && readerTranslateLabel) {
+      readerTranslateBtn.disabled = false;
+      if (lang === 'es') {
+        readerTranslateBtn.classList.add('in-spanish');
+        readerTranslateLabel.textContent = 'En Español (Ver EN)';
+        readerTranslateBtn.title = 'Capítulo disponible en Español. Clic para alternar a versión en Inglés.';
+      } else {
+        readerTranslateBtn.classList.remove('in-spanish');
+        readerTranslateLabel.textContent = 'Traducir a Español';
+        readerTranslateBtn.title = 'Traducir este capítulo a Español';
+      }
+    }
 
     stopTts();
     currentTtsParagraphs = chapterData.paragraphs || [];
@@ -802,14 +1011,35 @@ async function updateLastReadWidget() {
       return;
     }
 
+    let lang = lastRead.last_read_language || 'en';
+    let chapters = await window.wtrApi.getDownloadedChapters(lastRead.novel_id, lang);
+    if (!chapters || chapters.length === 0) {
+      const altLang = lang === 'es' ? 'en' : 'es';
+      const altChapters = await window.wtrApi.getDownloadedChapters(lastRead.novel_id, altLang);
+      if (altChapters && altChapters.length > 0) {
+        lang = altLang;
+        chapters = altChapters;
+      }
+    }
+
+    if (!chapters || chapters.length === 0) {
+      container.classList.add('hidden');
+      return;
+    }
+
+    let targetChNo = lastRead.last_read_chapter_no;
+    if (!chapters.some(c => c.chapter_no === targetChNo)) {
+      targetChNo = chapters[0].chapter_no;
+    }
+
     container.classList.remove('hidden');
     const titleEl = document.getElementById('last-read-title');
     const chEl = document.getElementById('last-read-chapter');
     const langEl = document.getElementById('last-read-lang');
 
     if (titleEl) titleEl.textContent = lastRead.title || 'Novela';
-    if (chEl) chEl.textContent = `Capítulo ${lastRead.last_read_chapter_no}`;
-    if (langEl) langEl.textContent = (lastRead.last_read_language || 'en').toUpperCase();
+    if (chEl) chEl.textContent = `Capítulo ${targetChNo}`;
+    if (langEl) langEl.textContent = lang.toUpperCase();
 
     const btn = document.getElementById('menu-continue-reading-btn');
     if (btn) {
@@ -823,10 +1053,8 @@ async function updateLastReadWidget() {
           cover_url: lastRead.cover_url,
           author: lastRead.author
         };
-        const lang = lastRead.last_read_language || 'en';
-        const chapters = await window.wtrApi.getDownloadedChapters(lastRead.novel_id, lang);
-        currentReadingChaptersList = chapters || [];
-        openReaderModal(novelObj, lastRead.last_read_chapter_no, lang);
+        currentReadingChaptersList = chapters;
+        openReaderModal(novelObj, targetChNo, lang);
       };
     }
   } catch (err) {

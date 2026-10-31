@@ -321,6 +321,10 @@
                       <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                       <span>Abrir Carpeta</span>
                     </button>
+                    <button id="detail-translate-btn" class="btn btn-primary btn-sm btn-translate-novel" title="Traducir capítulos en inglés a español">
+                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      <span id="detail-translate-btn-text">Traducir a Español</span>
+                    </button>
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
                     <label for="chapters-lang-filter" style="margin-bottom: 0; font-size: 13px;">Idioma:</label>
@@ -329,6 +333,17 @@
                       <option value="es">Español (ES)</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              <!-- Barra de progreso para traducción de capítulos -->
+              <div id="chapters-translate-progress" class="translate-progress-box hidden">
+                <div class="translate-progress-header">
+                  <span id="translate-progress-status">Traduciendo capítulos a español...</span>
+                  <span id="translate-progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div id="translate-progress-fill" style="width: 0%;"></div>
                 </div>
               </div>
 
@@ -353,6 +368,10 @@
                 <span id="reader-novel-title" class="reader-novel-subtitle">Nombre de la novela</span>
               </div>
               <div class="reader-header-controls">
+                <button id="reader-translate-btn" class="btn btn-outline btn-sm btn-reader-translate" title="Traducir este capítulo a Español">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  <span id="reader-translate-label">Traducir a Español</span>
+                </button>
                 <div class="font-size-controls">
                   <button id="reader-font-decrease" class="btn-icon" title="Reducir fuente">A-</button>
                   <button id="reader-font-increase" class="btn-icon" title="Aumentar fuente">A+</button>
@@ -403,6 +422,7 @@
             <div class="modal-body reader-body">
               <div class="reader-meta-bar">
                 <span id="reader-model-badge" class="badge badge-primary">Gemini AI</span>
+                <span id="reader-lang-badge" class="badge badge-secondary">EN</span>
                 <span id="reader-paragraphs-info" class="text-muted text-xs">Párrafos: -</span>
               </div>
               <article id="reader-article-content" class="reader-article">
