@@ -84,7 +84,10 @@ program
           saveChapterAsTxt(novel.slug, ch, novel.title);
           chapters.push(ch);
           if (options.pdf && !options.merge) {
-            await exportChaptersToPdf(novel.slug, [ch], novel.title);
+            await exportChaptersToPdf(novel.slug, [ch], novel.title, {
+              coverUrl: novel.cover_url,
+              author: novel.author
+            });
           }
         }
       }
@@ -95,7 +98,10 @@ program
         console.log(chalk.dim(`  ${mergedTxt}`));
 
         if (options.pdf) {
-          const mergedPdf = await exportChaptersToPdf(novel.slug, chapters, novel.title);
+          const mergedPdf = await exportChaptersToPdf(novel.slug, chapters, novel.title, {
+            coverUrl: novel.cover_url,
+            author: novel.author
+          });
           console.log(chalk.green(`✓ Archivo fusionado PDF creado:`));
           console.log(chalk.dim(`  ${mergedPdf}`));
         }
@@ -339,7 +345,10 @@ async function runDownloader(query, options) {
 
       // Si se solicitó PDF individual sin merge
       if (shouldExportPdf && !shouldMerge) {
-        await exportChaptersToPdf(novelInfo.slug, [chapterData], novelInfo.title);
+        await exportChaptersToPdf(novelInfo.slug, [chapterData], novelInfo.title, {
+          coverUrl: novelInfo.image || novelInfo.coverUrl,
+          author: novelInfo.author
+        });
       }
 
       // Si vino de la red y no de la BD local, aplicar pausa de cortesía anti-detección
@@ -362,7 +371,10 @@ async function runDownloader(query, options) {
 
     if (shouldExportPdf) {
       console.log(chalk.dim('Generando compilación en PDF...'));
-      const mergedPdfPath = await exportChaptersToPdf(novelInfo.slug, downloadedChapters, novelInfo.title);
+      const mergedPdfPath = await exportChaptersToPdf(novelInfo.slug, downloadedChapters, novelInfo.title, {
+        coverUrl: novelInfo.image || novelInfo.coverUrl,
+        author: novelInfo.author
+      });
       console.log(chalk.green(`✓ Archivo PDF generado:`));
       console.log(chalk.cyan(`  ${mergedPdfPath}`));
     }

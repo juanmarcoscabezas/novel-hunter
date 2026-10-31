@@ -192,7 +192,10 @@ function setupIpcHandlers() {
 
           // Exportar PDF individual si se solicitó y no es fusión
           if (pdf && !merge) {
-            await exportChaptersToPdf(novel.slug, [chapterData], novel.title);
+            await exportChaptersToPdf(novel.slug, [chapterData], novel.title, {
+              coverUrl: novel.coverUrl || novel.image,
+              author: novel.author
+            });
           }
         }
       } catch (err) {
@@ -219,7 +222,10 @@ function setupIpcHandlers() {
           percent: 98,
           status: 'Compilando documento PDF final...'
         });
-        results.mergedPdf = await exportChaptersToPdf(novel.slug, downloadedChapters, novel.title);
+        results.mergedPdf = await exportChaptersToPdf(novel.slug, downloadedChapters, novel.title, {
+          coverUrl: novel.coverUrl || novel.image,
+          author: novel.author
+        });
       }
     } else if (pdf && !merge && downloadedChapters.length > 0) {
       // Si se pidió PDF individual para todos
@@ -320,7 +326,10 @@ function setupIpcHandlers() {
         saveChapterAsTxt(novel.slug, ch, novel.title);
         chapters.push(ch);
         if (pdf && !merge) {
-          await exportChaptersToPdf(novel.slug, [ch], novel.title);
+          await exportChaptersToPdf(novel.slug, [ch], novel.title, {
+            coverUrl: novel.cover_url,
+            author: novel.author
+          });
         }
       }
     }
@@ -344,7 +353,10 @@ function setupIpcHandlers() {
           percent: 95,
           status: 'Compilando libro digital PDF...'
         });
-        mergedPdf = await exportChaptersToPdf(novel.slug, chapters, novel.title);
+        mergedPdf = await exportChaptersToPdf(novel.slug, chapters, novel.title, {
+          coverUrl: novel.cover_url,
+          author: novel.author
+        });
       }
     }
 

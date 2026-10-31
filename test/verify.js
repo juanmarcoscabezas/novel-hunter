@@ -132,7 +132,21 @@ async function runTests() {
   assert.strictEqual(cleared, null);
   console.log('   ✓ Guardado, lectura y limpieza de sesión validados.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (14/14) PASARON EXITOSAMENTE!');
+  // Test 15: Exportación de PDF con Imagen de Portada incrustada y caché
+  console.log('\n15. Probando exportación a PDF con imagen de portada y caché...');
+  const testCoverUrl = 'https://img.wtr-lab.com/cdn/series/YfFlgEVUjTUpL8O24Fo-dSkN22f9ByCIPw3Q7FdMapY.png';
+  const coverPdf = await exportChaptersToPdf('cover-test-novel', [ch1, ch2], 'Lord: At The Beginning', {
+    coverUrl: testCoverUrl,
+    author: 'Ya Xiao Xin'
+  });
+  assert(fs.existsSync(coverPdf), 'El PDF con portada debe existir');
+  const coverPdfStats = fs.statSync(coverPdf);
+  assert(coverPdfStats.size > 80000, `El PDF debe contener los bytes de la imagen (Tamaño: ${coverPdfStats.size} bytes)`);
+  const cachedCoverPath = path.join(CONFIG.dataDir, 'covers', 'cover-test-novel.img');
+  assert(fs.existsSync(cachedCoverPath), 'La portada debe quedar en caché local para uso offline');
+  console.log(`   ✓ PDF con imagen de portada incrustada verificado (${Math.round(coverPdfStats.size / 1024)} KB) y portada en caché local.`);
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (15/15) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {
