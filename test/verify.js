@@ -179,7 +179,11 @@ async function runTests() {
   assert(htmlContent.includes('id="lib-storage-size"'), 'index.html debe contener el contador dinámico lib-storage-size');
   assert(!htmlContent.includes('<span class="metric-value">SQLite 3NF</span>'), 'la tarjeta de métrica ya no debe ser estática SQLite 3NF');
   assert(appJsContent.includes('getStorageStats'), 'app.js debe cargar el tamaño de almacenamiento dinámico');
-  console.log('   ✓ Cero emojis rotos en la interfaz, alineación vertical y métrica dinámica de almacenamiento verificadas.');
+  assert(htmlContent.includes('<h1>Buscador & Descarga</h1>'), 'el título de la pestaña 1 debe ser Buscador & Descarga');
+  assert(htmlContent.includes('<h1>Mi Biblioteca</h1>'), 'el título de la pestaña 2 debe ser Mi Biblioteca');
+  assert(htmlContent.includes('<h1>Consola Terminal</h1>'), 'el título de la pestaña 3 debe ser Consola Terminal');
+  assert(htmlContent.includes('<h1>Configuración</h1>'), 'el título de la pestaña 4 debe ser Configuración');
+  console.log('   ✓ Cero emojis rotos en la interfaz, alineación vertical, métrica dinámica y títulos alineados con menú verificados.');
 
   // Test 17: Hot-Reload y Atajos de Desarrollo
   console.log('\n17. Verificando configuración de Hot-Reload y entorno de desarrollo...');

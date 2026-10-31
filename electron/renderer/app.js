@@ -452,8 +452,8 @@ async function loadLibrary() {
       grid.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">${ICONS.bookXl}</div>
-          <h3>Tu catálogo local está vacío</h3>
-          <p>Usa la pestaña "Buscador & Descarga" para buscar y guardar tus novelas en SQLite.</p>
+          <h3>Tu biblioteca está vacía</h3>
+          <p>Usa la pestaña "Buscador & Descarga" para buscar y guardar tus novelas en tu biblioteca local.</p>
         </div>
       `;
       return;
