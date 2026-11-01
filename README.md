@@ -78,6 +78,17 @@ O para desarrollo con recarga en vivo de estilos y DevTools:
 npm run dev
 ```
 
+### Compilación y Empaquetado para Windows (`.exe`)
+Para compilar la versión distribuible de Windows:
+```bash
+# Generar ejecutable portable de Windows:
+npm run dist:win
+
+# Generar instalador asistido (NSIS):
+npm run dist:win:installer
+```
+Los ejecutables se generan en el directorio `dist/` siguiendo la convención estandarizada con guiones bajos entre nombre y versión: **`Novel_Hunter_1.0.0.exe`**.
+
 ---
 
 ## 📚 Documentación Adicional en `docs/`

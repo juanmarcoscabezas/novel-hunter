@@ -210,6 +210,7 @@ async function runTests() {
   assert(preloadContent.includes('hot-reload:css'), 'preload.cjs debe escuchar evento hot-reload:css');
   assert.strictEqual(pkgContent.scripts.dev, 'electron .', 'package.json debe incluir script npm run dev');
   assert.strictEqual(pkgContent.build.productName, 'Novel Hunter', 'package.json debe nombrar el producto como Novel Hunter');
+  assert.strictEqual(pkgContent.build.artifactName, 'Novel_Hunter_${version}.${ext}', 'package.json debe nombrar el artefacto con nombre y version separados por guion bajo');
   assert.strictEqual(mainJsContent.includes("title: 'Novel Hunter'"), true, 'main.js debe tener la ventana titulada Novel Hunter');
   console.log('   ✓ Hot-Reload para CSS en vivo, UI refresh, DevTools y renombrado a Novel Hunter verificado correctamente.');
 

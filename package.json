@@ -22,6 +22,7 @@
   "build": {
     "appId": "com.novelhunter.app",
     "productName": "Novel Hunter",
+    "artifactName": "Novel_Hunter_${version}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -35,14 +36,19 @@
       "target": [
         "portable"
       ],
-      "icon": "electron/assets/icon.png"
+      "icon": "electron/assets/icon.png",
+      "artifactName": "Novel_Hunter_${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Novel_Hunter_${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Novel Hunter"
+      "shortcutName": "Novel Hunter",
+      "artifactName": "Novel_Hunter_${version}.${ext}"
     }
   },
   "keywords": [

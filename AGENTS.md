@@ -29,7 +29,7 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
   - Iconos vectoriales SVG en línea (`ICONS` en `app.js`). Cero emojis rotos o fuentes de iconos externas.
 - **Backend de Escritorio**: Electron (`electron/main.js`), `preload.cjs` con `contextBridge` aislado (`window.wtrApi`).
 - **Base de Datos**: SQLite normalizada en **Tercera Forma Normal (3NF)** usando el módulo nativo de Node.js (`node:sqlite`).
-- **Empaquetado**: `electron-builder` para generar ejecutables portables de Windows (`dist/Novel Hunter 1.0.0.exe`).
+- **Empaquetado**: `electron-builder` para generar ejecutables portables de Windows con nomenclatura de guión bajo (`dist/Novel_Hunter_1.0.0.exe`).
 
 ### Estructura de Directorios Clave:
 ```

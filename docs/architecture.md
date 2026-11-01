@@ -375,5 +375,17 @@ Todos los botones y controles de la interfaz deben estar rigurosamente armonizad
 6. **Regla de Oro de Interfaz para Agentes**:
    - Ningún componente o botón nuevo puede utilizar colores hexadecimales fijos (`#334155`, `#38bdf8`, etc.) o gradientes estáticos no temáticos; deben consumir los tokens temáticos para preservar la coherencia en cualquiera de los 4 temas.
 
+---
+
+## 18. Empaquetado y Distribución para Windows (`electron-builder`)
+
+La compilación y distribución de Novel Hunter se gestiona mediante `electron-builder` en [`package.json`](file:///home/juanmarcos/nasser_18/package.json):
+- **Estandarización de Nombre y Versión con Guión Bajo**:
+  - Parámetro `artifactName`: `"Novel_Hunter_${version}.${ext}"`.
+  - Asegura que los binarios generados en `dist/` se nombren de forma uniforme sin espacios en blanco (ej. `dist/Novel_Hunter_1.0.0.exe`), facilitando su uso en terminales, scripts de automatización e instaladores.
+- **Targets Soportados**:
+  - `portable`: Ejecutable autónomo sin instalación previa (`npm run dist:win`).
+  - `nsis`: Instalador tradicional con opciones de directorio y accesos directos (`npm run dist:win:installer`).
+
 
 
