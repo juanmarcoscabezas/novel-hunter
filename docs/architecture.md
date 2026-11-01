@@ -8,14 +8,22 @@ Este documento describe en profundidad los aspectos técnicos, de ingeniería in
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Capa de Interfaz (CLI)"]
-        CLI["bin/cli.js (Commander + Prompts)"]
+    subgraph UI ["Capa de Interfaz de Usuario"]
+        Electron["Desktop App (electron/renderer)"]
+        CLI["bin/cli.js (Terminal CLI)"]
+    end
+
+    subgraph DesktopBackend ["Capa de Escritorio Electron"]
+        Main["electron/main.js (IPC Handlers)"]
+        Preload["electron/preload.cjs (Isolated ContextBridge)"]
     end
 
     subgraph Core ["Capa de Negocio y Orquestación"]
-        Reader["src/api/reader.js (Orquestador)"]
+        Reader["src/api/reader.js (Descarga y Caché)"]
         NovelAPI["src/api/novel.js (Búsqueda y Capítulos)"]
-        HTTP["src/api/client.js (Cliente con Anti-Bot)"]
+        HTTP["src/api/client.js (Anti-Bot & Cookies)"]
+        TTS["src/services/tts.js (EdgeTTS + WordBoundary)"]
+        TransServ["src/services/translator.js (Híbrido ES)"]
     end
 
     subgraph Engine ["Procesamiento y Traducción"]
@@ -28,22 +36,19 @@ flowchart TD
         DB["src/db/repository.js (SQLite 3NF)"]
         TXT["src/storage/writer.js / merger.js"]
         PDF["src/storage/pdf.js (PDFKit con Portada)"]
+        MP3["Audio MP3 (Capítulos narrados)"]
     end
 
-    CLI --> NovelAPI
-    CLI --> Reader
-    Reader --> DB
-    Reader --> HTTP
+    Electron <--> Preload
+    Preload <--> Main
+    Main --> Core
+    CLI --> Core
+
+    Core --> DB
+    Core --> HTTP
+    Core --> Engine
+    Core --> Storage
     HTTP --> WTR["wtr-lab.com Endpoints"]
-
-    Reader --> GeminiClean
-    Reader --> AES
-    Reader --> GoogleTrans
-
-    CLI --> TXT
-    CLI --> PDF
-    DB --> TXT
-    DB --> PDF
 ```
 
 ---
@@ -172,3 +177,51 @@ Al generar PDFs con `pdfkit`:
   doc.page.margins.bottom = oldBottom;
   ```
   Esto garantiza que el documento tenga exactamente las páginas que ocupa el contenido, sin páginas vacías.
+
+---
+
+## 7. Lector Integrado y Continuación de Lectura (Binge Reading)
+
+El lector offline integrado en `electron/renderer/` proporciona una experiencia fluida sin fricción:
+- **Persistencia de progreso**: `reading_progress` en SQLite registra automáticamente la novela, el último capítulo y el idioma al abrir cualquier lectura.
+- **Botón dinámico "Siguiente"**:
+  - Si el capítulo siguiente ya está en caché local, realiza un cambio instantáneo de capítulo.
+  - Si se alcanza el último capítulo disponible, el botón muta a `Descargar Sig. (Cap. N+1)` con estilo prioritario.
+  - Al pulsarlo, el proceso principal de Electron descarga y procesa el capítulo en segundo plano vía `novel:download`, lo persiste en SQLite y lo proyecta inmediatamente en el lector sin cerrar la vista.
+- **Tarjeta de finalización**: Al llegar al último párrafo, se despliega una interfaz que permite descargar un único capítulo o un lote de 5 capítulos con un solo clic.
+
+---
+
+## 8. Motor de Síntesis de Voz Neural (TTS) y Marcas Temporales
+
+- Utiliza `node-edge-tts` con streaming sobre WebSocket.
+- Captura eventos `WordBoundary` con marcas de tiempo relativas (en milisegundos) para cada palabra sintetizada.
+- Cada palabra en el DOM se envuelve en un elemento `.reader-word`, permitiendo al usuario hacer clic en cualquier palabra para iniciar la reproducción auditiva exactamente desde esa posición (`playFromWord`).
+- Permite la exportación completa del capítulo a un archivo `.mp3` en `exports/<novela>/audio/`.
+
+---
+
+## 9. Ciclo de Desarrollo y Regla de Documentación
+
+Conforme al skill `.agents/skills/novel-hunter-workflow/SKILL.md`:
+1. Implementación de feature.
+2. Pruebas automatizadas (`test/verify.js`, `test/test_db.js`).
+3. Verificación verde al 100%.
+4. **Actualización obligatoria de toda la documentación** (`README.md`, `docs/`, `AGENTS.md`).
+5. Commit formal con Conventional Commits.
+
+---
+
+## 10. Eliminación Segura de Novelas y Capítulos
+
+Para mantener limpia la biblioteca y optimizar el almacenamiento:
+- **IPC Handlers**:
+  - `novel:delete`: Elimina la novela en SQLite y borra recursivamente la carpeta física de exportaciones (`exports/<slug>/`).
+  - `novel:deleteChapters`: Elimina capítulos canónicos o traducciones por idioma y borra los archivos individuales `.txt` y `.mp3` correspondientes en disco.
+- **Cascada Relacional 3NF**: El borrado en SQLite activa las restricciones `ON DELETE CASCADE` de `chapters`, `chapter_translations`, `paragraphs` y `reading_progress`.
+- **Puntos de Interacción en la UI**:
+  - Botón *"Borrar Capítulos"* (`#detail-delete-chapters-btn`) en el modal de detalle con soporte para selección por rangos (`1-10`, `all`) e idioma.
+  - Botón *"Eliminar Novela Completa"* (`#detail-delete-novel-btn`) con alerta de confirmación irreversible.
+  - Botón individual *"Borrar"* en cada fila de capítulo (`.btn-delete-ch`).
+  - Botón directo de eliminar en las tarjetas de la biblioteca (`.btn-delete-novel-card`).
+  - Botón *"Borrar"* en los controles de cabecera del modo lector (`#reader-delete-btn`).

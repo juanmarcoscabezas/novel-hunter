@@ -13,7 +13,7 @@ import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
 import { repository, NovelRepository } from '../src/db/repository.js';
 import { getDb } from '../src/db/connection.js';
-import { CONFIG, saveSession, getSavedSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
+import { CONFIG, saveSession, getSavedSession, clearSession, getGeminiApiKey, saveGeminiApiKey, getChapterGrouping, saveChapterGrouping } from '../src/config.js';
 import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
 import { translateChapterToSpanish, batchTranslateNovelToSpanish } from '../src/services/translator.js';
 
@@ -456,11 +456,19 @@ async function runTests() {
   assert(fs.existsSync(claudePath), 'CLAUDE.md debe existir en la raíz del proyecto');
 
   const agentsContent = fs.readFileSync(agentsPath, 'utf8');
-  assert(agentsContent.includes('Cada vez que agregues una feature, haz tests, corre los tests y luego commit'), 'AGENTS.md debe contener la Regla de Oro del usuario');
+  assert(agentsContent.includes('Cada vez que agregues una feature, haz tests, corre los tests') && agentsContent.includes('luego commit'), 'AGENTS.md debe contener la Regla de Oro del usuario');
+  assert(agentsContent.includes('actualiza la documentación de todo'), 'AGENTS.md debe contener la directriz de actualización obligatoria de documentación');
   assert(agentsContent.includes('Tercera Forma Normal (3NF)'), 'AGENTS.md debe especificar la regla de 3NF relacional');
   assert(agentsContent.includes('resolveStorageDir'), 'AGENTS.md debe advertir sobre la no escritura dentro de app.asar');
 
-  console.log('   ✓ Reglas claras universales para LLMs y asistentes de IA verificadas correctamente.');
+  // Verificar presencia y contenido del skill de workflow en .agents/skills/
+  const skillPath = path.join(projectRoot, '.agents', 'skills', 'novel-hunter-workflow', 'SKILL.md');
+  assert(fs.existsSync(skillPath), 'El skill de flujo de trabajo (.agents/skills/novel-hunter-workflow/SKILL.md) debe existir');
+  const skillContent = fs.readFileSync(skillPath, 'utf8');
+  assert(skillContent.includes('name: novel-hunter-workflow'), 'El skill debe tener el frontmatter name: novel-hunter-workflow');
+  assert(skillContent.includes('Actualización Obligatoria de Toda la Documentación'), 'El skill debe incluir el paso obligatorio de documentación');
+
+  console.log('   ✓ Reglas claras universales para LLMs, asistentes y skill de workflow verificados correctamente.');
 
   // Test 25: Continuación de Lectura y Descarga Directa de Capítulos (Detalle de Novela y Lector)
   console.log('\n25. Probando Continuación de Lectura y Descarga Directa (Detalle de Novela y Detalle de Capítulo)...');
@@ -629,7 +637,151 @@ async function runTests() {
 
   console.log('   ✓ Botón para borrar capítulos y botón para eliminar novela completa verificados correctamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (26/26) PASARON EXITOSAMENTE!');
+  // Test 27: Tabla de Contenidos con nombres de capítulos en la búsqueda de series
+  console.log('\n27. Probando Tabla de Contenidos con nombres de capítulos en la búsqueda de series...');
+  const tocHtml = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
+  const tocAppJs = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'app.js'), 'utf8');
+  const tocStyles = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'styles.css'), 'utf8');
+
+  // Aserciones en index.html
+  assert(tocHtml.includes('class="download-toc-section"'), 'index.html debe contener el contenedor download-toc-section');
+  assert(tocHtml.includes('id="modal-toc-list"'), 'index.html debe contener el listado modal-toc-list');
+  assert(tocHtml.includes('id="modal-toc-search"'), 'index.html debe contener el campo modal-toc-search');
+  assert(tocHtml.includes('id="modal-toc-count"'), 'index.html debe contener el contador modal-toc-count');
+  assert(tocHtml.includes('id="toggle-expand-toc-btn"'), 'index.html debe contener el botón toggle-expand-toc-btn');
+
+  // Aserciones en styles.css
+  assert(tocStyles.includes('.download-toc-section'), 'styles.css debe definir estilos para .download-toc-section');
+  assert(tocStyles.includes('.modal-toc-list'), 'styles.css debe definir estilos para .modal-toc-list');
+  assert(tocStyles.includes('.toc-chapter-item'), 'styles.css debe definir estilos para .toc-chapter-item');
+  assert(tocStyles.includes('.toc-expanded'), 'styles.css debe definir estilos expandidos para .toc-expanded');
+  assert(tocStyles.includes('.novel-card-actions'), 'styles.css debe definir estilos para .novel-card-actions');
+
+  // Aserciones en app.js
+  assert(tocAppJs.includes('renderModalTableOfContents'), 'app.js debe implementar renderModalTableOfContents');
+  assert(tocAppJs.includes('btn-explore-toc'), 'app.js debe incluir el botón btn-explore-toc en las tarjetas de búsqueda');
+  assert(tocAppJs.includes('highlightSelectedTocChapters'), 'app.js debe implementar highlightSelectedTocChapters');
+  assert(tocAppJs.includes('btn-toc-pick'), 'app.js debe permitir seleccionar capítulo individual desde la tabla de contenidos');
+  assert(tocAppJs.includes('btn-toc-range-to'), 'app.js debe permitir definir rango hasta el capítulo seleccionado');
+
+  // Verificación funcional con API de capítulos
+  const sampleChapters = await getChapterList(112330);
+  assert(Array.isArray(sampleChapters) && sampleChapters.length > 0, 'getChapterList debe devolver array de capítulos');
+  assert(sampleChapters[0].order === 1, 'El primer capítulo debe tener order 1');
+  assert(typeof sampleChapters[0].title === 'string' && sampleChapters[0].title.length > 0, 'El capítulo debe contener el nombre del capítulo');
+  assert(sampleChapters[0].title.includes('Chapter 1'), 'El título debe contener el número y nombre del capítulo');
+
+  // Verificación de filtrado y búsqueda de capítulos por nombre
+  const queryFound = sampleChapters.filter(ch => ch.title.toLowerCase().includes('remnants'));
+  assert(queryFound.length > 0, 'La búsqueda por palabra clave del nombre del capítulo debe encontrar coincidencias');
+  assert.strictEqual(queryFound[0].order, 1, 'El capítulo encontrado debe ser el 1');
+
+  // Verificación de cero emojis en los archivos modificados
+  const emojiCheckRegex = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\u2190-\u21ff]/g;
+  const tocHtmlEmojis = tocHtml.match(emojiCheckRegex) || [];
+  const tocJsEmojis = tocAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(tocHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${tocHtmlEmojis.join(', ')}`);
+  assert.strictEqual(tocJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${tocJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Tabla de Contenidos con nombres de capítulos, búsqueda en tiempo real y selector de rango verificados.');
+
+  // Test 28: Paginación y Acordeón Configurable de Capítulos
+  console.log('\n28. Probando Paginación y Acordeón Configurable de Capítulos...');
+
+  // 1. Verificación funcional de getChapterGrouping y saveChapterGrouping en src/config.js
+  const initialGrouping = getChapterGrouping();
+  assert(typeof initialGrouping === 'number' && initialGrouping > 0, 'getChapterGrouping debe devolver un número positivo');
+
+  // Guardar configuración numérica personalizada (ej: 10, 20, 50)
+  const save10 = saveChapterGrouping(10);
+  assert(save10.success, 'saveChapterGrouping(10) debe responder con éxito');
+  assert.strictEqual(getChapterGrouping(), 10, 'getChapterGrouping debe retornar 10');
+
+  const save50 = saveChapterGrouping(50);
+  assert(save50.success, 'saveChapterGrouping(50) debe responder con éxito');
+  assert.strictEqual(getChapterGrouping(), 50, 'getChapterGrouping debe retornar 50');
+
+  // Valores inválidos deben recurrir al valor por defecto (20)
+  const saveInvalid = saveChapterGrouping('invalido');
+  assert(saveInvalid.success, 'saveChapterGrouping con valor inválido debe tener éxito con fallback');
+  assert.strictEqual(getChapterGrouping(), 20, 'Valores inválidos deben recurrir a 20');
+
+  const saveNegative = saveChapterGrouping(-5);
+  assert.strictEqual(getChapterGrouping(), 20, 'Valores negativos deben recurrir a 20');
+
+  // Restaurar el valor inicial
+  saveChapterGrouping(initialGrouping);
+
+  // 2. Verificación del algoritmo de chunking y rotulado del acordeón
+  const mockChapters = Array.from({ length: 45 }, (_, i) => ({
+    chapter_no: i + 1,
+    title: `Capítulo ${i + 1}: Título ${i + 1}`
+  }));
+
+  const chunkChapters = (chs, size) => {
+    const res = [];
+    for (let i = 0; i < chs.length; i += size) {
+      res.push(chs.slice(i, i + size));
+    }
+    return res;
+  };
+
+  const chunks10 = chunkChapters(mockChapters, 10);
+  assert.strictEqual(chunks10.length, 5, 'Con 45 capítulos y grupos de 10 deben generarse 5 acordeones');
+  assert.strictEqual(chunks10[0][0].chapter_no, 1);
+  assert.strictEqual(chunks10[0][chunks10[0].length - 1].chapter_no, 10);
+  assert.strictEqual(chunks10[4][0].chapter_no, 41);
+  assert.strictEqual(chunks10[4][chunks10[4].length - 1].chapter_no, 45);
+
+  const chunks20 = chunkChapters(mockChapters, 20);
+  assert.strictEqual(chunks20.length, 3, 'Con 45 capítulos y grupos de 20 deben generarse 3 acordeones');
+  assert.strictEqual(chunks20[0].length, 20);
+  assert.strictEqual(chunks20[1].length, 20);
+  assert.strictEqual(chunks20[2].length, 5);
+
+  // 3. Verificación de UI, IPC y estilos
+  const accHtml = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
+  const accStyles = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'styles.css'), 'utf8');
+  const accMain = fs.readFileSync(path.join(__dirname, '..', 'electron', 'main.js'), 'utf8');
+  const accPreload = fs.readFileSync(path.join(__dirname, '..', 'electron', 'preload.cjs'), 'utf8');
+  const accAppJs = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'app.js'), 'utf8');
+
+  // Aserciones en index.html
+  assert(accHtml.includes('id="chapter-group-size-input"'), 'index.html debe contener el campo de configuración numérico chapter-group-size-input');
+  assert(accHtml.includes('id="chapter-group-status-pill"'), 'index.html debe incluir el pill de estado chapter-group-status-pill');
+  assert(accHtml.includes('id="save-chapter-group-btn"'), 'index.html debe incluir el botón save-chapter-group-btn');
+  assert(accHtml.includes('id="reset-chapter-group-btn"'), 'index.html debe incluir el botón reset-chapter-group-btn');
+  assert(accHtml.includes('group-size-chip'), 'index.html debe incluir chips para selección rápida de tamaño (10, 20, 50, 100)');
+
+  // Aserciones en styles.css
+  assert(accStyles.includes('.chapters-accordion-toolbar'), 'styles.css debe definir estilos para .chapters-accordion-toolbar');
+  assert(accStyles.includes('.chapter-accordion'), 'styles.css debe definir estilos para .chapter-accordion');
+  assert(accStyles.includes('.chapter-accordion-header'), 'styles.css debe definir estilos para .chapter-accordion-header');
+  assert(accStyles.includes('.chapter-accordion-arrow'), 'styles.css debe definir estilos para la flecha giratoria .chapter-accordion-arrow');
+  assert(accStyles.includes('.chapter-accordion-body'), 'styles.css debe definir estilos para el cuerpo desplegable .chapter-accordion-body');
+
+  // Aserciones en IPC (main.js y preload.cjs)
+  assert(accMain.includes("ipcMain.handle('settings:getChapterGrouping'"), 'main.js debe registrar el handler settings:getChapterGrouping');
+  assert(accMain.includes("ipcMain.handle('settings:saveChapterGrouping'"), 'main.js debe registrar el handler settings:saveChapterGrouping');
+  assert(accPreload.includes('getChapterGrouping:'), 'preload.cjs debe exponer getChapterGrouping');
+  assert(accPreload.includes('saveChapterGrouping:'), 'preload.cjs debe exponer saveChapterGrouping');
+
+  // Aserciones en app.js
+  assert(accAppJs.includes('chapterGroupingSize'), 'app.js debe mantener el estado chapterGroupingSize');
+  assert(accAppJs.includes('loadChapterGroupingStatus'), 'app.js debe implementar loadChapterGroupingStatus');
+  assert(accAppJs.includes('chapter-accordion'), 'app.js debe generar elementos de acordeón para los capítulos');
+  assert(accAppJs.includes('accordion-expand-all'), 'app.js debe soportar expandir todos los acordeones');
+  assert(accAppJs.includes('accordion-collapse-all'), 'app.js debe soportar colapsar todos los acordeones');
+
+  // Verificación de cero emojis en archivos modificados
+  const accHtmlEmojis = accHtml.match(emojiCheckRegex) || [];
+  const accJsEmojis = accAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(accHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${accHtmlEmojis.join(', ')}`);
+  assert.strictEqual(accJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${accJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Paginación y Acordeón Configurable de Capítulos verificados exitosamente (10, 20, etc.).');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (28/28) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

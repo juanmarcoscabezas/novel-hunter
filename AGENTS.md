@@ -6,7 +6,7 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 
 ## 🚨 1. Regla de Oro Inquebrantable (User Mandate)
 
-> **"Cada vez que agregues una feature, haz tests, corre los tests y luego commit."**
+> **"Cada vez que agregues una feature, haz tests, corre los tests, actualiza la documentación de todo y luego commit."**
 
 - **Prohibido hacer commit sin tests**: Si agregas una feature o modificas una funcionalidad, debes escribir la prueba correspondiente.
 - **Prohibido hacer commit con pruebas rotas**: Siempre corre y verifica que pasen exitosamente:
@@ -14,6 +14,7 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
   npm test
   node test/test_db.js
   ```
+- **Prohibido hacer commit sin actualizar la documentación**: Siempre que se agregue o modifique una característica, se debe actualizar obligatoriamente `README.md` y los archivos especializados en `docs/` (`architecture.md`, `database.md`, `cli-guide.md`, etc.).
 - **Integridad de las suites de prueba**: Nunca comentes, desactives o elimines aserciones existentes para "hacer pasar" una prueba. Si una funcionalidad cambia, actualiza las pruebas justificadamente.
 - **Aislamiento en pruebas**: Toda prueba que interactúe con la base de datos o el progreso de lectura debe aislarse en memoria (`:memory:`) o restaurar el estado previo para no alterar nunca los datos del usuario en `data/novels.db`.
 
@@ -114,4 +115,17 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
   1. Modificar código respetando los lineamientos.
   2. Escribir o actualizar pruebas en `test/verify.js` o `test/test_db.js`.
   3. Ejecutar `npm test && node test/test_db.js`.
-  4. Si todo pasa al 100%, proceder con `git add` y `git commit`.
+  4. **Actualizar la documentación de todo** (`README.md`, `docs/`, `AGENTS.md`).
+  5. Si todo pasa al 100% y la documentación está al día, proceder con `git add` y `git commit`.
+
+---
+
+## 📖 8. Reglas de Documentación Continua (Mandatorio)
+
+- **Sincronización Total de Documentación**: Ninguna funcionalidad se considera completada hasta que su documentación esté escrita y actualizada.
+- **Archivos a Actualizar**:
+  - `README.md`: Tabla de características, requerimientos, guía de uso y nuevas opciones de interfaz.
+  - `docs/architecture.md`: Flujo del sistema, IPC handlers, arquitectura de componentes.
+  - `docs/database.md`: Esquema SQLite 3NF, relaciones en cascada, nuevos métodos en `NovelRepository`.
+  - `docs/cli-guide.md`: Nuevos comandos CLI o paridad con terminal embebida.
+  - `.agents/skills/novel-hunter-workflow/SKILL.md`: Guía de workflow para agentes y asistentes de IA.

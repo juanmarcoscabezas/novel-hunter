@@ -1604,17 +1604,25 @@ async function openReaderModal(novelItem, chapterNo, lang) {
     }
 
     stopTts();
-    currentTtsParagraphs = chapterData.paragraphs || [];
+    const rawParagraphs = chapterData.paragraphs || [];
+    currentTtsParagraphs = rawParagraphs
+      .map(p => (typeof p === 'string' ? p.replace(/\s+/g, ' ').trim() : ''))
+      .filter(p => p.length > 0);
     currentTtsParagraphIndex = 0;
+    paragraphsInfo.textContent = `${currentTtsParagraphs.length} párrafos (${lang.toUpperCase()})`;
 
     // Seleccionar automáticamente una voz adecuada al idioma del capítulo
     const voiceSelect = document.getElementById('tts-voice-select');
     if (voiceSelect && voiceSelect.options.length > 0) {
-      if (lang === 'es') {
-        const esVoice = Array.from(voiceSelect.options).find(o => o.value.startsWith('es-'));
+      const savedVoice = localStorage.getItem(`preferred_voice_${lang}`);
+      const optionsArray = Array.from(voiceSelect.options);
+      if (savedVoice && optionsArray.some(o => o.value === savedVoice)) {
+        voiceSelect.value = savedVoice;
+      } else if (lang === 'es') {
+        const esVoice = optionsArray.find(o => o.value.startsWith('es-'));
         if (esVoice) voiceSelect.value = esVoice.value;
       } else {
-        const enVoice = Array.from(voiceSelect.options).find(o => o.value.startsWith('en-'));
+        const enVoice = optionsArray.find(o => o.value.startsWith('en-'));
         if (enVoice) voiceSelect.value = enVoice.value;
       }
     }
@@ -1823,27 +1831,90 @@ let isTtsPlaying = false;
 let currentTtsParagraphIndex = 0;
 let currentTtsParagraphs = [];
 let ttsPlaybackSessionId = 0;
+const ttsPrefetchCache = new Map();
+
+function getTtsCacheKey(pIndex, voice, rate) {
+  return `${pIndex}__${voice}__${rate}`;
+}
+
+function prefetchParagraphTts(pIndex, voice, rate) {
+  if (pIndex < 0 || pIndex >= currentTtsParagraphs.length) return;
+  const text = currentTtsParagraphs[pIndex];
+  if (!text || !text.trim()) return;
+  const key = getTtsCacheKey(pIndex, voice, rate);
+  if (!ttsPrefetchCache.has(key)) {
+    const promise = window.wtrApi.ttsSynthesize(text, { voice, rate })
+      .catch((err) => {
+        console.warn('Error en prefetch de TTS:', err);
+        ttsPrefetchCache.delete(key);
+        return null;
+      });
+    ttsPrefetchCache.set(key, promise);
+  }
+}
 
 async function initTtsControls() {
   const playBtn = document.getElementById('tts-play-btn');
   const stopBtn = document.getElementById('tts-stop-btn');
   const exportBtn = document.getElementById('tts-export-btn');
   const voiceSelect = document.getElementById('tts-voice-select');
+  const rateSelect = document.getElementById('tts-rate-select');
 
   try {
     const voices = await window.wtrApi.ttsGetVoices();
     if (voiceSelect && voices && voices.length > 0) {
       voiceSelect.innerHTML = '';
-      voices.forEach((v) => {
-        const opt = document.createElement('option');
-        opt.value = v.id;
-        opt.textContent = `${v.flag} ${v.name} (${v.gender} - ${v.desc})`;
-        voiceSelect.appendChild(opt);
+
+      const groups = [
+        { label: '🇨🇴 Colombia', filter: (v) => v.lang === 'es-CO' || v.id === 'es-ES-XimenaNeural' },
+        { label: '👩 Español (Mujeres)', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Mujer' && v.lang !== 'es-CO' && v.id !== 'es-ES-XimenaNeural' },
+        { label: '👨 Español (Hombres)', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Hombre' && v.lang !== 'es-CO' },
+        { label: '🇬🇧 Inglés', filter: (v) => v.lang.startsWith('en-') }
+      ];
+
+      const addedIds = new Set();
+      groups.forEach((g) => {
+        const groupVoices = voices.filter(v => g.filter(v) && !addedIds.has(v.id));
+        if (groupVoices.length > 0) {
+          const optGroup = document.createElement('optgroup');
+          optGroup.label = g.label;
+          groupVoices.forEach((v) => {
+            addedIds.add(v.id);
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = `${v.flag} ${v.name} (${v.gender} - ${v.desc})`;
+            optGroup.appendChild(opt);
+          });
+          voiceSelect.appendChild(optGroup);
+        }
       });
+
+      const remaining = voices.filter(v => !addedIds.has(v.id));
+      if (remaining.length > 0) {
+        remaining.forEach((v) => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = `${v.flag} ${v.name} (${v.gender} - ${v.desc})`;
+          voiceSelect.appendChild(opt);
+        });
+      }
+
+      const savedEsVoice = localStorage.getItem('preferred_voice_es');
+      if (savedEsVoice && Array.from(voiceSelect.options).some(o => o.value === savedEsVoice)) {
+        voiceSelect.value = savedEsVoice;
+      }
     }
   } catch (err) {
     console.warn('Error al cargar voces naturales:', err);
   }
+
+  voiceSelect?.addEventListener('change', () => {
+    const val = voiceSelect.value;
+    if (val) {
+      const langKey = val.startsWith('en-') ? 'en' : 'es';
+      localStorage.setItem(`preferred_voice_${langKey}`, val);
+    }
+  });
 
   playBtn?.addEventListener('click', () => {
     if (isTtsPlaying) {
@@ -1859,6 +1930,20 @@ async function initTtsControls() {
 
   exportBtn?.addEventListener('click', async () => {
     await exportCurrentChapterAudio();
+  });
+
+  rateSelect?.addEventListener('change', () => {
+    ttsPrefetchCache.clear();
+    if (isTtsPlaying) {
+      playParagraphTts(currentTtsParagraphIndex);
+    }
+  });
+
+  voiceSelect?.addEventListener('change', () => {
+    ttsPrefetchCache.clear();
+    if (isTtsPlaying) {
+      playParagraphTts(currentTtsParagraphIndex);
+    }
   });
 }
 
@@ -1921,6 +2006,7 @@ function resumeOrStartTts() {
 
 function stopTts() {
   ttsPlaybackSessionId++;
+  ttsPrefetchCache.clear();
   if (currentTtsAudio) {
     currentTtsAudio.pause();
     currentTtsAudio = null;
@@ -1960,7 +2046,17 @@ async function playParagraphTts(pIndex, targetWord = null) {
   const rate = rateSelect ? rateSelect.value : 'default';
 
   try {
-    const result = await window.wtrApi.ttsSynthesize(text, { voice, rate });
+    const cacheKey = getTtsCacheKey(pIndex, voice, rate);
+    let result = null;
+    if (ttsPrefetchCache.has(cacheKey)) {
+      result = await ttsPrefetchCache.get(cacheKey);
+      ttsPrefetchCache.delete(cacheKey);
+    }
+
+    if (!result || !result.audioBase64) {
+      result = await window.wtrApi.ttsSynthesize(text, { voice, rate });
+    }
+
     if (thisSession !== ttsPlaybackSessionId) return;
 
     if (!result || !result.audioBase64) {
@@ -1979,11 +2075,40 @@ async function playParagraphTts(pIndex, targetWord = null) {
     updateTtsUiPlayingState(true);
     updateTtsStatus(`Leyendo párrafo ${pIndex + 1}/${currentTtsParagraphs.length}...`);
 
+    // Precargar inmediatamente el siguiente párrafo en segundo plano para eliminar la pausa de red
+    if (pIndex + 1 < currentTtsParagraphs.length) {
+      prefetchParagraphTts(pIndex + 1, voice, rate);
+    }
+
+    // Limpiar entradas antiguas de caché
+    for (const [k] of ttsPrefetchCache) {
+      const idx = parseInt(k.split('__')[0], 10);
+      if (idx < pIndex) ttsPrefetchCache.delete(k);
+    }
+
     const wordList = result.words || [];
     const pElement = document.querySelector(`.reader-paragraph[data-pindex="${pIndex}"]`);
     const wordSpans = pElement ? Array.from(pElement.querySelectorAll('.reader-word')) : [];
 
+    let hasAdvanced = false;
+    const advanceToNext = () => {
+      if (hasAdvanced || thisSession !== ttsPlaybackSessionId) return;
+      hasAdvanced = true;
+      audio.ontimeupdate = null;
+      audio.onended = null;
+      audio.onerror = null;
+      try { audio.pause(); } catch {}
+      clearWordHighlights();
+      if (currentTtsParagraphIndex + 1 < currentTtsParagraphs.length) {
+        playParagraphTts(currentTtsParagraphIndex + 1);
+      } else {
+        stopTts();
+        updateTtsStatus('Lectura del capítulo finalizada');
+      }
+    };
+
     audio.ontimeupdate = () => {
+      if (hasAdvanced || thisSession !== ttsPlaybackSessionId) return;
       const currentMs = audio.currentTime * 1000;
       const matched = wordList.find(w => currentMs >= w.start && currentMs <= w.end);
       if (matched && pElement) {
@@ -1997,6 +2122,12 @@ async function playParagraphTts(pIndex, targetWord = null) {
           }
         });
       }
+
+      // Reducir la pausa final cortando el silencio sobrante del MP3 (~800ms) generado por EdgeTTS
+      const lastWord = wordList.length > 0 ? wordList[wordList.length - 1] : null;
+      if (lastWord && lastWord.end && currentMs >= (lastWord.end + 80)) {
+        advanceToNext();
+      }
     };
 
     if (targetWord) {
@@ -2008,18 +2139,12 @@ async function playParagraphTts(pIndex, targetWord = null) {
     }
 
     audio.onended = () => {
-      clearWordHighlights();
-      if (currentTtsParagraphIndex + 1 < currentTtsParagraphs.length) {
-        playParagraphTts(currentTtsParagraphIndex + 1);
-      } else {
-        stopTts();
-        updateTtsStatus('Lectura del capítulo finalizada');
-      }
+      advanceToNext();
     };
 
     audio.onerror = (err) => {
       console.warn('Error en reproducción:', err);
-      playParagraphTts(pIndex + 1);
+      advanceToNext();
     };
 
     await audio.play();

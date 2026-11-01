@@ -4,22 +4,38 @@ import { EdgeTTS } from 'node-edge-tts';
 import { CONFIG } from '../config.js';
 
 export const NATURAL_VOICES = [
-  // Español (España)
-  { id: 'es-ES-AlvaroNeural', name: 'Álvaro', gender: 'Hombre', lang: 'es-ES', flag: '🇪🇸', desc: 'Cálido y natural' },
-  { id: 'es-ES-ElviraNeural', name: 'Elvira', gender: 'Mujer', lang: 'es-ES', flag: '🇪🇸', desc: 'Fluida y profesional' },
-  // Español (México)
-  { id: 'es-MX-DaliaNeural', name: 'Dalia', gender: 'Mujer', lang: 'es-MX', flag: '🇲🇽', desc: 'Expresiva y suave' },
-  { id: 'es-MX-JorgeNeural', name: 'Jorge', gender: 'Hombre', lang: 'es-MX', flag: '🇲🇽', desc: 'Enérgico y dinámico' },
-  // Español (Latinoamérica)
-  { id: 'es-AR-TomasNeural', name: 'Tomás', gender: 'Hombre', lang: 'es-AR', flag: '🇦🇷', desc: 'Narrador argentino' },
-  { id: 'es-CO-GonzaloNeural', name: 'Gonzalo', gender: 'Hombre', lang: 'es-CO', flag: '🇨🇴', desc: 'Claro colombiano' },
-  // Inglés (EE.UU.)
-  { id: 'en-US-GuyNeural', name: 'Guy', gender: 'Hombre', lang: 'en-US', flag: '🇺🇸', desc: 'Narrador de audiolibros' },
-  { id: 'en-US-JennyNeural', name: 'Jenny', gender: 'Mujer', lang: 'en-US', flag: '🇺🇸', desc: 'Natural y expresiva' },
-  { id: 'en-US-AriaNeural', name: 'Aria', gender: 'Mujer', lang: 'en-US', flag: '🇺🇸', desc: 'Vívida y atractiva' },
-  // Inglés (Reino Unido)
-  { id: 'en-GB-RyanNeural', name: 'Ryan', gender: 'Hombre', lang: 'en-GB', flag: '🇬🇧', desc: 'Acento británico' },
-  { id: 'en-GB-SoniaNeural', name: 'Sonia', gender: 'Mujer', lang: 'en-GB', flag: '🇬🇧', desc: 'Acento británico' }
+  // Colombia (Voces prioritarias)
+  { id: 'es-CO-SalomeNeural', name: 'Salomé', gender: 'Mujer', lang: 'es-CO', flag: '🇨🇴', desc: 'Expresiva y cálida', country: 'Colombia' },
+  { id: 'es-ES-XimenaNeural', name: 'Ximena', gender: 'Mujer', lang: 'es-CO', flag: '🇨🇴', desc: 'Clara y juvenil', country: 'Colombia' },
+  { id: 'es-CO-GonzaloNeural', name: 'Gonzalo', gender: 'Hombre', lang: 'es-CO', flag: '🇨🇴', desc: 'Claro colombiano', country: 'Colombia' },
+
+  // Español - Voces Femeninas (Latinoamérica y España)
+  { id: 'es-MX-DaliaNeural', name: 'Dalia', gender: 'Mujer', lang: 'es-MX', flag: '🇲🇽', desc: 'Expresiva y suave', country: 'México' },
+  { id: 'es-AR-ElenaNeural', name: 'Elena', gender: 'Mujer', lang: 'es-AR', flag: '🇦🇷', desc: 'Dulce y pausada', country: 'Argentina' },
+  { id: 'es-CL-CatalinaNeural', name: 'Catalina', gender: 'Mujer', lang: 'es-CL', flag: '🇨🇱', desc: 'Clara y natural', country: 'Chile' },
+  { id: 'es-PE-CamilaNeural', name: 'Camila', gender: 'Mujer', lang: 'es-PE', flag: '🇵🇪', desc: 'Natural y melódica', country: 'Perú' },
+  { id: 'es-US-PalomaNeural', name: 'Paloma', gender: 'Mujer', lang: 'es-US', flag: '🇺🇸', desc: 'Agradable y versátil', country: 'EE.UU. (Latino)' },
+  { id: 'es-VE-PaolaNeural', name: 'Paola', gender: 'Mujer', lang: 'es-VE', flag: '🇻🇪', desc: 'Dulce y expresiva', country: 'Venezuela' },
+  { id: 'es-CR-MariaNeural', name: 'María', gender: 'Mujer', lang: 'es-CR', flag: '🇨🇷', desc: 'Amable y cálida', country: 'Costa Rica' },
+  { id: 'es-EC-AndreaNeural', name: 'Andrea', gender: 'Mujer', lang: 'es-EC', flag: '🇪🇨', desc: 'Clara y modulada', country: 'Ecuador' },
+  { id: 'es-UY-ValentinaNeural', name: 'Valentina', gender: 'Mujer', lang: 'es-UY', flag: '🇺🇾', desc: 'Envolvente y amena', country: 'Uruguay' },
+  { id: 'es-PR-KarinaNeural', name: 'Karina', gender: 'Mujer', lang: 'es-PR', flag: '🇵🇷', desc: 'Expresiva y brillante', country: 'Puerto Rico' },
+  { id: 'es-CU-BelkysNeural', name: 'Belkys', gender: 'Mujer', lang: 'es-CU', flag: '🇨🇺', desc: 'Cálida y serena', country: 'Cuba' },
+  { id: 'es-BO-SofiaNeural', name: 'Sofía', gender: 'Mujer', lang: 'es-BO', flag: '🇧🇴', desc: 'Serena y clara', country: 'Bolivia' },
+  { id: 'es-GT-MartaNeural', name: 'Marta', gender: 'Mujer', lang: 'es-GT', flag: '🇬🇹', desc: 'Natural y suave', country: 'Guatemala' },
+  { id: 'es-ES-ElviraNeural', name: 'Elvira', gender: 'Mujer', lang: 'es-ES', flag: '🇪🇸', desc: 'Fluida y profesional', country: 'España' },
+
+  // Español - Voces Masculinas
+  { id: 'es-MX-JorgeNeural', name: 'Jorge', gender: 'Hombre', lang: 'es-MX', flag: '🇲🇽', desc: 'Enérgico y dinámico', country: 'México' },
+  { id: 'es-AR-TomasNeural', name: 'Tomás', gender: 'Hombre', lang: 'es-AR', flag: '🇦🇷', desc: 'Narrador argentino', country: 'Argentina' },
+  { id: 'es-ES-AlvaroNeural', name: 'Álvaro', gender: 'Hombre', lang: 'es-ES', flag: '🇪🇸', desc: 'Cálido y natural', country: 'España' },
+
+  // Inglés (EE.UU. y Reino Unido)
+  { id: 'en-US-JennyNeural', name: 'Jenny', gender: 'Mujer', lang: 'en-US', flag: '🇺🇸', desc: 'Natural y expresiva', country: 'EE.UU.' },
+  { id: 'en-US-AriaNeural', name: 'Aria', gender: 'Mujer', lang: 'en-US', flag: '🇺🇸', desc: 'Vívida y atractiva', country: 'EE.UU.' },
+  { id: 'en-US-GuyNeural', name: 'Guy', gender: 'Hombre', lang: 'en-US', flag: '🇺🇸', desc: 'Narrador de audiolibros', country: 'EE.UU.' },
+  { id: 'en-GB-SoniaNeural', name: 'Sonia', gender: 'Mujer', lang: 'en-GB', flag: '🇬🇧', desc: 'Acento británico', country: 'Reino Unido' },
+  { id: 'en-GB-RyanNeural', name: 'Ryan', gender: 'Hombre', lang: 'en-GB', flag: '🇬🇧', desc: 'Acento británico', country: 'Reino Unido' }
 ];
 
 /**
@@ -36,13 +52,14 @@ export function getAvailableVoices() {
  * @returns {Promise<{ audioBase64: string, words: Array<{ part: string, start: number, end: number }> }>}
  */
 export async function synthesizeParagraph(text, options = {}) {
-  const cleanText = (text || '').trim();
+  const cleanText = (text || '').replace(/\s+/g, ' ').trim();
   if (!cleanText) {
     return { audioBase64: '', words: [] };
   }
 
-  const voice = options.voice || 'es-ES-AlvaroNeural';
-  const lang = options.lang || (voice.startsWith('en-') ? 'en-US' : 'es-ES');
+  const voice = options.voice || 'es-CO-SalomeNeural';
+  const matchedVoice = NATURAL_VOICES.find(v => v.id === voice);
+  const lang = options.lang || (matchedVoice ? matchedVoice.lang : (voice.startsWith('en-') ? 'en-US' : (voice.startsWith('es-') ? voice.slice(0, 5) : 'es-ES')));
   const rate = options.rate || 'default';
   const pitch = options.pitch || 'default';
 
@@ -96,8 +113,9 @@ export async function exportChapterAudio(novelSlug, chapterNo, chapterTitle, par
   const fileName = `Capitulo_${String(chapterNo).padStart(4, '0')} - ${safeTitle}.mp3`;
   const destPath = path.join(audioDir, fileName);
 
-  const voice = options.voice || 'es-ES-AlvaroNeural';
-  const lang = options.lang || (voice.startsWith('en-') ? 'en-US' : 'es-ES');
+  const voice = options.voice || 'es-CO-SalomeNeural';
+  const matchedVoice = NATURAL_VOICES.find(v => v.id === voice);
+  const lang = options.lang || (matchedVoice ? matchedVoice.lang : (voice.startsWith('en-') ? 'en-US' : (voice.startsWith('es-') ? voice.slice(0, 5) : 'es-ES')));
   const rate = options.rate || 'default';
 
   const tts = new EdgeTTS({
@@ -114,10 +132,10 @@ export async function exportChapterAudio(novelSlug, chapterNo, chapterTitle, par
   let currentLen = 0;
 
   for (const p of paragraphs) {
-    const text = (p || '').trim();
+    const text = (p || '').replace(/\s+/g, ' ').trim();
     if (!text) continue;
     if (currentLen + text.length > 1200 && currentBlock.length > 0) {
-      blocks.push(currentBlock.join('\n\n'));
+      blocks.push(currentBlock.join('\n'));
       currentBlock = [text];
       currentLen = text.length;
     } else {
@@ -126,7 +144,7 @@ export async function exportChapterAudio(novelSlug, chapterNo, chapterTitle, par
     }
   }
   if (currentBlock.length > 0) {
-    blocks.push(currentBlock.join('\n\n'));
+    blocks.push(currentBlock.join('\n'));
   }
 
   const allAudioChunks = [];

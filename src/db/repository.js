@@ -119,9 +119,15 @@ export class NovelRepository {
     const chapterId = chapterStmt.get(novelRawId, chapterNo, translationData.rawTitle || null).id;
 
     // 2. Guardar la traducción del capítulo
-    const fullText = Array.isArray(translationData.paragraphs)
-      ? translationData.paragraphs.join('\n\n')
-      : String(translationData.paragraphs || '');
+    const cleanParagraphs = Array.isArray(translationData.paragraphs)
+      ? translationData.paragraphs
+          .map(p => (typeof p === 'string' ? p.replace(/\s+/g, ' ').trim() : ''))
+          .filter(p => p.length > 0)
+      : [];
+
+    const fullText = cleanParagraphs.length > 0
+      ? cleanParagraphs.join('\n\n')
+      : String(translationData.paragraphs || '').trim();
 
     const transStmt = this.db.prepare(`
       INSERT INTO chapter_translations (chapter_id, engine_id, language, title, source_service, full_text, translated_at)
@@ -143,7 +149,7 @@ export class NovelRepository {
     ).id;
 
     // 3. Guardar los párrafos atómicos en la tabla 'paragraphs'
-    if (Array.isArray(translationData.paragraphs) && translationData.paragraphs.length > 0) {
+    if (cleanParagraphs.length > 0) {
       // Limpiar párrafos previos de esta traducción si existieran
       this.db.prepare('DELETE FROM paragraphs WHERE translation_id = ?').run(translationId);
 
@@ -152,8 +158,8 @@ export class NovelRepository {
         VALUES (?, ?, ?)
       `);
 
-      for (let i = 0; i < translationData.paragraphs.length; i++) {
-        pStmt.run(translationId, i + 1, translationData.paragraphs[i]);
+      for (let i = 0; i < cleanParagraphs.length; i++) {
+        pStmt.run(translationId, i + 1, cleanParagraphs[i]);
       }
     }
 
@@ -185,14 +191,16 @@ export class NovelRepository {
     const row = query.get(novelRawId, chapterNo, language);
     if (!row) return null;
 
-    // Obtener los párrafos atómicos ordenados
+    // Obtener los párrafos atómicos ordenados y limpios sin espacios en blanco redundantes
     const pStmt = this.db.prepare(`
       SELECT content FROM paragraphs
       WHERE translation_id = ?
       ORDER BY paragraph_order ASC
     `);
     const pRows = pStmt.all(row.translation_id);
-    const paragraphs = pRows.length > 0 ? pRows.map(p => p.content) : row.full_text.split('\n\n');
+    const paragraphs = pRows.length > 0
+      ? pRows.map(p => (p.content || '').replace(/\s+/g, ' ').trim()).filter(p => p.length > 0)
+      : (row.full_text || '').split(/\n+/).map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 0);
 
     return {
       chapterNo: row.chapter_no,

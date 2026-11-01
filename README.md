@@ -1,29 +1,31 @@
-# WTR-LAB Novel Downloader & Scraper 📚
+# Novel Hunter (WTR-LAB Novel Downloader & Reader) 📚
 
-Herramienta en línea de comandos (CLI) desarrollada en **Node.js** para buscar, descargar, traducir y fusionar novelas ligeras de [wtr-lab.com](https://wtr-lab.com/en).
+**Novel Hunter** es una aplicación de escritorio híbrida y herramienta CLI desarrollada en **Node.js** y **Electron** para buscar, descargar, traducir, leer offline y narrar novelas ligeras de [wtr-lab.com](https://wtr-lab.com/en).
 
-Soporta traducción prioritaria de **Google Gemini**, reemplazo automático de glosario de términos oficiales, descifrado nativo **AES-GCM**, fallback y traducción a **Español** vía Google Translate, almacenamiento individual en **TXT**, compilación fusionada (**Merge**) y exportación a **PDF**.
+Soporta traducción prioritaria de **Google Gemini** con sustitución de glosario oficial, descifrado nativo **AES-GCM**, traducción bajo demanda a **Español** (Google Translate RPC y Gemini Flash), catálogo relacional local **SQLite 3NF** (`node:sqlite`), narración auditiva natural con voces neurales **EdgeTTS** (sincronizada palabra por palabra), lectura ininterrumpida con descarga al vuelo de los siguientes capítulos, gestión de almacenamiento (borrado selectivo y acordeones) y exportación a **TXT** y **PDF** con portadas en alta resolución.
 
 ---
 
 ## 📋 Tabla de Contenidos
 
 - [Características Principales](#-características-principales)
+- [Modo Escritorio (Desktop App)](#-modo-escritorio-desktop-app)
 - [Documentación Adicional (`docs/`)](#-documentación-adicional-en-docs)
 - [Cumplimiento de Requerimientos](#-cumplimiento-de-requerimientos)
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación](#-instalación)
 - [Guía de Uso](#-guía-de-uso)
-  - [Modo Interactivo (Recomendado)](#1-modo-interactivo-recomendado)
+  - [Modo Interactivo (CLI)](#1-modo-interactivo-cli)
   - [Modo Comando con Parámetros (Flags)](#2-modo-comando-con-parámetros-flags)
   - [Gestión de Sesión y Autenticación (Bypass Cloudflare)](#3-gestión-de-sesión-y-autenticación)
-- [Formato de Selección de Capítulos](#-formato-de-selección-de-capítulos)
+- [Lector Integrado y Continuación de Lectura](#-lector-integrado-y-continuación-de-lectura)
 - [Mecanismos Internos e Ingeniería Inversa](#-mecanismos-internos-e-ingeniería-inversa)
   - [1. Flujo de Descarga y Prioridad de Motores](#1-flujo-de-descarga-y-prioridad-de-motores)
   - [2. Glosario de Gemini y Reemplazo de Tokens](#2-glosario-de-gemini-y-reemplazo-de-tokens)
   - [3. Descifrado AES-GCM (Servicio Web)](#3-descifrado-aes-gcm-servicio-web)
   - [4. Traducción a Español](#4-traducción-a-español)
-  - [5. Evasión de Cloudflare](#5-evasión-de-cloudflare)
+  - [5. Motor de Narración TTS y Word Boundary](#5-motor-de-narración-tts-y-word-boundary)
+  - [6. Evasión de Cloudflare](#6-evasión-de-cloudflare)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Pruebas Automatizadas](#-pruebas-automatizadas)
 
@@ -31,17 +33,34 @@ Soporta traducción prioritaria de **Google Gemini**, reemplazo automático de g
 
 ## ✨ Características Principales
 
-- 💾 **Base de Datos Portable SQLite**: Catálogo relacional normalizado en 3NF (`node:sqlite` nativo) que almacena novelas, autores, glosario, capítulos y párrafos atómicos en un solo archivo `data/novels.db`.
-- ⚡ **Caché Inteligente y Cero Re-Descargas**: Si un capítulo ya está en la base de datos local, se carga en milisegundos sin consumir peticiones ni arriesgar bloqueos de Cloudflare.
-- 📦 **Exportación Offline**: Exporta o fusiona capítulos a TXT o PDF directamente desde la base de datos sin necesidad de conexión a internet.
-- 🔍 **Búsqueda Flexible**: Busca por nombre de novela con menú interactivo o pega directamente la URL completa de WTR-Lab.
-- 🤖 **Prioridad Gemini Nativa**: Descarga directa de la traducción de Google Gemini (`gemini-3.5-flash-lite`) alojada en la plataforma.
-- 📖 **Limpieza de Glosario**: Decodifica y sustituye automáticamente los marcadores `※N⛬` por los nombres de personajes, sectas, píldoras y reinos de cultivo oficiales.
-- 🔓 **Descifrador AES-GCM**: Algoritmo criptográfico integrado para descifrar el contenido ofuscado del servicio estándar de WTR-Lab.
-- 🇪🇸 **Traducción Opcional a Español**: Traduce con fluidez los capítulos conservando los nombres propios y la coherencia del glosario.
-- 📁 **Organización y Fusión**: Guarda cada capítulo por separado (`.txt`) y permite unirlos todos en un único archivo compilado con índice de contenidos.
-- 📄 **Exportación a PDF**: Genera libros digitales en PDF con formato tipográfico limpio, portada, encabezados y numeración de página.
-- 🛡️ **Anti-Detección Cloudflare**: Cabeceras de navegador real (Chrome 130 Windows), *request throttling* con pausas aleatorias y soporte para cookies de sesión.
+- 🖥️ **Aplicación de Escritorio Moderna**: Interfaz gráfica rápida en Vanilla JS (ES Modules) impulsada por Electron con navegación lateral (*Buscador*, *Mi biblioteca*, *Consola Terminal*, *Configuración*).
+- 💾 **Base de Datos SQLite en 3NF**: Esquema relacional normalizado con módulo nativo `node:sqlite` que almacena novelas, autores, capítulos canónicos, traducciones independientes (`en`, `es`), párrafos atómicos en 1NF y progreso de lectura en `data/novels.db`.
+- 📖 **Lector Offline con Lectura Ininterrumpida (*Binge Reading*)**:
+  - Botón directo **"Seguir Leyendo (Cap. X)"** en la biblioteca y en el modal de detalle de la novela.
+  - **Descarga al vuelo del capítulo siguiente**: Cuando llegas al último capítulo descargado, el botón *"Siguiente"* se transforma en *"Descargar Sig. (Cap. X+1)"* permitiendo continuar la historia sin interrupciones.
+  - Tarjeta interactiva al pie del texto para descargar el siguiente capítulo o los próximos 5 en lote.
+  - Botón *"Descargar Más..."* integrado tanto en el lector como en el detalle de la novela con sugerencia de rangos inteligentes.
+- 🎙️ **Narración Auditiva Neural (TTS)**: Motor `node-edge-tts` con 11 voces neurales naturales multilingües (ES, MX, AR, CO, US, GB), sincronización por palabra (`WordBoundary`), salto de narración al hacer clic sobre cualquier palabra (`.reader-word`) y exportación a audiolibro en MP3.
+- 🌐 **Traducción Híbrida Inteligente**: Gemini 1.5 Flash (usando API Key configurable en Ajustes) con fallback automático y gratuito a Google Translate RPC. Traducción bajo demanda tanto individual como por lotes.
+- 🗂️ **Agrupación y Gestión de Capítulos**:
+  - Acordeón de capítulos agrupados en bloques configurables (por defecto 20 capítulos por grupo) con botones para expandir/colapsar todos.
+  - Diálogo de borrado selectivo de capítulos por idioma y eliminación de novelas completas en cascada 3NF.
+- ⚡ **Caché Inteligente y Cero Re-Descargas**: Capítulos descargados se leen en milisegundos desde SQLite sin peticiones a internet ni consumo de cuotas.
+- 📦 **Exportación Offline**: Exporta a archivos individuales `.txt` o libros digitales `.pdf` con tipografía limpia, portadas incrustadas y tabla de contenidos.
+- 🛡️ **Anti-Detección Cloudflare**: Cabeceras de navegador real (Chrome 130 Windows), *request throttling* con pausas aleatorias (*jitter*) y soporte para cookies de sesión.
+
+---
+
+## 🖥️ Modo Escritorio (Desktop App)
+
+Inicia la aplicación de escritorio ejecutando:
+```bash
+npm run electron
+```
+O para desarrollo con recarga en vivo de estilos y DevTools:
+```bash
+npm run dev
+```
 
 ---
 
@@ -253,7 +272,14 @@ El módulo [src/translators/google.js](file:///home/juanmarcos/nasser_18/src/tra
 - Separa los párrafos con el delimitador numérico `[[--9999--]]` (inmune a traducciones erróneas).
 - Reconstruye los párrafos en español manteniendo los saltos de línea originales.
 
-### 5. Evasión de Cloudflare
+### 5. Motor de Narración TTS y Word Boundary
+
+El módulo [src/services/tts.js](file:///home/juanmarcos/nasser_18/src/services/tts.js) integra `node-edge-tts` para ofrecer síntesis de voz natural:
+- Catálogo de 11 voces neuronales en español (España, México, Colombia, Argentina) e inglés (US, UK).
+- Emisión de marcas de tiempo por palabra (`WordBoundary`) que permite saltar a cualquier punto del capítulo haciendo clic sobre cualquier palabra (`.reader-word`).
+- Exportación directa de capítulos completos a audiolibro en formato MP3 con nombres estandarizados en `exports/<novela>/audio/`.
+
+### 6. Evasión de Cloudflare
 
 Para evitar bloqueos por bot o activación de retos de Turnstile:
 1. **Emulación de Chrome 130**: Envío de cabeceras completas `User-Agent`, `Sec-Ch-Ua`, `Sec-Fetch-*` y `Referer`.
@@ -266,29 +292,45 @@ Para evitar bloqueos por bot o activación de retos de Turnstile:
 
 ```text
 nasser_18/
+├── electron/
+│   ├── main.js              # Proceso principal de Electron e IPC Handlers
+│   ├── preload.cjs          # ContextBridge seguro (window.wtrApi)
+│   └── renderer/            # Interfaz de usuario (index.html, app.js, styles.css)
 ├── bin/
 │   └── cli.js               # CLI principal (prompts interactivos y commander)
 ├── src/
-│   ├── config.js            # Configuración, rutas y persistencia de cookies
+│   ├── config.js            # Configuración, rutas y persistencia de cookies/settings
 │   ├── api/
 │   │   ├── client.js        # Cliente HTTP con cabeceras anti-bot y cookies
 │   │   ├── novel.js         # Búsqueda de novelas, parseo de URLs y lista de capítulos
-│   │   └── reader.js        # Descarga con prioridad Gemini y fallback Web
+│   │   └── reader.js        # Descarga con prioridad Gemini, fallback Web y guardado SQLite
 │   ├── crypto/
 │   │   └── aes.js           # Descifrador AES-GCM nativo
+│   ├── db/
+│   │   ├── connection.js    # Conexión nativa node:sqlite con modo WAL y FK activas
+│   │   ├── schema.sql       # Esquema relacional en Tercera Forma Normal (3NF)
+│   │   └── repository.js    # NovelRepository con soporte de cascada y lectura offline
+│   ├── services/
+│   │   ├── tts.js           # Motor TTS EdgeTTS con marcas temporales y exportación MP3
+│   │   └── translator.js    # Servicio híbrido de traducción Gemini / Google RPC
 │   ├── translators/
-│   │   ├── gemini.js        # Limpieza de tokens y reemplazo de glosario
+│   │   ├── gemini.js        # Limpieza de tokens y reemplazo de glosario oficial
 │   │   └── google.js        # Traductor por lotes con delimitadores seguros
 │   └── storage/
 │       ├── writer.js        # Escritura de capítulos individuales en TXT
 │       ├── merger.js        # Fusión de capítulos con índice de contenidos
 │       └── pdf.js           # Generador de documentos PDF con portada y paginación
-├── data/                    # Base de datos SQLite (novels.db)
-├── exports/                 # Directorio de salida de novelas exportadas (TXT / PDF)
+├── .agents/
+│   └── skills/
+│       └── novel-hunter-workflow/ # Skill de ciclo de desarrollo y documentación
+├── data/                    # Base de datos SQLite (novels.db) y settings.json
+├── exports/                 # Directorio de salida de novelas exportadas (TXT / PDF / MP3)
 ├── test/
-│   └── verify.js            # Suite de pruebas automatizadas
+│   ├── verify.js            # Suite integral de verificación (26 pruebas)
+│   └── test_db.js           # Suite unitaria SQLite 3NF (14 pruebas)
+├── AGENTS.md                # Reglas mandatorias para LLMs y asistentes
+├── GEMINI.md                # Directrices específicas para Gemini / Antigravity
 ├── package.json             # Manifiesto y dependencias del proyecto
-├── req.txt                  # Requerimientos originales del proyecto
 └── README.md                # Documentación completa
 ```
 
@@ -296,24 +338,28 @@ nasser_18/
 
 ## 🧪 Pruebas Automatizadas
 
-El proyecto cuenta con una suite completa de pruebas unitarias y de integración que verifica:
-1. Parseo correcto de URLs de WTR-Lab.
-2. Búsqueda en vivo de novelas contra la API.
-3. Obtención de capítulos.
-4. Sustitución de glosario de Gemini.
-5. Traducción de Google Translate por lotes.
-6. Descarga real de un capítulo con Gemini.
-7. Escritura en archivo `.txt`.
-8. Fusión de capítulos.
-9. Creación y formato de archivo `.pdf`.
+El proyecto cuenta con dos suites de pruebas automatizadas completas:
 
-Para ejecutar las pruebas:
+1. **Suite de Integración** (`test/verify.js` - 26 pruebas):
+   - Parseo de URLs, búsqueda en vivo, lista de capítulos y glosario Gemini.
+   - Descifrado AES-GCM y traductor por lotes Google Translate RPC.
+   - Generación de TXT, fusión y PDF con portadas incrustadas.
+   - Sincronización palabra por palabra TTS y exportación MP3.
+   - Traducción local bajo demanda a español (individual y lotes).
+   - Opciones de seguir leyendo y descarga al vuelo de capítulos siguientes.
+   - Eliminación selectiva de capítulos y borrado completo de novela.
+
+2. **Suite Unitaria SQLite 3NF** (`test/test_db.js` - 14 pruebas):
+   - Normalización relacional de autores, novelas, glosarios y capítulos.
+   - Párrafos atómicos en 1NF y versiones independientes por idioma (`en`, `es`).
+   - Registro de progreso de lectura y último leído global.
+   - Detección de capítulos pendientes de traducir.
+   - Borrado selectivo por idioma y eliminación en cascada completa.
+
+Para ejecutar ambas suites:
 ```bash
 npm test
-```
-o directamente:
-```bash
-node test/verify.js
+node test/test_db.js
 ```
 
 ---

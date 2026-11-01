@@ -148,9 +148,36 @@ Diccionario oficial de la novela extraído del backend de WTR-Lab.
 - `translated_term` (TEXT): Traducción oficial (ej: `Foundation Establishment`).
 - `language` (TEXT): Idioma del término (`en`, `es`).
 
+### `reading_progress`
+Registro de avance y último capítulo leído por novela.
+- `novel_id` (INTEGER, PK, FK): Referencia a `novels.id`.
+- `last_read_chapter_no` (INTEGER): Número del último capítulo leído.
+- `last_read_language` (TEXT): Idioma de la última lectura (`en` o `es`).
+- `last_read_at` (DATETIME): Marca temporal de la última lectura.
+
 ---
 
-## 4. Gestión y Respaldos de la Base de Datos
+## 4. Borrado y Gestión en Cascada Relacional (3NF)
+
+La clase `NovelRepository` implementa métodos seguros con transacciones para el mantenimiento del catálogo:
+
+1. **`deleteNovel(identifier)`**:
+   - Elimina la novela de la tabla `novels`.
+   - Gracias a `PRAGMA foreign_keys = ON;`, SQLite ejecuta automáticamente la eliminación en cascada de:
+     - `chapters` (capítulos canónicos)
+     - `chapter_translations` (traducciones EN/ES)
+     - `paragraphs` (párrafos atómicos)
+     - `glossary_terms` (términos de glosario)
+     - `reading_progress` (progreso registrado)
+
+2. **`deleteChapters(novelRawId, chapterNumbers, language)`**:
+   - Permite borrar selectivamente traducciones de un idioma (`es` o `en`) sin eliminar el capítulo canónico en el otro idioma.
+   - Si se eliminan todas las traducciones de un capítulo, se elimina el registro canónico en `chapters`.
+   - Reajusta automáticamente el progreso de lectura si el capítulo eliminado era el último leído.
+
+---
+
+## 5. Gestión y Respaldos de la Base de Datos
 
 ### Copia de Respaldo:
 Como SQLite es un archivo único en disco, puedes realizar un backup en caliente simplemente copiando el archivo:

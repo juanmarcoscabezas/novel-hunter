@@ -3,8 +3,9 @@
 Read and strictly follow [AGENTS.md](./AGENTS.md).
 
 ## Critical Directives:
-1. MANDATORY RULE: "Cada vez que agregues una feature, haz tests, corre los tests y luego commit."
-2. NEVER commit without running and passing:
+1. MANDATORY RULE: "Cada vez que agregues una feature, haz tests, corre los tests, actualiza la documentación de todo y luego commit."
+2. ALWAYS update documentation in README.md and docs/ for every feature.
+3. NEVER commit without running and passing:
    `npm test`
    `node test/test_db.js`
 3. Architecture:
