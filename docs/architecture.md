@@ -253,3 +253,25 @@ Para optimizar la visualización de novelas con cientos o miles de capítulos gu
   - Cada acordeón muestra su rango de capítulos (ej. `Capítulos 1 – 20`), un badge con el conteo de capítulos y un icono indicador con rotación CSS suave de 90°.
   - **Barra de Herramientas**: Muestra un resumen general (`Total: X capítulos en Y grupos`) y controles rápidos para *"Expandir todos"* o *"Colapsar todos"*.
   - **Apertura Inteligente**: Se abre automáticamente el acordeón correspondiente al último capítulo leído (`last_read_chapter_no`) para retomar la lectura sin necesidad de desplazamiento.
+
+---
+
+## 13. Optimización de UX y Menú Desplegable "Más Opciones" en Detalle de Novela
+
+Para garantizar una experiencia de usuario limpia y evitar la sobrecarga de botones en el modal de detalle de la novela (`#chapters-modal`), la barra `.novel-meta-actions` implementa una jerarquía clara de acciones:
+- **Acciones Primarias Visibles**:
+  - `detail-continue-btn`: *"Seguir Leyendo (Cap. X)"* para reanudar inmediatamente la lectura.
+  - `detail-download-next-btn`: *"Descargar Sig. (Cap. X+1)"* con cálculo reactivo del siguiente capítulo pendiente de descarga.
+  - `detail-translate-btn`: *"Traducir a Español"* para la traducción masiva bajo demanda.
+- **Menú Desplegable "Más Opciones" (`#detail-more-btn` / `#detail-more-dropdown`)**:
+  - Estructurado en `.dropdown-wrapper` con posicionamiento flotante y animación suave de aparición (`dropdownFadeIn`).
+  - **Acciones Secundarias**:
+    - `detail-download-more-btn`: *"Descargar Más..."* para definir lotes y rangos personalizados.
+    - `detail-export-btn`: *"Exportar (TXT / PDF)"* a archivos independientes o consolidados.
+    - `detail-open-folder-btn`: *"Abrir Carpeta"* en el explorador de archivos nativo del sistema operativo.
+  - **Separador Visual (`.dropdown-divider`)**: Divide las operaciones utilitarias de las acciones destructivas.
+  - **Acciones Destructivas Seguras (`.dropdown-item-danger`)**:
+    - `detail-delete-chapters-btn`: *"Borrar Capítulos..."* para gestionar el almacenamiento por rangos e idioma.
+    - `detail-delete-novel-btn`: *"Eliminar Novela Completa"* con confirmación previa y eliminación en cascada 3NF.
+- **Interacción y Cierre Automático**: Cierre instantáneo al hacer clic en cualquier opción, al hacer clic fuera del menú o al cerrar/abrir el detalle de la novela.
+

@@ -818,7 +818,50 @@ async function runTests() {
 
   console.log('   ✓ Paginación y Acordeón Configurable de Capítulos verificados exitosamente (10, 20, etc.).');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (28/28) PASARON EXITOSAMENTE!');
+  // Test 29: Menú Desplegable "Más Opciones" en Detalle de Novela (UX Optimizada)
+  console.log('\n29. Probando Menú Desplegable "Más Opciones" en Detalle de Novela (UX Optimizada)...');
+  const uxHtml = fs.readFileSync(path.join(__dirname, '../electron/renderer/index.html'), 'utf-8');
+  const uxStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const uxAppJs = fs.readFileSync(path.join(__dirname, '../electron/renderer/app.js'), 'utf-8');
+
+  // Aserciones en index.html
+  assert(uxHtml.includes('id="detail-more-btn"'), 'index.html debe contener el botón detail-more-btn');
+  assert(uxHtml.includes('id="detail-more-dropdown"'), 'index.html debe contener el contenedor detail-more-dropdown');
+  assert(uxHtml.includes('class="dropdown-wrapper"'), 'index.html debe estructurar el menú en .dropdown-wrapper');
+  assert(uxHtml.includes('class="dropdown-divider"'), 'index.html debe contener .dropdown-divider para separar acciones destructivas');
+  assert(uxHtml.includes('dropdown-item-danger'), 'index.html debe marcar las opciones destructivas con .dropdown-item-danger');
+
+  // Verificar que las acciones secundarias y destructivas están dentro del dropdown
+  const dropdownStartIndex = uxHtml.indexOf('id="detail-more-dropdown"');
+  assert(dropdownStartIndex !== -1, 'El dropdown debe existir en index.html');
+  const dropdownContent = uxHtml.slice(dropdownStartIndex, dropdownStartIndex + 2000);
+  assert(dropdownContent.includes('id="detail-download-more-btn"'), 'detail-download-more-btn debe estar dentro del dropdown');
+  assert(dropdownContent.includes('id="detail-export-btn"'), 'detail-export-btn debe estar dentro del dropdown');
+  assert(dropdownContent.includes('id="detail-open-folder-btn"'), 'detail-open-folder-btn debe estar dentro del dropdown');
+  assert(dropdownContent.includes('id="detail-delete-chapters-btn"'), 'detail-delete-chapters-btn debe estar dentro del dropdown');
+  assert(dropdownContent.includes('id="detail-delete-novel-btn"'), 'detail-delete-novel-btn debe estar dentro del dropdown');
+
+  // Aserciones en styles.css
+  assert(uxStyles.includes('.dropdown-wrapper'), 'styles.css debe definir estilos para .dropdown-wrapper');
+  assert(uxStyles.includes('.dropdown-menu'), 'styles.css debe definir estilos para .dropdown-menu');
+  assert(uxStyles.includes('.dropdown-item'), 'styles.css debe definir estilos para .dropdown-item');
+  assert(uxStyles.includes('.dropdown-divider'), 'styles.css debe definir estilos para .dropdown-divider');
+  assert(uxStyles.includes('.dropdown-item-danger'), 'styles.css debe definir estilos para .dropdown-item-danger');
+
+  // Aserciones en app.js
+  assert(uxAppJs.includes("document.getElementById('detail-more-btn')"), 'app.js debe enlazar el botón detail-more-btn');
+  assert(uxAppJs.includes("document.getElementById('detail-more-dropdown')"), 'app.js debe referenciar detail-more-dropdown');
+  assert(uxAppJs.includes("moreDropdown?.classList.toggle('hidden')"), 'app.js debe alternar visibilidad al hacer clic en Más');
+
+  // Verificación de cero emojis en archivos modificados
+  const uxHtmlEmojis = uxHtml.match(emojiCheckRegex) || [];
+  const uxJsEmojis = uxAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(uxHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${uxHtmlEmojis.join(', ')}`);
+  assert.strictEqual(uxJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${uxJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Menú Desplegable "Más Opciones" y limpieza de UX en Detalle verificados exitosamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (29/29) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

@@ -305,6 +305,22 @@ function initDownloadModal() {
     if (tocSearch) tocSearch.value = '';
     if (tocClearBtn) tocClearBtn.classList.add('hidden');
     resetDownloadProgress();
+
+    if (currentChaptersNovel) {
+      const langFilter = document.getElementById('chapters-lang-filter');
+      const lang = langFilter ? langFilter.value : 'en';
+      loadChaptersListForNovel(currentChaptersNovel, lang).catch(() => {});
+      updateModalActionButtons(currentChaptersNovel, lang).catch(() => {});
+    }
+    if (currentReadingNovel) {
+      const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
+      window.wtrApi.getDownloadedChapters(novelId, currentReadingLang).then(chapters => {
+        if (chapters && chapters.length > 0) {
+          currentReadingChaptersList = chapters;
+          updateReaderNavButtons();
+        }
+      }).catch(() => {});
+    }
   };
 
   closeBtn.addEventListener('click', closeModal);
@@ -358,11 +374,18 @@ async function openDownloadModal(novel, options = null) {
   // Determinar parámetros de opciones
   let suggestedStartChapter = null;
   let expandToc = false;
+  let preferredLang = null;
   if (typeof options === 'number') {
     suggestedStartChapter = options;
   } else if (options && typeof options === 'object') {
     suggestedStartChapter = options.suggestedStartChapter || null;
     expandToc = Boolean(options.expandToc);
+    preferredLang = options.lang || null;
+  }
+
+  const langSelect = document.getElementById('lang-select');
+  if (langSelect && preferredLang) {
+    langSelect.value = preferredLang;
   }
 
   document.getElementById('modal-novel-title').textContent = novel.title;
@@ -659,6 +682,8 @@ async function startDownload(payload) {
 
     document.getElementById('dl-view-library-btn')?.addEventListener('click', () => {
       document.getElementById('download-modal').classList.add('hidden');
+      document.getElementById('reader-modal')?.classList.add('hidden');
+      document.getElementById('chapters-modal')?.classList.add('hidden');
       resetDownloadProgress();
       const libTabBtn = document.querySelector('[data-tab="tab-library"]');
       if (libTabBtn) libTabBtn.click();
@@ -666,6 +691,24 @@ async function startDownload(payload) {
 
     // Recargar biblioteca SQLite
     loadLibrary();
+
+    // Si el modal de capítulos de esta novela está abierto, refrescar lista y botones
+    if (currentChaptersNovel && (currentChaptersNovel.raw_id === payload.novel.raw_id || currentChaptersNovel.id === payload.novel.id || currentChaptersNovel.slug === payload.novel.slug)) {
+      const langFilter = document.getElementById('chapters-lang-filter');
+      const lang = langFilter ? langFilter.value : (payload.lang || 'en');
+      await loadChaptersListForNovel(currentChaptersNovel, lang);
+      await updateModalActionButtons(currentChaptersNovel, lang);
+    }
+
+    // Si el lector está abierto para esta novela, actualizar la lista de capítulos y botones
+    if (currentReadingNovel && (currentReadingNovel.raw_id === payload.novel.raw_id || currentReadingNovel.id === payload.novel.id || currentReadingNovel.slug === payload.novel.slug)) {
+      const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
+      const chapters = await window.wtrApi.getDownloadedChapters(novelId, currentReadingLang);
+      if (chapters && chapters.length > 0) {
+        currentReadingChaptersList = chapters;
+        updateReaderNavButtons();
+      }
+    }
   } catch (err) {
     isDownloading = false;
     cancelBtn.classList.add('hidden');
@@ -847,14 +890,36 @@ function initChaptersModal() {
   const closeBtn = document.getElementById('close-chapters-modal-btn');
   const closeBottomBtn = document.getElementById('close-chapters-bottom-btn');
   const langFilter = document.getElementById('chapters-lang-filter');
+  const moreBtn = document.getElementById('detail-more-btn');
+  const moreDropdown = document.getElementById('detail-more-dropdown');
 
   const closeModal = () => {
     stopTts();
     modal.classList.add('hidden');
+    moreDropdown?.classList.add('hidden');
     loadLibrary();
   };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
+
+  moreBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreDropdown?.classList.toggle('hidden');
+  });
+
+  moreDropdown?.querySelectorAll('.dropdown-item').forEach(item => {
+    item.addEventListener('click', () => {
+      moreDropdown.classList.add('hidden');
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (moreDropdown && !moreDropdown.classList.contains('hidden')) {
+      if (!moreDropdown.contains(e.target) && e.target !== moreBtn && !moreBtn?.contains(e.target)) {
+        moreDropdown.classList.add('hidden');
+      }
+    }
+  });
 
   const continueBtn = document.getElementById('detail-continue-btn');
   const downloadNextBtn = document.getElementById('detail-download-next-btn');
@@ -965,7 +1030,7 @@ function initChaptersModal() {
     const lang = langFilter.value;
     const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, lang);
     const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : 1;
-    openDownloadModal(currentChaptersNovel, nextCh);
+    openDownloadModal(currentChaptersNovel, { suggestedStartChapter: nextCh, lang });
   });
 
   exportBtn?.addEventListener('click', () => {
@@ -1083,6 +1148,8 @@ async function updateModalActionButtons(novelItem, lang) {
 async function openChaptersModal(novelItem) {
   currentChaptersNovel = novelItem;
   const modal = document.getElementById('chapters-modal');
+  const moreDropdown = document.getElementById('detail-more-dropdown');
+  moreDropdown?.classList.add('hidden');
   document.getElementById('chapters-modal-title').textContent = novelItem.title;
   document.getElementById('chapters-novel-author').textContent = novelItem.author || 'Desconocido';
   document.getElementById('chapters-novel-total').textContent = `${novelItem.total_chapters || '?'} en WTR-Lab`;
@@ -1382,7 +1449,7 @@ function initReaderModal() {
     const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
     const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, currentReadingLang);
     const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : (currentReadingChapterNo + 1);
-    openDownloadModal(currentReadingNovel, nextCh);
+    openDownloadModal(currentReadingNovel, { suggestedStartChapter: nextCh, lang: currentReadingLang });
   });
 
   translateBtn?.addEventListener('click', async () => {

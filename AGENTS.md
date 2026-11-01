@@ -77,7 +77,8 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
      - `"Configuración"`
 2. **Estilo y Botones**:
    - Las acciones principales de las tarjetas de novela deben tener altura unificada exacta (36px, `box-sizing: border-box`).
-   - Las opciones de exportar y abrir carpeta deben residir dentro del modal de detalle de la novela para evitar duplicidad en la barra global.
+   - Las opciones de exportar, abrir carpeta y borrado deben residir dentro del modal de detalle de la novela para evitar duplicidad o saturación visual en la barra global o tarjetas.
+   - En el encabezado del detalle de la novela (`#chapters-modal`), mantener visibles las acciones primarias (`Seguir Leyendo`, `Descargar Sig.`, `Traducir a Español`) y agrupar las acciones secundarias (`Descargar Más...`, `Exportar`, `Abrir Carpeta`) y destructivas (`Borrar Capítulos...`, `Eliminar Novela Completa`) dentro del menú desplegable `[Más ▾]` (`#detail-more-btn` / `#detail-more-dropdown`).
 3. **Traducción On-Demand**:
    - Si el usuario descargó en inglés, debe tener disponible el botón `🌐 Traducir a Español` tanto en el lector (`#reader-modal`) como en el detalle de la novela (`#chapters-modal`).
    - Debe proveerse retroalimentación visual en tiempo real (barras de progreso, spinners, etiquetas de estado) durante operaciones asíncronas.

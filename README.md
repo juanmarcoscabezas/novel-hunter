@@ -49,6 +49,7 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
 - 🎙️ **Narración Auditiva Neural (TTS)**: Motor `node-edge-tts` con 11 voces neurales naturales multilingües (ES, MX, AR, CO, US, GB), sincronización por palabra (`WordBoundary`), salto de narración al hacer clic sobre cualquier palabra (`.reader-word`) y exportación a audiolibro en MP3.
 - 🌐 **Traducción Híbrida Inteligente**: Gemini 1.5 Flash (usando API Key configurable en Ajustes) con fallback automático y gratuito a Google Translate RPC. Traducción bajo demanda tanto individual como por lotes.
 - 🗂️ **Agrupación y Gestión de Capítulos**:
+  - **Experiencia de Usuario Optimizada en Detalle de Novela**: Encabezado limpio con las 3 acciones prioritarias visibles (`Seguir Leyendo`, `Descargar Sig.`, `Traducir a Español`) y un menú desplegable **"Más ▾"** para acciones secundarias (`Descargar Más...`, `Exportar TXT/PDF`, `Abrir Carpeta`) y acciones destructivas protegidas con estilo de advertencia (`Borrar Capítulos...`, `Eliminar Novela Completa`).
   - Acordeón de capítulos agrupados en bloques configurables (por defecto 20 capítulos por grupo) con botones para expandir/colapsar todos.
   - Diálogo de borrado selectivo de capítulos por idioma y eliminación de novelas completas en cascada 3NF.
 - ⚡ **Caché Inteligente y Cero Re-Descargas**: Capítulos descargados se leen en milisegundos desde SQLite sin peticiones a internet ni consumo de cuotas.
@@ -196,9 +197,9 @@ node bin/cli.js export <slug_o_id> --chapters 1-20 --lang es --merge --pdf
 
 #### Eliminar capítulos o novelas completas:
 - **Desde la interfaz gráfica de escritorio**:
-  - Todas las acciones de eliminación residen de forma limpia y segura dentro del detalle de la novela:
-    - **Eliminar novela completa**: Pulsa el botón *"Eliminar Novela Completa"* en la barra de acciones del detalle de la novela. Elimina en cascada relacional 3NF todos los registros y limpia la carpeta en `exports/`.
-    - **Borrar capítulos**: Usa el botón *"Borrar Capítulos"* en el modal de detalle para definir rangos (`1-10`, `all`) e idioma, o el botón individual *"Borrar"* en cada fila de capítulo.
+  - Todas las acciones de eliminación residen de forma limpia y segura dentro del menú desplegable **"Más ▾"** en el detalle de la novela:
+    - **Eliminar novela completa**: Pulsa el botón *"Más ▾"* -> *"Eliminar Novela Completa"* (destacado en rojo preventivo). Elimina en cascada relacional 3NF todos los registros y limpia la carpeta en `exports/`.
+    - **Borrar capítulos**: Usa el botón *"Más ▾"* -> *"Borrar Capítulos..."* en el modal de detalle para definir rangos (`1-10`, `all`) e idioma, o el botón individual *"Borrar"* en cada fila de capítulo.
 - **Desde la consola integrada o CLI**:
   ```bash
   # Eliminar novela completa de la biblioteca y disco:

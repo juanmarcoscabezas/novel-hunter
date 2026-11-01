@@ -683,6 +683,31 @@ body {
   justify-content: center;
 }
 
+#global-modals {
+  display: contents;
+}
+
+/* Jerarquía de capas (Z-Index) para apertura superpuesta */
+#chapters-modal {
+  z-index: 150;
+}
+
+#reader-modal {
+  z-index: 200;
+}
+
+#export-modal {
+  z-index: 300;
+}
+
+#download-modal {
+  z-index: 350;
+}
+
+#delete-chapters-modal {
+  z-index: 400;
+}
+
 .modal.hidden {
   display: none;
 }
@@ -2038,6 +2063,99 @@ body {
   color: #60a5fa;
   margin-top: 8px;
 }
+
+/* ==========================================================================
+   Menú desplegable "Más Opciones" en Detalle de Novela
+   ========================================================================== */
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  min-width: 220px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-card-hover);
+  color: #fff;
+}
+
+.dropdown-item .svg-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.dropdown-item:hover .svg-icon {
+  color: var(--text-main);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+}
+
+.dropdown-item-danger {
+  color: #f87171;
+}
+
+.dropdown-item-danger .svg-icon {
+  color: #f87171;
+}
+
+.dropdown-item-danger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.dropdown-item-danger:hover .svg-icon {
+  color: #ef4444;
+}
+
 
 
 
