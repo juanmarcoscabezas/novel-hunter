@@ -29,7 +29,7 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
   - Iconos vectoriales SVG en línea (`ICONS` en `app.js`). Cero emojis rotos o fuentes de iconos externas.
 - **Backend de Escritorio**: Electron (`electron/main.js`), `preload.cjs` con `contextBridge` aislado (`window.wtrApi`).
 - **Base de Datos**: SQLite normalizada en **Tercera Forma Normal (3NF)** usando el módulo nativo de Node.js (`node:sqlite`).
-- **Empaquetado**: `electron-builder` para generar ejecutables portables de Windows con nomenclatura de guión bajo (`dist/Novel_Hunter_1.0.0.exe`).
+- **Empaquetado**: `electron-builder` para generar ejecutables portables de Windows con nomenclatura de guión bajo (`dist/Novel_Hunter_1.1.0.exe`).
 
 ### Estructura de Directorios Clave:
 ```
@@ -101,6 +101,7 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
    - En modales con listas de capítulos (`.download-modal-card`, `#chapters-modal`), el contenedor `.modal-body` debe configurarse con `overflow: hidden; max-height: none; flex: 1; min-height: 0;`.
    - Los paneles superiores (portada, búsqueda, configuración) y los botones inferiores del pie deben mantenerse estables con `flex-shrink: 0;`.
    - El desplazamiento debe residir exclusivamente en la lista interna (`.modal-toc-list` o `.chapters-list-wrapper`) con `flex: 1; min-height: 0; max-height: none; overflow-y: auto;`, erradicando barras de scroll duplicadas o conflictivas.
+   - En el modal de descarga (`.download-modal-card`), estructurar la vista en 2 columnas (`.download-sidebar-col` de 320px a la izquierda y `.download-toc-section` a la derecha) para dotar al listado de capítulos del 100% de la altura vertical disponible (más de 500px), garantizando visibilidad simultánea de 12 a 16 capítulos.
 
 ---
 

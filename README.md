@@ -40,7 +40,7 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
   - **Selección ágil de descarga**: Botón *"Seleccionar"* para descargar un capítulo individual y botón *"Hasta aquí"* para construir rangos de descarga con un solo clic.
   - **Modo expandido**: Botón *"Expandir"* para maximizar la tabla de contenidos a toda la altura del modal y explorar cientos de capítulos con total fluidez.
   - **Acciones duales en tarjetas**: Botón *"Tabla de Contenidos"* para explorar el índice y botón *"Descargar"* para configurar opciones de descarga directa.
-  - **Diseño de Scroll Único (Cero Doble Scroll)**: Estructura flexbox unificada en el modal de descarga (`.download-modal-card`) y en el detalle de capítulos (`#chapters-modal`), bloqueando el desbordamiento duplicado en `.modal-body` y canalizando el desplazamiento exclusivamente en la lista de capítulos (`.modal-toc-list` / `.chapters-list-wrapper`), manteniendo portada, filtros y botones siempre anclados y accesibles.
+  - **Diseño de 2 Columnas y Scroll Maximizado (Cero Doble Scroll)**: Estructura flexbox unificada en el modal de descarga (`.download-modal-card`) con columna lateral izquierda de configuración (320px) y columna principal derecha para la Tabla de Contenidos a toda la altura vertical (más de 500px - 650px disponibles), permitiendo ver 12 a 16 capítulos simultáneamente sin competir por espacio con la portada o los formularios. Canaliza el desplazamiento exclusivamente en la lista de capítulos (`.modal-toc-list` / `.chapters-list-wrapper`), manteniendo portada, filtros y botones siempre anclados y accesibles.
 - 💾 **Base de Datos SQLite en 3NF**: Esquema relacional normalizado con módulo nativo `node:sqlite` que almacena novelas, autores, capítulos canónicos, traducciones independientes (`en`, `es`), párrafos atómicos en 1NF y progreso de lectura en `data/novels.db`.
 - 📖 **Lector Offline con Lectura Ininterrumpida (*Binge Reading*)**:
   - Botón directo **"Seguir Leyendo (Cap. X)"** en la biblioteca y en el modal de detalle de la novela.
@@ -88,7 +88,7 @@ npm run dist:win
 # Generar instalador asistido (NSIS):
 npm run dist:win:installer
 ```
-Los ejecutables se generan en el directorio `dist/` siguiendo la convención estandarizada con guiones bajos entre nombre y versión: **`Novel_Hunter_1.0.0.exe`**.
+Los ejecutables se generan en el directorio `dist/` siguiendo la convención estandarizada con guiones bajos entre nombre y versión: **`Novel_Hunter_1.1.0.exe`**.
 
 ---
 

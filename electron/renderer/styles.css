@@ -1148,13 +1148,13 @@ body {
   color: var(--text-dim);
 }
 
-/* Tabla de Contenidos en Modal de Descarga (Diseño de Scroll Único) */
+/* Tabla de Contenidos en Modal de Descarga (Diseño de 2 Columnas y Scroll Único Maximizado) */
 .download-modal-card {
-  width: 820px;
-  max-width: 94vw;
-  height: 86vh;
-  max-height: 860px;
-  min-height: 520px;
+  width: 960px;
+  max-width: 96vw;
+  height: 88vh;
+  max-height: 900px;
+  min-height: 540px;
   display: flex;
   flex-direction: column;
   transition: all 0.25s ease;
@@ -1164,27 +1164,80 @@ body {
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 24px;
+  flex-direction: row;
+  gap: 16px;
+  padding: 16px 20px;
   overflow: hidden;
   max-height: none;
 }
 
-.download-modal-card .novel-meta-preview {
+/* Columna Lateral de Configuración (320px) */
+.download-sidebar-col {
+  width: 320px;
   flex-shrink: 0;
-  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.download-config-panel {
+.download-modal-card .novel-meta-preview {
   flex-shrink: 0;
+  padding: 10px 12px;
+  gap: 12px;
+  background-color: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.download-modal-card .cover-thumb {
+  width: 52px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.download-modal-card .novel-meta-details {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.download-modal-card .novel-desc-clamped {
+  -webkit-line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.download-modal-card .download-config-panel {
+  flex-shrink: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   transition: opacity 0.2s ease, max-height 0.2s ease;
 }
 
-.download-modal-card.toc-expanded .download-config-panel {
+.download-modal-card .download-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.download-modal-card.toc-expanded .download-sidebar-col {
   display: none;
 }
 
+/* Columna Principal: Tabla de Contenidos a Pantalla Completa con Máximo Espacio Vertical */
 .download-toc-section {
   flex: 1;
   min-height: 0;
@@ -1285,6 +1338,16 @@ body {
 
 .download-progress-container {
   flex-shrink: 0;
+}
+
+@media (max-width: 820px) {
+  .download-modal-card .modal-body {
+    flex-direction: column;
+  }
+  .download-sidebar-col {
+    width: 100%;
+    max-height: 220px;
+  }
 }
 
 .toc-chapter-item {

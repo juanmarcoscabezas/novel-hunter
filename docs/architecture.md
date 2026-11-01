@@ -382,7 +382,7 @@ Todos los botones y controles de la interfaz deben estar rigurosamente armonizad
 La compilación y distribución de Novel Hunter se gestiona mediante `electron-builder` en [`package.json`](file:///home/juanmarcos/nasser_18/package.json):
 - **Estandarización de Nombre y Versión con Guión Bajo**:
   - Parámetro `artifactName`: `"Novel_Hunter_${version}.${ext}"`.
-  - Asegura que los binarios generados en `dist/` se nombren de forma uniforme sin espacios en blanco (ej. `dist/Novel_Hunter_1.0.0.exe`), facilitando su uso en terminales, scripts de automatización e instaladores.
+  - Asegura que los binarios generados en `dist/` se nombren de forma uniforme sin espacios en blanco (ej. `dist/Novel_Hunter_1.1.0.exe`), facilitando su uso en terminales, scripts de automatización e instaladores.
 - **Targets Soportados**:
   - `portable`: Ejecutable autónomo sin instalación previa (`npm run dist:win`).
   - `nsis`: Instalador tradicional con opciones de directorio y accesos directos (`npm run dist:win:installer`).
@@ -397,24 +397,32 @@ Para brindar una experiencia de usuario natural y eliminar los molestos conflict
   - Anteriormente, la clase global `.modal-body` aplicaba `max-height: 70vh; overflow-y: auto;`.
   - Cuando los componentes internos de listado (como `.modal-toc-list` en la Tabla de Contenidos o `.chapters-list-wrapper` en el catálogo de capítulos) acumulaban alturas superiores a `70vh` sumadas a los paneles de configuración y portada, el navegador generaba un scrollbar exterior en el cuerpo del modal y un segundo scrollbar interior dentro del listado.
   - Esto provocaba que dos barras de scroll compitieran lado a lado y que el desplazamiento saltara bruscamente entre el contenedor general y la lista de capítulos.
-- **Estructura Flexbox Unificada (`display: flex`)**:
-  - Tanto `.download-modal-card` como `#chapters-modal .modal-card` se dimensionan con altura adaptable y límites seguros:
+- **Estructura Flexbox Unificada y Diseño de 2 Columnas (`display: flex`)**:
+  - Para maximizar drásticamente el espacio vertical visible del listado de capítulos para descargar, `.download-modal-card` implementa una arquitectura en dos columnas:
     ```css
-    height: 86vh;
-    max-height: 860px;
-    min-height: 520px;
-    display: flex;
-    flex-direction: column;
+    .download-modal-card {
+      width: 960px;
+      max-width: 96vw;
+      height: 88vh;
+      max-height: 900px;
+      min-height: 540px;
+      display: flex;
+      flex-direction: column;
+    }
+    .download-modal-card .modal-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      padding: 16px 20px;
+      overflow: hidden;
+    }
     ```
-  - Sus respectivos `.modal-body` se configuran como flex items que absorben el espacio disponible pero bloquean el desbordamiento duplicado:
-    ```css
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    max-height: none;
-    ```
+  - **Columna Izquierda (`.download-sidebar-col`, 320px)**: Agrupa verticalmente la vista previa compacta de la novela, el panel de configuración de descarga (rango de capítulos, chips interactivos, selector de idioma y checkboxes de fusión/PDF) y la barra de progreso en vivo, con scroll independiente si se escala la ventana.
+  - **Columna Derecha (`.download-toc-section`, Principal a Altura Completa)**: Se expande ocupando todo el ancho restante y el **100% de la altura vertical del cuerpo del modal**. Esto eleva el espacio visible para `.modal-toc-list` de unos escasos 150px a más de **500px - 650px**, permitiendo visualizar de 12 a 16 capítulos simultáneamente (un incremento de más del 400%).
+  - Al hacer clic en un capítulo de la derecha, el rango de la izquierda se actualiza al instante a la vista del usuario sin requerir desplazamientos verticales en la página.
+  - En modo expandido (`.download-modal-card.toc-expanded`), la columna lateral se oculta y la tabla de contenidos ocupa el 100% del ancho del modal.
 - **Fijación de Controles y Canalización del Scroll**:
   - Los encabezados (`.modal-header`), vistas previas (`.novel-meta-preview`), paneles de opciones (`.download-config-panel`, `.download-toc-header`) y pies de acción (`.modal-footer`) se marcan con `flex-shrink: 0;`. Permanecen siempre visibles y accesibles para el usuario.
   - La lista de capítulos (`.modal-toc-list` y `.chapters-list-wrapper`) recibe `flex: 1; min-height: 0; max-height: none; overflow-y: auto;`, convirtiéndose en el **único y exclusivo scrollbar** del modal.

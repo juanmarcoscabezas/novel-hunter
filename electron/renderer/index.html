@@ -430,56 +430,71 @@
             </header>
 
             <div class="modal-body">
-              <div class="novel-meta-preview">
-                <img id="modal-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
-                <div class="novel-meta-details">
-                  <p><strong>Autor:</strong> <span id="modal-novel-author">-</span></p>
-                  <p><strong>Capítulos en WTR-Lab:</strong> <span id="modal-novel-chapters">-</span></p>
-                  <p id="modal-novel-desc" class="novel-desc-clamped"></p>
+              <!-- Columna Lateral de Configuración y Metadatos -->
+              <div class="download-sidebar-col">
+                <div class="novel-meta-preview">
+                  <img id="modal-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
+                  <div class="novel-meta-details">
+                    <p><strong>Autor:</strong> <span id="modal-novel-author">-</span></p>
+                    <p><strong>Capítulos en WTR-Lab:</strong> <span id="modal-novel-chapters">-</span></p>
+                    <p id="modal-novel-desc" class="novel-desc-clamped"></p>
+                  </div>
                 </div>
-              </div>
 
-              <div class="download-config-panel">
-                <div class="form-group">
-                  <label for="chapter-range-input">Rango de Capítulos:</label>
-                  <div class="input-with-chips">
-                    <input type="text" id="chapter-range-input" value="1-5" placeholder="Ej: 1-10, 15, 20-30">
-                    <div class="chips-row">
-                      <button class="chip" data-range="1-5">1-5</button>
-                      <button class="chip" data-range="1-10">1-10</button>
-                      <button class="chip" data-range="1-25">1-25</button>
-                      <button class="chip" data-range="1-50">1-50</button>
-                      <button class="chip" data-range="all">Todos</button>
+                <div class="download-config-panel">
+                  <div class="form-group">
+                    <label for="chapter-range-input">Rango de Capítulos:</label>
+                    <div class="input-with-chips">
+                      <input type="text" id="chapter-range-input" value="1-5" placeholder="Ej: 1-10, 15, 20-30">
+                      <div class="chips-row">
+                        <button class="chip" data-range="1-5">1-5</button>
+                        <button class="chip" data-range="1-10">1-10</button>
+                        <button class="chip" data-range="1-25">1-25</button>
+                        <button class="chip" data-range="1-50">1-50</button>
+                        <button class="chip" data-range="all">Todos</button>
+                      </div>
+                    </div>
+                    <small class="form-hint">Capítulos disponibles: <span id="modal-total-avail">-</span></small>
+                  </div>
+
+                  <div class="form-row download-form-row">
+                    <div class="form-group">
+                      <label for="lang-select">Idioma de Traducción:</label>
+                      <select id="lang-select" class="form-control">
+                        <option value="en" selected>Inglés (Gemini AI MTL con Glosario)</option>
+                        <option value="es">Español (Gemini AI + Google Translate)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group checkboxes-group">
+                      <label class="checkbox-container">
+                        <input type="checkbox" id="merge-checkbox" checked>
+                        <span class="checkmark"></span>
+                        Fusionar en un solo archivo
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" id="pdf-checkbox" checked>
+                        <span class="checkmark"></span>
+                        Exportar a libro digital PDF
+                      </label>
                     </div>
                   </div>
-                  <small class="form-hint">Capítulos disponibles: <span id="modal-total-avail">-</span></small>
                 </div>
 
-                <div class="form-row">
-                  <div class="form-group half">
-                    <label for="lang-select">Idioma de Traducción:</label>
-                    <select id="lang-select" class="form-control">
-                      <option value="en" selected>Inglés (Gemini AI MTL con Glosario)</option>
-                      <option value="es">Español (Gemini AI + Google Translate)</option>
-                    </select>
+                <!-- Barra de Progreso Activa en la Columna de Configuración -->
+                <div id="progress-container" class="progress-box hidden">
+                  <div class="progress-header">
+                    <span id="progress-status-label">Iniciando descarga...</span>
+                    <span id="progress-percent-label">0%</span>
                   </div>
-
-                  <div class="form-group half checkboxes-group">
-                    <label class="checkbox-container">
-                      <input type="checkbox" id="merge-checkbox" checked>
-                      <span class="checkmark"></span>
-                      Fusionar en un solo archivo
-                    </label>
-                    <label class="checkbox-container">
-                      <input type="checkbox" id="pdf-checkbox" checked>
-                      <span class="checkmark"></span>
-                      Exportar a libro digital PDF
-                    </label>
+                  <div class="progress-bar-bg">
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
                   </div>
+                  <div class="progress-subtext" id="progress-subtext"></div>
                 </div>
               </div>
 
-              <!-- Sección Tabla de Contenidos -->
+              <!-- Sección Tabla de Contenidos (Columna Principal con Máximo Espacio Vertical) -->
               <div class="download-toc-section">
                 <div class="download-toc-header">
                   <div class="download-toc-title-area">
@@ -515,18 +530,6 @@
                     <span>Cargando tabla de contenidos...</span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Barra de Progreso Activa -->
-              <div id="progress-container" class="progress-box hidden">
-                <div class="progress-header">
-                  <span id="progress-status-label">Iniciando descarga...</span>
-                  <span id="progress-percent-label">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                  <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
-                </div>
-                <div class="progress-subtext" id="progress-subtext"></div>
               </div>
             </div>
 

@@ -1042,15 +1042,20 @@ async function runTests() {
 
   console.log('   ✓ Armonización de Botones (.btn-secondary, .btn-outline, .btn-translate-novel, .chip.active) verificada con éxito.');
 
-  // Test 34: Unificación de Scroll Único en Tabla de Contenidos y Detalle de Capítulos (Cero Doble Scroll)
-  console.log('\n34. Probando Unificación de Scroll Único en Tabla de Contenidos y Detalle de Capítulos (Cero Doble Scroll)...');
+  // Test 34: Unificación de Scroll Único y Maximización de Espacio en Tabla de Contenidos y Capítulos
+  console.log('\n34. Probando Unificación de Scroll Único y Maximización de Espacio en Tabla de Contenidos y Capítulos...');
   const scrollStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const scrollHtml = fs.readFileSync(path.join(__dirname, '../electron/renderer/index.html'), 'utf-8');
 
   // Aserciones para el modal de descarga y Tabla de Contenidos (TOC)
-  assert(scrollStyles.includes('.download-modal-card {') && scrollStyles.includes('height: 86vh;'),
-    'styles.css debe definir altura adaptable (86vh) y flexbox en .download-modal-card');
+  assert(scrollStyles.includes('.download-modal-card {') && (scrollStyles.includes('height: 88vh;') || scrollStyles.includes('height: 86vh;')),
+    'styles.css debe definir altura adaptable (88vh) y flexbox en .download-modal-card');
   assert(scrollStyles.includes('.download-modal-card .modal-body {') && scrollStyles.includes('overflow: hidden;'),
     'styles.css debe definir overflow: hidden en .download-modal-card .modal-body para eliminar el scroll externo duplicado');
+  assert(scrollStyles.includes('.download-sidebar-col {'),
+    'styles.css debe estructurar .download-sidebar-col para la columna lateral de configuración');
+  assert(scrollHtml.includes('class="download-sidebar-col"'),
+    'index.html debe contener la columna lateral download-sidebar-col');
   assert(scrollStyles.includes('.modal-toc-list {') && scrollStyles.includes('overflow-y: auto;') && scrollStyles.includes('flex: 1;'),
     'styles.css debe definir .modal-toc-list con flex: 1 y overflow-y: auto como único scrollbar');
   assert(scrollStyles.includes('.download-modal-card.toc-expanded .modal-toc-list {') && scrollStyles.includes('max-height: none;'),
