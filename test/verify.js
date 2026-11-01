@@ -556,7 +556,80 @@ async function runTests() {
 
   console.log('   ✓ Opciones de continuar leyendo y descargar siguiente/más capítulos validadas.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (25/25) PASARON EXITOSAMENTE!');
+  // Test 26: Botón para borrar capítulos y botón para eliminar novela completa
+  console.log('\n26. Probando Botón para Borrar Capítulos y Botón para Eliminar Novela Completa...');
+  assert(verifyHtml.includes('id="detail-delete-chapters-btn"'), 'index.html debe contener el botón detail-delete-chapters-btn');
+  assert(verifyHtml.includes('id="detail-delete-novel-btn"'), 'index.html debe contener el botón detail-delete-novel-btn');
+  assert(verifyHtml.includes('id="delete-chapters-modal"'), 'index.html debe contener el modal delete-chapters-modal');
+  assert(verifyHtml.includes('id="reader-delete-btn"'), 'index.html debe contener el botón reader-delete-btn en el lector');
+
+  assert(verifyStyles.includes('.btn-outline-danger'), 'styles.css debe definir estilos para .btn-outline-danger');
+
+  assert(verifyPreload.includes('deleteNovel:'), 'preload.cjs debe exponer deleteNovel');
+  assert(verifyPreload.includes('deleteChapters:'), 'preload.cjs debe exponer deleteChapters');
+
+  assert(verifyMain.includes("ipcMain.handle('novel:delete'"), 'main.js debe registrar el handler novel:delete');
+  assert(verifyMain.includes("ipcMain.handle('novel:deleteChapters'"), 'main.js debe registrar el handler novel:deleteChapters');
+
+  assert(verifyAppJs.includes('btn-delete-novel-card'), 'app.js debe incluir botón de borrar novela en las tarjetas');
+  assert(verifyAppJs.includes('btn-delete-ch'), 'app.js debe incluir botón de borrar capítulo en la lista');
+  assert(verifyAppJs.includes('detail-delete-chapters-btn'), 'app.js debe enlazar el botón detail-delete-chapters-btn');
+  assert(verifyAppJs.includes('detail-delete-novel-btn'), 'app.js debe enlazar el botón detail-delete-novel-btn');
+  assert(verifyAppJs.includes('initDeleteChaptersModal'), 'app.js debe implementar initDeleteChaptersModal');
+
+  // Prueba funcional en SQLite (aislada)
+  const delTestNovelId = 887766;
+  const delTestMeta = {
+    id: delTestNovelId,
+    rawId: delTestNovelId,
+    slug: 'deletion-test-novel',
+    title: 'Deletion Test Novel',
+    author: 'Test Author',
+    total_chapters: 10
+  };
+
+  const cleanupDelTest = () => {
+    try {
+      repository.deleteNovel(delTestNovelId);
+    } catch {}
+  };
+
+  cleanupDelTest();
+  try {
+    repository.upsertNovel(delTestMeta);
+    repository.saveChapterTranslation(delTestNovelId, 1, {
+      language: 'en',
+      title: 'Chapter 1',
+      model: 'Gemini',
+      paragraphs: ['Para 1']
+    }, delTestMeta);
+    repository.saveChapterTranslation(delTestNovelId, 2, {
+      language: 'en',
+      title: 'Chapter 2',
+      model: 'Gemini',
+      paragraphs: ['Para 2']
+    }, delTestMeta);
+    repository.updateReadingProgress(delTestNovelId, 2, 'en');
+
+    // 1. Probar deleteChapters: borrar solo capítulo 1
+    const delRes1 = repository.deleteChapters(delTestNovelId, [1]);
+    assert(delRes1.success, 'deleteChapters debe responder con éxito');
+    const chRemaining = repository.getDownloadedChapterNumbers(delTestNovelId, 'en');
+    assert.deepStrictEqual(chRemaining, [2], 'Solo debe quedar el capítulo 2');
+
+    // 2. Probar deleteNovel: eliminar novela completa
+    const delNovelRes = repository.deleteNovel(delTestNovelId);
+    assert(delNovelRes !== null, 'deleteNovel debe devolver la novela eliminada');
+    assert(!repository.getNovel(delTestNovelId), 'La novela no debe existir en la base de datos');
+    assert.strictEqual(repository.getDownloadedChapters(delTestNovelId, 'en').length, 0, 'No deben quedar capítulos');
+    assert(!repository.getReadingProgress(delTestNovelId), 'El progreso debe borrarse');
+  } finally {
+    cleanupDelTest();
+  }
+
+  console.log('   ✓ Botón para borrar capítulos y botón para eliminar novela completa verificados correctamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (26/26) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {
