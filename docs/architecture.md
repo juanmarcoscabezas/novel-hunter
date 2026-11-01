@@ -201,7 +201,21 @@ El lector offline integrado en `electron/renderer/` proporciona una experiencia 
 
 ---
 
-## 9. Ciclo de Desarrollo y Regla de Documentación
+## 9. Exploración de Series y Tabla de Contenidos Dinámica (TOC)
+
+El explorador de series en la vista de búsqueda integra la Tabla de Contenidos completa y en tiempo real:
+- **Obtención asíncrona de metadatos**: Al inspeccionar una serie, se consulta el endpoint `GET /api/chapters/[raw_id]` a través del handler IPC `novel:getChapters`.
+- **Estructura enriquecida**: Cada capítulo expone su número canónico (`order`), título en inglés/traducción (`title`), título original en caracteres asiáticos (`rawTitle`) y fecha de actualización.
+- **Buscador interactivo en el modal**: La función `renderModalTableOfContents` filtra los capítulos en tiempo real según el término ingresado, actualizando métricas dinámicas (`Mostrando X de Y capítulos`).
+- **Selector de rango por clic**:
+  - `btn-toc-pick`: Establece el capítulo cliqueado como objetivo único en el campo de rango.
+  - `btn-toc-range-to`: Construye un rango desde el capítulo inicial seleccionado hasta el capítulo actual (`start-end`).
+  - Resaltado visual reactivo: `highlightSelectedTocChapters` actualiza la clase `.selected` en todos los ítems dentro del rango ingresado.
+- **Modo expandido**: Permite colapsar el formulario de opciones y extender la lista de capítulos a toda la altura disponible (`.toc-expanded`) para navegar colecciones de más de 1000 capítulos sin saturar la pantalla.
+
+---
+
+## 10. Ciclo de Desarrollo y Regla de Documentación
 
 Conforme al skill `.agents/skills/novel-hunter-workflow/SKILL.md`:
 1. Implementación de feature.
@@ -212,7 +226,7 @@ Conforme al skill `.agents/skills/novel-hunter-workflow/SKILL.md`:
 
 ---
 
-## 10. Eliminación Segura de Novelas y Capítulos
+## 11. Eliminación Segura de Novelas y Capítulos
 
 Para mantener limpia la biblioteca y optimizar el almacenamiento:
 - **IPC Handlers**:
@@ -228,7 +242,7 @@ Para mantener limpia la biblioteca y optimizar el almacenamiento:
 
 ---
 
-## 11. Paginación y Acordeón Configurable de Capítulos
+## 12. Paginación y Acordeón Configurable de Capítulos
 
 Para optimizar la visualización de novelas con cientos o miles de capítulos guardados, Novel Hunter implementa un sistema de particionado dinámico en acordeones:
 - **Configuración Numérica de Usuario**:
