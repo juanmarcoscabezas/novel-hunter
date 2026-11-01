@@ -1,0 +1,17 @@
+# Cursor Rules - Novel Hunter
+
+Read and strictly follow [AGENTS.md](./AGENTS.md).
+
+## Critical Directives:
+1. MANDATORY RULE: "Cada vez que agregues una feature, haz tests, corre los tests y luego commit."
+2. NEVER commit without running and passing:
+   `npm test`
+   `node test/test_db.js`
+3. Architecture:
+   - Frontend: Vanilla JS (ESM) + Electron Context Isolation (`preload.cjs`).
+   - Database: SQLite 3NF via `node:sqlite`. Keep canonical chapters in `chapters` and translations in `chapter_translations` (`en`, `es`).
+   - Packaging: Never write inside `app.asar`. Use `resolveStorageDir()` in `src/config.js`.
+4. UI Consistency:
+   - Screen headers must match menu button names exactly ("Buscador", "Mi biblioteca", "Consola Terminal", "Configuración").
+   - Action buttons must maintain unified 36px height.
+   - SVG vector icons only (no broken emojis).

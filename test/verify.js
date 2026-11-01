@@ -442,7 +442,27 @@ async function runTests() {
   assert(updatedAppJs.includes('btn-translate-ch'), 'app.js debe soportar traducción individual desde la lista de capítulos');
   console.log('   ✓ Traducción individual, traducción por lotes, SQLite 3NF y UI integradas correctamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (23/23) PASARON EXITOSAMENTE!');
+  // Test 24: Verificación de Reglas Claras para LLMs y Agentes de IA
+  console.log('\n24. Verificando Reglas Claras para LLMs y Agentes de IA (AGENTS.md, GEMINI.md, .cursorrules, CLAUDE.md)...');
+  const projectRoot = path.resolve(__dirname, '..');
+  const agentsPath = path.join(projectRoot, 'AGENTS.md');
+  const geminiPath = path.join(projectRoot, 'GEMINI.md');
+  const cursorPath = path.join(projectRoot, '.cursorrules');
+  const claudePath = path.join(projectRoot, 'CLAUDE.md');
+
+  assert(fs.existsSync(agentsPath), 'AGENTS.md debe existir en la raíz del proyecto');
+  assert(fs.existsSync(geminiPath), 'GEMINI.md debe existir en la raíz del proyecto');
+  assert(fs.existsSync(cursorPath), '.cursorrules debe existir en la raíz del proyecto');
+  assert(fs.existsSync(claudePath), 'CLAUDE.md debe existir en la raíz del proyecto');
+
+  const agentsContent = fs.readFileSync(agentsPath, 'utf8');
+  assert(agentsContent.includes('Cada vez que agregues una feature, haz tests, corre los tests y luego commit'), 'AGENTS.md debe contener la Regla de Oro del usuario');
+  assert(agentsContent.includes('Tercera Forma Normal (3NF)'), 'AGENTS.md debe especificar la regla de 3NF relacional');
+  assert(agentsContent.includes('resolveStorageDir'), 'AGENTS.md debe advertir sobre la no escritura dentro de app.asar');
+
+  console.log('   ✓ Reglas claras universales para LLMs y asistentes de IA verificadas correctamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (24/24) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {
