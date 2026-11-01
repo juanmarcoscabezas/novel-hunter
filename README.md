@@ -196,8 +196,9 @@ node bin/cli.js export <slug_o_id> --chapters 1-20 --lang es --merge --pdf
 
 #### Eliminar capítulos o novelas completas:
 - **Desde la interfaz gráfica de escritorio**:
-  - **Eliminar novela completa**: Pulsa el botón *"Eliminar Novela Completa"* en el modal de detalle o el icono de papelera en la tarjeta de *Mi Biblioteca*. Elimina en cascada relacional 3NF todos los registros y limpia la carpeta en `exports/`.
-  - **Borrar capítulos**: Usa el botón *"Borrar Capítulos"* en el modal de detalle para definir rangos e idioma, o el botón *"Borrar"* en cualquier fila de capítulo o en la cabecera del modo lector.
+  - Todas las acciones de eliminación residen de forma limpia y segura dentro del detalle de la novela:
+    - **Eliminar novela completa**: Pulsa el botón *"Eliminar Novela Completa"* en la barra de acciones del detalle de la novela. Elimina en cascada relacional 3NF todos los registros y limpia la carpeta en `exports/`.
+    - **Borrar capítulos**: Usa el botón *"Borrar Capítulos"* en el modal de detalle para definir rangos (`1-10`, `all`) e idioma, o el botón individual *"Borrar"* en cada fila de capítulo.
 - **Desde la consola integrada o CLI**:
   ```bash
   # Eliminar novela completa de la biblioteca y disco:

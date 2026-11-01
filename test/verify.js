@@ -602,12 +602,11 @@ async function runTests() {
 
   console.log('   ✓ Opciones de continuar leyendo y descargar siguiente/más capítulos validadas.');
 
-  // Test 26: Botón para borrar capítulos y botón para eliminar novela completa
-  console.log('\n26. Probando Botón para Borrar Capítulos y Botón para Eliminar Novela Completa...');
+  // Test 26: Botón para borrar capítulos y botón para eliminar novela completa dentro del detalle
+  console.log('\n26. Probando Botón para Borrar Capítulos y Botón para Eliminar Novela Completa dentro del Detalle...');
   assert(verifyHtml.includes('id="detail-delete-chapters-btn"'), 'index.html debe contener el botón detail-delete-chapters-btn');
   assert(verifyHtml.includes('id="detail-delete-novel-btn"'), 'index.html debe contener el botón detail-delete-novel-btn');
   assert(verifyHtml.includes('id="delete-chapters-modal"'), 'index.html debe contener el modal delete-chapters-modal');
-  assert(verifyHtml.includes('id="reader-delete-btn"'), 'index.html debe contener el botón reader-delete-btn en el lector');
 
   assert(verifyStyles.includes('.btn-outline-danger'), 'styles.css debe definir estilos para .btn-outline-danger');
 
@@ -617,8 +616,8 @@ async function runTests() {
   assert(verifyMain.includes("ipcMain.handle('novel:delete'"), 'main.js debe registrar el handler novel:delete');
   assert(verifyMain.includes("ipcMain.handle('novel:deleteChapters'"), 'main.js debe registrar el handler novel:deleteChapters');
 
-  assert(verifyAppJs.includes('btn-delete-novel-card'), 'app.js debe incluir botón de borrar novela en las tarjetas');
-  assert(verifyAppJs.includes('btn-delete-ch'), 'app.js debe incluir botón de borrar capítulo en la lista');
+  assert(!verifyAppJs.includes('btn-delete-novel-card'), 'las tarjetas de biblioteca deben mantenerse limpias sin botón de borrar externo');
+  assert(verifyAppJs.includes('btn-delete-ch'), 'app.js debe incluir botón de borrar capítulo en la lista dentro del detalle');
   assert(verifyAppJs.includes('detail-delete-chapters-btn'), 'app.js debe enlazar el botón detail-delete-chapters-btn');
   assert(verifyAppJs.includes('detail-delete-novel-btn'), 'app.js debe enlazar el botón detail-delete-novel-btn');
   assert(verifyAppJs.includes('initDeleteChaptersModal'), 'app.js debe implementar initDeleteChaptersModal');

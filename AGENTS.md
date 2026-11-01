@@ -86,7 +86,8 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 
 ## 🎙️ 5. Reglas de Narración Auditiva (TTS)
 
-- El motor TTS utiliza `node-edge-tts` con voces neurales naturales multilingües (español e inglés, con acentos de ES, MX, AR, CO, US, GB).
+- El motor TTS utiliza `node-edge-tts` con un catálogo de 25 voces neurales naturales multilingües, priorizando voces colombianas (`es-CO-SalomeNeural`, `es-ES-XimenaNeural`, `es-CO-GonzaloNeural`) y una amplia selección femenina de Latinoamérica y España.
+- El selector agrupa las voces con `<optgroup>` y persiste la preferencia del usuario en `localStorage`.
 - Debe preservarse la sincronización de marcas de tiempo por palabra (`WordBoundary`) que permite al usuario hacer clic en cualquier palabra del texto (`.reader-word`) para iniciar la lectura inmediatamente desde esa posición.
 - Para exportaciones de audio completas, empaquetar en lotes controlados para evitar límites de tiempo en WebSocket.
 

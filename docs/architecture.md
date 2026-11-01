@@ -234,11 +234,10 @@ Para mantener limpia la biblioteca y optimizar el almacenamiento:
   - `novel:deleteChapters`: Elimina capítulos canónicos o traducciones por idioma y borra los archivos individuales `.txt` y `.mp3` correspondientes en disco.
 - **Cascada Relacional 3NF**: El borrado en SQLite activa las restricciones `ON DELETE CASCADE` de `chapters`, `chapter_translations`, `paragraphs` y `reading_progress`.
 - **Puntos de Interacción en la UI**:
-  - Botón *"Borrar Capítulos"* (`#detail-delete-chapters-btn`) en el modal de detalle con soporte para selección por rangos (`1-10`, `all`) e idioma.
-  - Botón *"Eliminar Novela Completa"* (`#detail-delete-novel-btn`) con alerta de confirmación irreversible.
-  - Botón individual *"Borrar"* en cada fila de capítulo (`.btn-delete-ch`).
-  - Botón directo de eliminar en las tarjetas de la biblioteca (`.btn-delete-novel-card`).
-  - Botón *"Borrar"* en los controles de cabecera del modo lector (`#reader-delete-btn`).
+  - Centralizados exclusivamente dentro del detalle de la novela (`#chapters-modal`), manteniendo las tarjetas de la biblioteca y el lector libres de saturación:
+    - Botón *"Borrar Capítulos"* (`#detail-delete-chapters-btn`) en la barra de acciones de la novela (`.novel-meta-actions`), con diálogo modal para selección por rangos (`1-10`, `all`) e idioma.
+    - Botón *"Eliminar Novela Completa"* (`#detail-delete-novel-btn`) en la barra de acciones con confirmación previa irreversible.
+    - Botón individual *"Borrar"* en cada fila de capítulo (`.btn-delete-ch`) dentro de la lista de capítulos de la novela.
 
 ---
 
