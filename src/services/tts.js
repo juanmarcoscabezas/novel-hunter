@@ -63,23 +63,35 @@ export async function synthesizeParagraph(text, options = {}) {
   const rate = options.rate || 'default';
   const pitch = options.pitch || 'default';
 
-  const tts = new EdgeTTS({
-    voice,
-    lang,
-    rate,
-    pitch,
-    saveSubtitles: true,
-    timeout: 30000
-  });
-
   const audioChunks = [];
   const words = [];
 
-  for await (const chunk of tts.streamAudio(cleanText)) {
-    if (Buffer.isBuffer(chunk)) {
-      audioChunks.push(chunk);
-    } else if (chunk && typeof chunk === 'object' && chunk.part) {
-      words.push(chunk);
+  let retries = 2;
+  while (retries >= 0) {
+    try {
+      const tts = new EdgeTTS({
+        voice,
+        lang,
+        rate,
+        pitch,
+        saveSubtitles: true,
+        timeout: 30000
+      });
+
+      for await (const chunk of tts.streamAudio(cleanText)) {
+        if (Buffer.isBuffer(chunk)) {
+          audioChunks.push(chunk);
+        } else if (chunk && typeof chunk === 'object' && chunk.part) {
+          words.push(chunk);
+        }
+      }
+      break;
+    } catch (err) {
+      if (retries === 0) throw err;
+      retries--;
+      audioChunks.length = 0;
+      words.length = 0;
+      await new Promise(r => setTimeout(r, 400));
     }
   }
 
@@ -118,14 +130,6 @@ export async function exportChapterAudio(novelSlug, chapterNo, chapterTitle, par
   const lang = options.lang || (matchedVoice ? matchedVoice.lang : (voice.startsWith('en-') ? 'en-US' : (voice.startsWith('es-') ? voice.slice(0, 5) : 'es-ES')));
   const rate = options.rate || 'default';
 
-  const tts = new EdgeTTS({
-    voice,
-    lang,
-    rate,
-    saveSubtitles: false,
-    timeout: 45000
-  });
-
   // Agrupamos párrafos en bloques manejables de ~1200 caracteres para síntesis óptima
   const blocks = [];
   let currentBlock = [];
@@ -149,9 +153,26 @@ export async function exportChapterAudio(novelSlug, chapterNo, chapterTitle, par
 
   const allAudioChunks = [];
   for (const block of blocks) {
-    for await (const chunk of tts.streamAudio(block)) {
-      if (Buffer.isBuffer(chunk)) {
-        allAudioChunks.push(chunk);
+    let retries = 2;
+    while (retries >= 0) {
+      try {
+        const tts = new EdgeTTS({
+          voice,
+          lang,
+          rate,
+          saveSubtitles: false,
+          timeout: 45000
+        });
+        for await (const chunk of tts.streamAudio(block)) {
+          if (Buffer.isBuffer(chunk)) {
+            allAudioChunks.push(chunk);
+          }
+        }
+        break;
+      } catch (err) {
+        if (retries === 0) throw err;
+        retries--;
+        await new Promise(r => setTimeout(r, 500));
       }
     }
   }
