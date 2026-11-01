@@ -11,7 +11,8 @@ import { fetchChapter } from '../src/api/reader.js';
 import { saveChapterAsTxt } from '../src/storage/writer.js';
 import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
-import { repository } from '../src/db/repository.js';
+import { repository, NovelRepository } from '../src/db/repository.js';
+import { getDb } from '../src/db/connection.js';
 import { CONFIG, saveSession, getSavedSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
 import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
 import { translateChapterToSpanish, batchTranslateNovelToSpanish } from '../src/services/translator.js';
@@ -232,26 +233,16 @@ async function runTests() {
 
   // Test 19: Almacenar último capítulo visto y botón de acceso directo desde el menú
   console.log('\n19. Probando almacenamiento de último capítulo visto y botón en el menú...');
-  // 19a. Base de datos (preservando estado original del usuario)
-  const originalReadingProgress = repository.db.prepare('SELECT * FROM reading_progress').all();
-  try {
-    repository.updateReadingProgress(9779, 1, 'es');
-    const lastReadGlobal = repository.getGlobalLastRead();
-    assert(lastReadGlobal !== null, 'Debe existir un registro de último capítulo leído');
-    assert.strictEqual(lastReadGlobal.novel_id, 9779);
-    assert.strictEqual(lastReadGlobal.last_read_chapter_no, 1);
-    assert.strictEqual(lastReadGlobal.last_read_language, 'es');
-  } finally {
-    // Restaurar el progreso de lectura previo para no alterar la base de datos de usuario ni reiniciar su lectura a 1
-    repository.db.prepare('DELETE FROM reading_progress').run();
-    const restoreStmt = repository.db.prepare(`
-      INSERT INTO reading_progress (novel_id, last_read_chapter_no, last_read_language, last_read_at)
-      VALUES (?, ?, ?, ?)
-    `);
-    for (const row of originalReadingProgress) {
-      restoreStmt.run(row.novel_id, row.last_read_chapter_no, row.last_read_language, row.last_read_at);
-    }
-  }
+  // 19a. Base de datos (aislada en memoria para no tocar nunca la BD del usuario)
+  const memDb = getDb(':memory:');
+  const testRepo = new NovelRepository(memDb);
+  testRepo.upsertNovel({ rawId: 9779, slug: 'lord-at-the-beginning', title: 'Lord at the Beginning' });
+  testRepo.updateReadingProgress(9779, 1, 'es');
+  const lastReadGlobal = testRepo.getGlobalLastRead();
+  assert(lastReadGlobal !== null, 'Debe existir un registro de último capítulo leído');
+  assert.strictEqual(lastReadGlobal.novel_id, 9779);
+  assert.strictEqual(lastReadGlobal.last_read_chapter_no, 1);
+  assert.strictEqual(lastReadGlobal.last_read_language, 'es');
 
   // 19b. Integración IPC y Renderer
   assert(preloadContent.includes('getLastRead: () => ipcRenderer.invoke'), 'preload.cjs debe exponer getLastRead');
