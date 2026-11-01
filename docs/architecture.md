@@ -351,5 +351,29 @@ Para asegurar armonía estética con el icono oficial de la aplicación ([electr
   - La preferencia se almacena en `localStorage` (`novel_hunter_theme`).
   - Se ejecuta una evaluación temprana al inicio del script para inyectar `data-theme` antes del renderizado completo, eliminando cualquier destello visual (*FOUC*).
 
+---
+
+## 17. Sistema de Botones y Armonización Temática de Controles Interactivos
+
+Todos los botones y controles de la interfaz deben estar rigurosamente armonizados con las variables CSS del tema activo, prohibiendo colores fijos o aislados:
+
+1. **Botones Primarios (`.btn-primary`)**:
+   - `background: var(--primary-gradient)` con sombra `box-shadow: 0 4px 14px var(--accent-glow)`.
+   - Utilizados para acciones prioritarias (`Buscar`, `Iniciar Descarga`, `Seguir Leyendo`, `Leer Capítulo`).
+2. **Botones Secundarios (`.btn-secondary`)**:
+   - `background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);`
+   - En `:hover`, `background-color: var(--bg-card-hover); border-color: var(--border-focus); color: #ffffff;`.
+   - Utilizados en cierres y cancelaciones de modales (`#close-modal-bottom-btn`, `#cancel-export-btn`, `#close-chapters-bottom-btn`).
+3. **Botones de Contorno (`.btn-outline`)**:
+   - `background: transparent; border: 1px solid var(--border-color); color: var(--text-main);`
+   - En `:hover`, adquieren sutil resplandor temático con `background-color: var(--badge-primary-bg); border-color: var(--border-focus); color: #ffffff;`.
+4. **Fichas y Chips Dinámicos (`.chip`, `.group-size-chip`)**:
+   - Estados normales con `var(--bg-card)` y `var(--border-color)`.
+   - Estado activo (`.chip.active`) sincronizado con `var(--primary-gradient)` y `var(--accent-glow)`.
+5. **Acciones Rápidas y Selectores (`.terminal-quick-btn`, `.select-harmonized`, `.btn-icon`)**:
+   - Enfoque y hover enlazados a `var(--border-focus)`, `var(--badge-primary-bg)` y `var(--accent-glow)`.
+6. **Regla de Oro de Interfaz para Agentes**:
+   - Ningún componente o botón nuevo puede utilizar colores hexadecimales fijos (`#334155`, `#38bdf8`, etc.) o gradientes estáticos no temáticos; deben consumir los tokens temáticos para preservar la coherencia en cualquiera de los 4 temas.
+
 
 

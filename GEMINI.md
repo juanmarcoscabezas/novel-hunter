@@ -18,3 +18,4 @@ Consulta [AGENTS.md](./AGENTS.md) para la guía completa de desarrollo, arquitec
    - Acciones de tarjetas alineadas a 36px de altura exacta.
    - Títulos de vista idénticos a los botones de navegación del menú lateral.
    - 4 temas visuales en cascada CSS (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`) seleccionables en Configuración y persistidos en `localStorage`.
+   - **Armonización de botones**: Prohibido usar colores fijos (`#334155`, `#3b82f6`, etc.) o gradientes no temáticos en botones nuevos. Todo botón o control interactivo debe usar variables CSS (`var(--primary-gradient)`, `var(--accent-glow)`, `var(--bg-card)`, `var(--border-color)`, `var(--border-focus)`, `var(--badge-primary-bg)`) y responder dinámicamente al tema activo.

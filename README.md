@@ -60,6 +60,7 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
   - **Deep Violet (Dark Fantasy)**: Noche púrpura con violeta real (`#8b5cf6`) y lavanda, sobria y descansada para largas sesiones de lectura.
   - **Midnight Velvet (Electric Magenta)**: Fondo negro carbón OLED (`#090a10`) con alto contraste en fucsia neón (`#f43f5e`).
   - **Hybrid Slate & Indigo Glow**: Pizarra fría clásica (`#0b0f19`) con acentos sutiles en índigo (`#6366f1`).
+  - **Armonización de Botones y Controles**: Todos los botones primarios, secundarios, contornos, chips de configuración y terminales adaptan su colorimetría dinámicamente mediante variables CSS temáticas sin colores fijos ni destellos visuales.
 - ⚡ **Caché Inteligente y Cero Re-Descargas**: Capítulos descargados se leen en milisegundos desde SQLite sin peticiones a internet ni consumo de cuotas.
 - 📦 **Exportación Offline**: Exporta a archivos individuales `.txt` o libros digitales `.pdf` con tipografía limpia, portadas incrustadas y tabla de contenidos.
 - 🛡️ **Anti-Detección Cloudflare**: Cabeceras de navegador real (Chrome 130 Windows), *request throttling* con pausas aleatorias (*jitter*) y soporte para cookies de sesión.

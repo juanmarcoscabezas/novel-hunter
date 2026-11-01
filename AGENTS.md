@@ -85,6 +85,18 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 4. **Temas y Cromática**:
    - La aplicación implementa 4 temas visuales seleccionables desde Configuración (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`), gestionados mediante variables CSS y el atributo `data-theme` en `<html>`.
    - El tema predeterminado es `neon-hunter`, alineado con la cromática y gradiente del icono oficial. La preferencia del usuario se persiste en `localStorage` (`novel_hunter_theme`).
+5. **Armonización de Botones y Controles con el Sistema de Temas (Mandatorio)**:
+   - **Prohibido colores fijos ("hardcodeados")**: NUNCA uses colores hexadecimales fijos (ej. `#334155`, `#3b82f6`, `rgba(59, 130, 246, ...)`) ni gradientes no temáticos en botones o controles interactivos nuevos o modificados.
+   - **Variables CSS reactivas obligatorias**: Todo botón o control debe adherirse a las variables CSS del tema activo:
+     - Primarios (`.btn-primary`): `var(--primary-gradient)` y resplandor `var(--accent-glow)`.
+     - Secundarios (`.btn-secondary`): `background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);`, y en hover `background-color: var(--bg-card-hover); border-color: var(--border-focus); color: #ffffff;`.
+     - Contorno (`.btn-outline`): `border: 1px solid var(--border-color); color: var(--text-main);`, y en hover iluminar con `var(--badge-primary-bg)` y `var(--border-focus)`.
+     - Fichas interactivas (`.chip`, `.group-size-chip`): `var(--bg-card)` y `var(--border-color)`, y `.chip.active` con `var(--primary-gradient)` y `var(--accent-glow)`.
+     - Acciones rápidas y selectores (`.terminal-quick-btn`, `.select-harmonized`, `.btn-icon`): deben reaccionar al color de acento y resplandor del tema (`var(--border-focus)`, `var(--badge-primary-bg)`, `var(--accent-glow)`).
+   - **Dimensiones estándar**:
+     - Botones de acción principales en tarjetas y modales: altura unificada de 36px (`.btn-sm` / `.btn-action-harmonized`, `box-sizing: border-box`).
+     - Botones compactos: 28px (`.btn-xs`).
+   - **Cero emojis**: Únicamente iconos vectoriales SVG en línea (`ICONS` en `app.js` o `<svg class="svg-icon">`).
 
 ---
 

@@ -17,3 +17,4 @@ Read and strictly follow [AGENTS.md](./AGENTS.md).
    - Action buttons must maintain unified 36px height.
    - SVG vector icons only (no broken emojis).
    - 4 selectable themes in Settings aligned with app icon (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`).
+   - Button harmonization: No hardcoded hex colors (`#334155`, `#3b82f6`) on buttons or controls. Always use theme CSS variables (`var(--primary-gradient)`, `var(--accent-glow)`, `var(--bg-card)`, `var(--border-color)`, `var(--border-focus)`).

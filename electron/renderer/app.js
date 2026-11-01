@@ -2819,6 +2819,18 @@ function initSettings() {
   const chapterGroupFeedback = document.getElementById('chapter-group-feedback');
   const groupSizeChips = document.querySelectorAll('.group-size-chip');
 
+  function updateActiveGroupChips(size) {
+    const targetSize = parseInt(size, 10);
+    groupSizeChips.forEach(chip => {
+      const chipSize = parseInt(chip.getAttribute('data-size'), 10);
+      if (chipSize === targetSize) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
   async function loadChapterGroupingStatus() {
     try {
       const res = await window.wtrApi.getChapterGrouping();
@@ -2826,6 +2838,7 @@ function initSettings() {
       chapterGroupingSize = (!isNaN(size) && size > 0) ? size : 20;
       if (chapterGroupInput) chapterGroupInput.value = chapterGroupingSize;
       if (chapterGroupPill) chapterGroupPill.textContent = `${chapterGroupingSize} por grupo`;
+      updateActiveGroupChips(chapterGroupingSize);
     } catch {}
   }
 
@@ -2836,8 +2849,14 @@ function initSettings() {
       const size = chip.getAttribute('data-size');
       if (chapterGroupInput && size) {
         chapterGroupInput.value = size;
+        updateActiveGroupChips(size);
       }
     });
+  });
+
+  chapterGroupInput?.addEventListener('input', () => {
+    const rawVal = chapterGroupInput.value.trim();
+    updateActiveGroupChips(rawVal);
   });
 
   saveChapterGroupBtn?.addEventListener('click', async () => {
@@ -2853,6 +2872,7 @@ function initSettings() {
       chapterGroupingSize = (res && res.chapterGrouping) ? res.chapterGrouping : num;
       if (chapterGroupInput) chapterGroupInput.value = chapterGroupingSize;
       if (chapterGroupPill) chapterGroupPill.textContent = `${chapterGroupingSize} por grupo`;
+      updateActiveGroupChips(chapterGroupingSize);
       showFeedback(chapterGroupFeedback, 'success', `Configuración guardada: Capítulos agrupados de ${chapterGroupingSize} en ${chapterGroupingSize}.`);
 
       // Refrescar modal de capítulos si está visible actualmente
@@ -2872,6 +2892,7 @@ function initSettings() {
       chapterGroupingSize = (res && res.chapterGrouping) ? res.chapterGrouping : 20;
       if (chapterGroupInput) chapterGroupInput.value = 20;
       if (chapterGroupPill) chapterGroupPill.textContent = '20 por grupo';
+      updateActiveGroupChips(20);
       showFeedback(chapterGroupFeedback, 'info', 'Restablecido al valor por defecto (20 por grupo).');
 
       const chaptersModal = document.getElementById('chapters-modal');

@@ -1010,7 +1010,35 @@ async function runTests() {
 
   console.log('   ✓ Selector de Temas Visuales (Neon Hunter, Deep Violet, Midnight Velvet, Hybrid Slate) verificado con éxito.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (32/32) PASARON EXITOSAMENTE!');
+  // Test 33: Armonización de Botones y Controles con Variables CSS de Temas
+  console.log('\n33. Probando Armonización Dinámica de Botones y Controles con Temas CSS...');
+  const btnStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const btnAppJs = fs.readFileSync(path.join(__dirname, '../electron/renderer/app.js'), 'utf-8');
+
+  // .btn-secondary debe usar variables del tema y no color fijo #334155
+  assert(!btnStyles.includes('background-color: #334155'), 'styles.css no debe tener hardcodeado #334155 en .btn-secondary');
+  assert(btnStyles.includes('.btn-secondary {'), 'styles.css debe definir .btn-secondary');
+
+  // .btn-translate-novel debe usar variables CSS y no gradiente azul fijo
+  assert(!btnStyles.includes('linear-gradient(135deg, #2563eb, #1d4ed8)'), 'styles.css no debe tener hardcodeado el gradiente azul en .btn-translate-novel');
+  assert(btnStyles.includes('.btn-translate-novel {'), 'styles.css debe definir .btn-translate-novel con variables de tema');
+
+  // .chip y .chip.active
+  assert(btnStyles.includes('.chip.active'), 'styles.css debe definir estilos para .chip.active');
+
+  // .reader-body debe responder al tema activo
+  assert(!btnStyles.includes('background-color: #0b1120'), 'styles.css no debe fijar #0b1120 en el lector');
+
+  // app.js debe reactivar los chips de configuración
+  assert(btnAppJs.includes('updateActiveGroupChips'), 'app.js debe implementar updateActiveGroupChips para sincronizar los botones chip');
+
+  // Cero emojis en app.js
+  const btnEmojis = btnAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(btnEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${btnEmojis.join(', ')}`);
+
+  console.log('   ✓ Armonización de Botones (.btn-secondary, .btn-outline, .btn-translate-novel, .chip.active) verificada con éxito.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (33/33) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

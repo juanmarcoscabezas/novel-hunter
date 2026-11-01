@@ -23,7 +23,7 @@ Este skill define el protocolo riguroso y secuencial que todo desarrollador o ag
   - **Backend**: Electron IPC seguro con `contextBridge` aislado (`electron/main.js`, `electron/preload.cjs`).
   - **Frontend**: Vanilla JS modular, HTML5 y CSS3 moderno con variables CSS (`electron/renderer/`).
   - **Base de Datos**: SQLite normalizado en Tercera Forma Normal (3NF) nativo con `node:sqlite`. Jamás escribir en `app.asar`.
-  - **UI / UX**: Altura fija unificada de 36px (`box-sizing: border-box`) para botones de acción. Iconos vectoriales SVG en línea (`ICONS`), cero emojis rotos.
+  - **UI / UX**: Altura fija unificada de 36px (`box-sizing: border-box`) para botones de acción. Iconos vectoriales SVG en línea (`ICONS`), cero emojis rotos. Armonización obligatoria de botones y controles: cero colores fijos (`#334155`, etc.), usar variables CSS del tema activo (`var(--primary-gradient)`, `var(--accent-glow)`, `var(--bg-card)`, `var(--border-color)`, `var(--border-focus)`).
 
 ### 2. Creación o Actualización de Pruebas
 - **Toda nueva funcionalidad debe tener su prueba asociada**:
