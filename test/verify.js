@@ -830,6 +830,7 @@ async function runTests() {
   assert(uxHtml.includes('class="dropdown-wrapper"'), 'index.html debe estructurar el menú en .dropdown-wrapper');
   assert(uxHtml.includes('class="dropdown-divider"'), 'index.html debe contener .dropdown-divider para separar acciones destructivas');
   assert(uxHtml.includes('dropdown-item-danger'), 'index.html debe marcar las opciones destructivas con .dropdown-item-danger');
+  assert(!uxHtml.includes('<label for="chapters-lang-filter"'), 'index.html no debe mostrar visible el selector de idioma en el detalle de la novela');
 
   // Verificar que las acciones secundarias y destructivas están dentro del dropdown
   const dropdownStartIndex = uxHtml.indexOf('id="detail-more-dropdown"');

@@ -45,8 +45,8 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 │   ├── storage/            # Exportación a TXT, PDF y fusión de capítulos
 │   └── translators/        # Lógica de Google Translate RPC y tokens Gemini
 ├── test/
-│   ├── verify.js           # Suite de integración integral (23+ pruebas)
-│   └── test_db.js          # Suite de verificación unitaria SQLite 3NF (12+ pruebas)
+│   ├── verify.js           # Suite de integración integral (31+ pruebas)
+│   └── test_db.js          # Suite de verificación unitaria SQLite 3NF (16+ pruebas)
 └── dist/                   # Ejecutables compilados de Windows
 ```
 

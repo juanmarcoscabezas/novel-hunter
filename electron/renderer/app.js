@@ -1287,10 +1287,12 @@ async function openChaptersModal(novelItem) {
 
   const langFilter = document.getElementById('chapters-lang-filter');
   const langs = (novelItem.languages || 'en').split(',').map(s => s.trim());
-  if (langs.includes('es') && !langs.includes('en')) {
-    langFilter.value = 'es';
-  } else {
-    langFilter.value = 'en';
+  let targetLang = novelItem.last_read_language;
+  if (!targetLang || !langs.includes(targetLang)) {
+    targetLang = langs.includes('es') ? 'es' : 'en';
+  }
+  if (langFilter) {
+    langFilter.value = targetLang;
   }
 
   const sortSelect = document.getElementById('chapters-sort-select');
@@ -1298,8 +1300,8 @@ async function openChaptersModal(novelItem) {
     sortSelect.value = localStorage.getItem('chapters_sort_order') || 'asc';
   }
 
-  await loadChaptersListForNovel(novelItem, langFilter.value);
-  await updateModalActionButtons(novelItem, langFilter.value);
+  await loadChaptersListForNovel(novelItem, langFilter ? langFilter.value : targetLang);
+  await updateModalActionButtons(novelItem, langFilter ? langFilter.value : targetLang);
   modal.classList.remove('hidden');
 }
 
@@ -1307,14 +1309,23 @@ async function loadChaptersListForNovel(novelItem, lang) {
   const container = document.getElementById('chapters-list-container');
   container.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Cargando capítulos...</div>';
 
-  const chapters = await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, lang);
+  let chapters = await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, lang);
+  if ((!chapters || chapters.length === 0) && lang !== 'en') {
+    const fallbackChapters = await window.wtrApi.getDownloadedChapters(novelItem.raw_id || novelItem.id, 'en');
+    if (fallbackChapters && fallbackChapters.length > 0) {
+      lang = 'en';
+      const langFilter = document.getElementById('chapters-lang-filter');
+      if (langFilter) langFilter.value = 'en';
+      chapters = fallbackChapters;
+    }
+  }
   currentReadingChaptersList = chapters;
   container.innerHTML = '';
 
   if (!chapters || chapters.length === 0) {
     container.innerHTML = `
       <div style="color: var(--text-muted); padding: 24px; text-align: center;">
-        No hay capítulos descargados en [${lang.toUpperCase()}] para esta novela.
+        No hay capítulos descargados para esta novela.
       </div>
     `;
     return;
