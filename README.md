@@ -34,6 +34,12 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
 ## ✨ Características Principales
 
 - 🖥️ **Aplicación de Escritorio Moderna**: Interfaz gráfica rápida en Vanilla JS (ES Modules) impulsada por Electron con navegación lateral (*Buscador*, *Mi biblioteca*, *Consola Terminal*, *Configuración*).
+- 📑 **Exploración de Series y Tabla de Contenidos (TOC)**:
+  - Al buscar una novela o hacer clic en **"Tabla de Contenidos"**, se presenta la lista completa con los **nombres reales de todos los capítulos**, su número canónico y títulos originales.
+  - **Buscador en tiempo real**: Filtra capítulos instantáneamente por palabras clave en el título o por número de capítulo.
+  - **Selección ágil de descarga**: Botón *"Seleccionar"* para descargar un capítulo individual y botón *"Hasta aquí"* para construir rangos de descarga con un solo clic.
+  - **Modo expandido**: Botón *"Expandir"* para maximizar la tabla de contenidos a toda la altura del modal y explorar cientos de capítulos con total fluidez.
+  - **Acciones duales en tarjetas**: Botón *"Tabla de Contenidos"* para explorar el índice y botón *"Descargar"* para configurar opciones de descarga directa.
 - 💾 **Base de Datos SQLite en 3NF**: Esquema relacional normalizado con módulo nativo `node:sqlite` que almacena novelas, autores, capítulos canónicos, traducciones independientes (`en`, `es`), párrafos atómicos en 1NF y progreso de lectura en `data/novels.db`.
 - 📖 **Lector Offline con Lectura Ininterrumpida (*Binge Reading*)**:
   - Botón directo **"Seguir Leyendo (Cap. X)"** en la biblioteca y en el modal de detalle de la novela.
