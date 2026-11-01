@@ -199,3 +199,20 @@ Puedes abrir `data/novels.db` directamente con:
 - **Integración con Progreso de Lectura (`reading_progress`)**:
   - Al abrir el modal de exploración de capítulos de una novela, la interfaz consulta `rp.last_read_chapter_no` para abrir por defecto el bloque de acordeón que contiene el último capítulo leído.
   - Esto optimiza la experiencia de lectura continua incluso en catálogos extensos con miles de capítulos ordenados en 3NF.
+
+---
+
+## 7. Ordenamiento Avanzado y Precisión Temporal en `NovelRepository`
+
+El repositorio expone el método `listLibrary(sortBy)` con múltiples estrategias de ordenamiento relacional calculadas en una sola consulta SQL optimizada con agrupamiento:
+
+- **Estrategias soportadas**:
+  - `'last_read'` (por defecto): Prioriza las novelas según la fecha y hora de lectura más reciente (`COALESCE(rp.last_read_at, '1970-01-01') DESC, n.updated_at DESC`).
+  - `'title_asc'` / `'title_desc'`: Orden alfabético insensible a mayúsculas (`n.title COLLATE NOCASE ASC / DESC`).
+  - `'chapters_desc'` / `'chapters_asc'`: Por cantidad de capítulos únicos descargados (`downloaded_chapters DESC / ASC`).
+  - `'author_asc'`: Por nombre del autor normalizado (`COALESCE(a.name, 'zzz') COLLATE NOCASE ASC`).
+  - `'progress_desc'`: Por porcentaje relativo de lectura completada (`(COUNT(DISTINCT c.chapter_no) / n.total_chapters) DESC`).
+  - `'updated_desc'`: Por última fecha de descarga o modificación de la novela (`n.updated_at DESC`).
+
+- **Marcas Temporales de Alta Resolución**:
+  - `updateReadingProgress` utiliza `strftime('%Y-%m-%d %H:%M:%f', 'now')` en SQLite para registrar marcas temporales con precisión de milisegundos, evitando colisiones de desempate en lecturas consecutivas de capítulos.

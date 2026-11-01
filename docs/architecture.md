@@ -275,3 +275,62 @@ Para garantizar una experiencia de usuario limpia y evitar la sobrecarga de boto
     - `detail-delete-novel-btn`: *"Eliminar Novela Completa"* con confirmación previa y eliminación en cascada 3NF.
 - **Interacción y Cierre Automático**: Cierre instantáneo al hacer clic en cualquier opción, al hacer clic fuera del menú o al cerrar/abrir el detalle de la novela.
 
+---
+
+## 14. Desacoplamiento Global de Modales y Jerarquía de Capas (Z-Index Layering)
+
+Para erradicar comportamientos donde los modales secundarios no emergían al ser invocados desde vistas anidadas (por ejemplo, el botón *"Descargar Más..."* presionado desde el detalle de la novela o el lector integrado), se rediseñó el ciclo de renderizado del DOM:
+
+- **Problema de Herencia CSS (`display: none`)**:
+  - Anteriormente, `#download-modal` residía como hijo de `<section id="tab-search">`. Al navegar a *"Mi Biblioteca"* (`#tab-library`), la pestaña de búsqueda recibía `display: none`, lo cual anulaba el renderizado de cualquier elemento hijo sin importar si se retiraba la clase `.hidden` o si tenía `position: fixed`.
+- **Contenedor `#global-modals`**:
+  - Los 5 modales de la aplicación (`#download-modal`, `#export-modal`, `#chapters-modal`, `#delete-chapters-modal`, `#reader-modal`) se reubicaron en un contenedor común al final de `<main id="main-content">`, fuera de todas las secciones de pestañas (`.tab-pane`).
+  - `#global-modals` utiliza `display: contents;`, garantizando que sus hijos se proyecten directamente al viewport del sistema sin generar cajas bloqueantes intermedias.
+- **Jerarquía Explícita de Capas (Z-Index)**:
+  - Para permitir la apertura superpuesta de diálogos de descarga o exportación sobre el lector o el catálogo de capítulos sin conflicto de apilamiento en el DOM:
+    ```css
+    #chapters-modal       { z-index: 150; } /* Vista base de detalle */
+    #reader-modal         { z-index: 200; } /* Lector integrado a pantalla completa */
+    #export-modal         { z-index: 300; } /* Diálogo de exportación offline */
+    #download-modal       { z-index: 350; } /* Configuración y progreso de descarga */
+    #delete-chapters-modal{ z-index: 400; } /* Diálogo de confirmación destructiva */
+    ```
+- **Sincronización Reactiva tras Descarga**:
+  - Al completar una descarga mediante `#download-modal`, la función `startDownload` detecta automáticamente si `currentChaptersNovel` o `currentReadingNovel` coinciden con la novela descargada. Si es así, ejecuta `loadChaptersListForNovel`, `updateModalActionButtons` y `updateReaderNavButtons`, actualizando la lista de capítulos disponibles y activando de inmediato el botón *"Siguiente"* en el lector sin requerir recarga manual.
+
+---
+
+## 15. Sistema de Filtros y Ordenamiento Reactivo (Biblioteca, Capítulos y TOC)
+
+Novel Hunter proporciona una arquitectura completa de filtrado y ordenamiento en múltiples capas para garantizar que el usuario pueda localizar, explorar y organizar sus novelas y capítulos con máxima fluidez:
+
+### 1. Barra de Herramientas de "Mi Biblioteca" (`.library-toolbar`)
+- **Búsqueda en Tiempo Real**: Input de texto (`#library-filter-input`) con filtrado por título y autor sin recargar la página.
+- **Filtro por Idioma (`#library-lang-filter`)**: Opciones para explorar todo el catálogo (`all`), solo novelas con traducción en español (`es`) o solo en inglés (`en`). Persistido en `localStorage` (`library_lang_filter`).
+- **Selector de Ordenamiento (`#library-sort-select`)**:
+  - `last_read`: Último leído o más recientemente actualizado (por defecto).
+  - `title_asc`: Orden alfabético por título ascendente (A - Z).
+  - `title_desc`: Orden alfabético por título descendente (Z - A).
+  - `chapters_desc`: Mayor número de capítulos descargados.
+  - `chapters_asc`: Menor número de capítulos descargados.
+  - `author_asc`: Orden alfabético por autor (A - Z).
+  - `progress_desc`: Mayor porcentaje de avance/lectura respecto al total de la serie en WTR-Lab.
+- **Doble Capa de Ordenamiento**:
+  - **Backend (SQLite)**: El método `NovelRepository.listLibrary(sortBy)` construye cláusulas SQL `ORDER BY` optimizadas utilizando índices de clave foránea y cálculos agregados de progreso.
+  - **Frontend (In-Memory)**: La función `applyLibraryFiltersAndSort()` ordena instantáneamente el array `cachedLibraryNovels` con 0ms de latencia visual al conmutar controles o escribir en la búsqueda.
+
+### 2. Ordenamiento en el Detalle de Capítulos (`#chapters-modal`)
+- **Selector de Orden (`#chapters-sort-select`)**:
+  - `asc`: Ascendente (`1 a N`), ideal para lectura cronológica desde el inicio.
+  - `desc`: Descendente (`N a 1`), ideal para consultar rápidamente los lanzamientos más recientes.
+- **Adaptación Reactiva de Acordeones**:
+  - Al cambiar el orden, los bloques del acordeón se recalculan e invierten sus rangos (ej. `Capítulos 20 – 1` o `Capítulos 100 – 81`), preservando la navegación y la expansión del último capítulo leído.
+  - La preferencia se persiste en `localStorage` (`chapters_sort_order`).
+
+### 3. Ordenamiento en la Tabla de Contenidos (TOC) (`#download-modal`)
+- **Selector de Orden (`#modal-toc-sort`)**:
+  - Permite ordenar la tabla de contenidos interactiva en orden `1 a N` o `N a 1`.
+  - Integrado en `.download-toc-controls` junto con el buscador en tiempo real de capítulos y el botón de expansión.
+  - La preferencia se persiste en `localStorage` (`toc_sort_order`).
+
+

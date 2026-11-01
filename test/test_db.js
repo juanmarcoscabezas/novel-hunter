@@ -215,7 +215,73 @@ async function runDbTests() {
   repo.deleteNovel('test-spaces');
   console.log('   ✓ Párrafos vacíos eliminados y espacios normalizados correctamente en SQLite.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (15/15) PASARON EXITOSAMENTE!');
+  // 16. Probando opciones de ordenamiento en listLibrary
+  console.log('\n16. Probando opciones de ordenamiento en listLibrary (3NF)...');
+  repo.upsertNovel({ rawId: 3001, slug: 'novel-beta', title: 'Beta Novel', author: 'Zack Writer', totalChapters: 100 });
+  repo.upsertNovel({ rawId: 3002, slug: 'novel-alpha', title: 'Alpha Novel', author: 'Adam Author', totalChapters: 10 });
+  repo.upsertNovel({ rawId: 3003, slug: 'novel-gamma', title: 'Gamma Novel', author: 'Mary Novelist', totalChapters: 50 });
+
+  // Guardar capítulos:
+  // Alpha: 5 de 10 (50% progreso)
+  for (let i = 1; i <= 5; i++) {
+    repo.saveChapterTranslation(3002, i, { language: 'en', title: `Cap ${i}`, fullText: 'Alpha text' });
+  }
+  // Gamma: 10 de 50 (20% progreso)
+  for (let i = 1; i <= 10; i++) {
+    repo.saveChapterTranslation(3003, i, { language: 'en', title: `Cap ${i}`, fullText: 'Gamma text' });
+  }
+  // Beta: 1 de 100 (1% progreso)
+  repo.saveChapterTranslation(3001, 1, { language: 'en', title: 'Cap 1', fullText: 'Beta text' });
+
+  // Progreso de lectura: Gamma leído más recientemente que Beta
+  repo.updateReadingProgress(3001, 1, 'en');
+  repo.updateReadingProgress(3003, 5, 'en');
+  memDb.prepare("UPDATE reading_progress SET last_read_at = '2026-01-01 10:00:00' WHERE novel_id = 3001").run();
+  memDb.prepare("UPDATE reading_progress SET last_read_at = '2026-01-02 12:00:00' WHERE novel_id = 3003").run();
+  repo.db.prepare("UPDATE reading_progress SET last_read_at = datetime('now', '+5 seconds') WHERE novel_id = 3003").run();
+
+  // Test title_asc
+  const byTitleAsc = repo.listLibrary('title_asc');
+  assert.strictEqual(byTitleAsc[0].title, 'Alpha Novel');
+  assert.strictEqual(byTitleAsc[1].title, 'Beta Novel');
+  assert.strictEqual(byTitleAsc[2].title, 'Gamma Novel');
+
+  // Test title_desc
+  const byTitleDesc = repo.listLibrary('title_desc');
+  assert.strictEqual(byTitleDesc[0].title, 'Gamma Novel');
+  assert.strictEqual(byTitleDesc[1].title, 'Beta Novel');
+  assert.strictEqual(byTitleDesc[2].title, 'Alpha Novel');
+
+  // Test chapters_desc
+  const byChaptersDesc = repo.listLibrary('chapters_desc');
+  assert.strictEqual(byChaptersDesc[0].title, 'Gamma Novel'); // 10 caps
+  assert.strictEqual(byChaptersDesc[1].title, 'Alpha Novel'); // 5 caps
+  assert.strictEqual(byChaptersDesc[2].title, 'Beta Novel');  // 1 cap
+
+  // Test author_asc
+  const byAuthorAsc = repo.listLibrary('author_asc');
+  assert.strictEqual(byAuthorAsc[0].author, 'Adam Author');
+  assert.strictEqual(byAuthorAsc[1].author, 'Mary Novelist');
+  assert.strictEqual(byAuthorAsc[2].author, 'Zack Writer');
+
+  // Test progress_desc
+  const byProgressDesc = repo.listLibrary('progress_desc');
+  assert.strictEqual(byProgressDesc[0].title, 'Alpha Novel'); // 50%
+  assert.strictEqual(byProgressDesc[1].title, 'Gamma Novel'); // 20%
+  assert.strictEqual(byProgressDesc[2].title, 'Beta Novel');  // 1%
+
+  // Test last_read
+  const byLastRead = repo.listLibrary('last_read');
+  assert.strictEqual(byLastRead[0].title, 'Gamma Novel'); // leído de último
+
+  // Limpieza
+  repo.deleteNovel('novel-beta');
+  repo.deleteNovel('novel-alpha');
+  repo.deleteNovel('novel-gamma');
+  assert.strictEqual(repo.listLibrary().length, 0);
+  console.log('   ✓ Opciones de ordenamiento en listLibrary (title_asc, title_desc, chapters_desc, author_asc, progress_desc, last_read) validadas exitosamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (16/16) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {

@@ -258,9 +258,19 @@ function initDownloadModal() {
   // Controles de la Tabla de Contenidos (TOC)
   const tocSearch = document.getElementById('modal-toc-search');
   const tocClearBtn = document.getElementById('modal-toc-clear-btn');
+  const tocSort = document.getElementById('modal-toc-sort');
   const toggleExpandBtn = document.getElementById('toggle-expand-toc-btn');
   const toggleExpandText = document.getElementById('toggle-expand-toc-text');
   const downloadModalCard = modal.querySelector('.download-modal-card');
+
+  if (tocSort) {
+    const savedTocSort = localStorage.getItem('toc_sort_order') || 'asc';
+    tocSort.value = savedTocSort;
+    tocSort.addEventListener('change', () => {
+      localStorage.setItem('toc_sort_order', tocSort.value);
+      renderModalTableOfContents(currentNovelChapters, tocSearch?.value || '', tocSort.value);
+    });
+  }
 
   if (tocSearch) {
     tocSearch.addEventListener('input', () => {
@@ -270,7 +280,7 @@ function initDownloadModal() {
       } else {
         tocClearBtn?.classList.add('hidden');
       }
-      renderModalTableOfContents(currentNovelChapters, q);
+      renderModalTableOfContents(currentNovelChapters, q, tocSort?.value || 'asc');
     });
   }
 
@@ -278,7 +288,7 @@ function initDownloadModal() {
     tocClearBtn.addEventListener('click', () => {
       if (tocSearch) tocSearch.value = '';
       tocClearBtn.classList.add('hidden');
-      renderModalTableOfContents(currentNovelChapters, '');
+      renderModalTableOfContents(currentNovelChapters, '', tocSort?.value || 'asc');
       tocSearch?.focus();
     });
   }
@@ -466,11 +476,13 @@ async function openDownloadModal(novel, options = null) {
   }
 }
 
-function renderModalTableOfContents(chapters, filterText = '') {
+function renderModalTableOfContents(chapters, filterText = '', sortOrder = null) {
   const container = document.getElementById('modal-toc-list');
   const countBadge = document.getElementById('modal-toc-count');
   const filterStatus = document.getElementById('modal-toc-filter-status');
   const rangeInput = document.getElementById('chapter-range-input');
+  const tocSort = document.getElementById('modal-toc-sort');
+  const activeSort = sortOrder || tocSort?.value || 'asc';
 
   if (!container) return;
 
@@ -489,9 +501,9 @@ function renderModalTableOfContents(chapters, filterText = '') {
   }
 
   const query = (filterText || '').trim().toLowerCase();
-  let filtered = chapters;
+  let filtered = [...chapters];
   if (query) {
-    filtered = chapters.filter((ch) => {
+    filtered = filtered.filter((ch) => {
       const titleMatch = ch.title && ch.title.toLowerCase().includes(query);
       const rawTitleMatch = ch.rawTitle && ch.rawTitle.toLowerCase().includes(query);
       const orderMatch = String(ch.order) === query || String(ch.order).startsWith(query) || `capítulo ${ch.order}`.includes(query) || `cap ${ch.order}`.includes(query);
@@ -507,6 +519,13 @@ function renderModalTableOfContents(chapters, filterText = '') {
       filterStatus.classList.add('hidden');
       filterStatus.textContent = '';
     }
+  }
+
+  // Ordenar lista de capítulos
+  if (activeSort === 'desc') {
+    filtered.sort((a, b) => b.order - a.order);
+  } else {
+    filtered.sort((a, b) => a.order - b.order);
   }
 
   container.innerHTML = '';
@@ -747,37 +766,211 @@ function handleGlobalProgress(data) {
 /* ==========================================================================
    4. MI BIBLIOTECA (SQLITE)
    ========================================================================== */
+let cachedLibraryNovels = [];
+
 function initLibrary() {
   const refreshBtn = document.getElementById('refresh-library-btn');
   const filterInput = document.getElementById('library-filter-input');
+  const langFilter = document.getElementById('library-lang-filter');
+  const sortSelect = document.getElementById('library-sort-select');
 
   refreshBtn.addEventListener('click', loadLibrary);
 
-  filterInput.addEventListener('input', () => {
-    const filter = filterInput.value.toLowerCase().trim();
-    const cards = document.querySelectorAll('#library-novel-grid .novel-card');
-    cards.forEach((card) => {
-      const title = card.getAttribute('data-title') || '';
-      const author = card.getAttribute('data-author') || '';
-      if (title.includes(filter) || author.includes(filter)) {
-        card.style.display = 'flex';
-      } else {
-        card.style.display = 'none';
-      }
+  if (sortSelect) {
+    const savedSort = localStorage.getItem('library_sort_order') || 'last_read';
+    sortSelect.value = savedSort;
+    sortSelect.addEventListener('change', () => {
+      localStorage.setItem('library_sort_order', sortSelect.value);
+      applyLibraryFiltersAndSort();
     });
+  }
+
+  if (langFilter) {
+    const savedLang = localStorage.getItem('library_lang_filter') || 'all';
+    langFilter.value = savedLang;
+    langFilter.addEventListener('change', () => {
+      localStorage.setItem('library_lang_filter', langFilter.value);
+      applyLibraryFiltersAndSort();
+    });
+  }
+
+  filterInput?.addEventListener('input', () => {
+    applyLibraryFiltersAndSort();
   });
 
   initExportModal();
 }
 
-async function loadLibrary() {
+function applyLibraryFiltersAndSort() {
+  const filterInput = document.getElementById('library-filter-input');
+  const langFilter = document.getElementById('library-lang-filter');
+  const sortSelect = document.getElementById('library-sort-select');
+
+  const filterText = (filterInput?.value || '').toLowerCase().trim();
+  const selectedLang = langFilter?.value || 'all';
+  const selectedSort = sortSelect?.value || 'last_read';
+
+  let list = [...cachedLibraryNovels];
+
+  // 1. Filtrar por búsqueda de texto
+  if (filterText) {
+    list = list.filter((item) => {
+      const title = (item.title || '').toLowerCase();
+      const author = (item.author || '').toLowerCase();
+      return title.includes(filterText) || author.includes(filterText);
+    });
+  }
+
+  // 2. Filtrar por idioma
+  if (selectedLang !== 'all') {
+    list = list.filter((item) => {
+      const langs = (item.languages || '').split(',').map(l => l.trim().toLowerCase());
+      return langs.includes(selectedLang.toLowerCase());
+    });
+  }
+
+  // 3. Ordenar
+  list.sort((a, b) => {
+    switch (selectedSort) {
+      case 'title_asc':
+        return (a.title || '').localeCompare(b.title || '');
+      case 'title_desc':
+        return (b.title || '').localeCompare(a.title || '');
+      case 'chapters_desc':
+        return (b.downloaded_chapters || 0) - (a.downloaded_chapters || 0);
+      case 'chapters_asc':
+        return (a.downloaded_chapters || 0) - (b.downloaded_chapters || 0);
+      case 'author_asc':
+        return (a.author || 'zzz').localeCompare(b.author || 'zzz');
+      case 'progress_desc': {
+        const progA = (a.downloaded_chapters || 0) / (a.total_chapters || 1);
+        const progB = (b.downloaded_chapters || 0) / (b.total_chapters || 1);
+        return progB - progA;
+      }
+      case 'last_read':
+      default: {
+        const timeA = a.last_read_at ? new Date(a.last_read_at).getTime() : 0;
+        const timeB = b.last_read_at ? new Date(b.last_read_at).getTime() : 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return (b.downloaded_chapters || 0) - (a.downloaded_chapters || 0);
+      }
+    }
+  });
+
+  renderLibraryGrid(list);
+}
+
+function renderLibraryGrid(list) {
   const grid = document.getElementById('library-novel-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (list.length === 0) {
+    if (cachedLibraryNovels.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">${ICONS.bookXl}</div>
+          <h3>Tu biblioteca está vacía</h3>
+          <p>Usa la pestaña "Buscador & Descarga" para buscar y guardar tus novelas en tu biblioteca local.</p>
+        </div>
+      `;
+    } else {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">${ICONS.search}</div>
+          <h3>Sin coincidencias</h3>
+          <p>No se encontraron novelas con los filtros y ordenamiento seleccionados.</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  list.forEach((item) => {
+    const card = document.createElement('div');
+    card.className = 'novel-card';
+    card.setAttribute('data-title', (item.title || '').toLowerCase());
+    card.setAttribute('data-author', (item.author || '').toLowerCase());
+
+    const coverHtml = item.cover_url
+      ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
+      : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
+
+    const langBadges = (item.languages || 'ninguno')
+      .split(',')
+      .map(l => `<span class="badge badge-primary">${escapeHtml(l.trim().toUpperCase())}</span>`)
+      .join(' ');
+
+    const continueBtnHtml = item.last_read_chapter_no
+      ? `
+        <button class="btn btn-sm btn-continue-novel" style="width: 100%;" title="Ir al último capítulo visto">
+          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>Continuar: Cap. ${item.last_read_chapter_no}</span>
+        </button>
+      `
+      : '';
+
+    card.innerHTML = `
+      <div class="novel-card-top">
+        ${coverHtml}
+        <div class="novel-card-info">
+          <h3 class="novel-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h3>
+          <span class="novel-card-author">${ICONS.user} ${escapeHtml(item.author || 'Desconocido')}</span>
+          <span class="novel-card-chapters">${ICONS.fileText} Guardados: <strong>${item.downloaded_chapters}</strong> / ${item.total_chapters || '?'}</span>
+          <div class="novel-card-meta-chips">
+            ${langBadges}
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-direction: column;">
+        ${continueBtnHtml}
+        <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
+          ${ICONS.fileTextSm}
+          <span>Ver Capítulos (${item.downloaded_chapters})</span>
+        </button>
+      </div>
+    `;
+
+    if (item.last_read_chapter_no) {
+      card.querySelector('.btn-continue-novel')?.addEventListener('click', async () => {
+        let lang = item.last_read_language || (item.languages ? item.languages.split(',')[0].trim() : 'en');
+        let chapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, lang);
+        if (!chapters || chapters.length === 0) {
+          const altLang = lang === 'es' ? 'en' : 'es';
+          const altChapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, altLang);
+          if (altChapters && altChapters.length > 0) {
+            lang = altLang;
+            chapters = altChapters;
+          }
+        }
+        currentReadingChaptersList = chapters || [];
+        let targetChNo = item.last_read_chapter_no;
+        if (chapters && chapters.length > 0 && !chapters.some(c => c.chapter_no === targetChNo)) {
+          targetChNo = chapters[0].chapter_no;
+        }
+        openReaderModal(item, targetChNo, lang);
+      });
+    }
+
+    card.querySelector('.btn-view-chapters').addEventListener('click', () => {
+      openChaptersModal(item);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+async function loadLibrary() {
   const totalNovelsEl = document.getElementById('lib-total-novels');
   const totalChaptersEl = document.getElementById('lib-total-chapters');
   const storageSizeEl = document.getElementById('lib-storage-size');
+  const sortSelect = document.getElementById('library-sort-select');
 
   try {
-    const list = await window.wtrApi.getLibrary();
+    const sortBy = sortSelect?.value || localStorage.getItem('library_sort_order') || 'last_read';
+    const list = await window.wtrApi.getLibrary(sortBy);
+    cachedLibraryNovels = list || [];
+
     if (window.wtrApi.getStorageStats && storageSizeEl) {
       try {
         const storage = await window.wtrApi.getStorageStats();
@@ -786,96 +979,12 @@ async function loadLibrary() {
         storageSizeEl.textContent = '0 KB';
       }
     }
-    grid.innerHTML = '';
 
-    totalNovelsEl.textContent = list.length;
-    const totalChapters = list.reduce((acc, item) => acc + (item.downloaded_chapters || 0), 0);
-    totalChaptersEl.textContent = totalChapters;
+    if (totalNovelsEl) totalNovelsEl.textContent = cachedLibraryNovels.length;
+    const totalChapters = cachedLibraryNovels.reduce((acc, item) => acc + (item.downloaded_chapters || 0), 0);
+    if (totalChaptersEl) totalChaptersEl.textContent = totalChapters;
 
-    if (list.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">${ICONS.bookXl}</div>
-          <h3>Tu biblioteca está vacía</h3>
-          <p>Usa la pestaña "Buscador & Descarga" para buscar y guardar tus novelas en tu biblioteca local.</p>
-        </div>
-      `;
-      return;
-    }
-
-    list.forEach((item) => {
-      const card = document.createElement('div');
-      card.className = 'novel-card';
-      card.setAttribute('data-title', (item.title || '').toLowerCase());
-      card.setAttribute('data-author', (item.author || '').toLowerCase());
-
-      const coverHtml = item.cover_url
-        ? `<img src="${escapeHtml(item.cover_url)}" alt="Cover" class="novel-card-cover" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.replaceWith(createPlaceholderCover())">`
-        : `<div class="novel-card-cover-placeholder">${ICONS.book}</div>`;
-
-      const langBadges = (item.languages || 'ninguno')
-        .split(',')
-        .map(l => `<span class="badge badge-primary">${escapeHtml(l.trim().toUpperCase())}</span>`)
-        .join(' ');
-
-      const continueBtnHtml = item.last_read_chapter_no
-        ? `
-          <button class="btn btn-sm btn-continue-novel" style="width: 100%;" title="Ir al último capítulo visto">
-            <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>Continuar: Cap. ${item.last_read_chapter_no}</span>
-          </button>
-        `
-        : '';
-
-      card.innerHTML = `
-        <div class="novel-card-top">
-          ${coverHtml}
-          <div class="novel-card-info">
-            <h3 class="novel-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h3>
-            <span class="novel-card-author">${ICONS.user} ${escapeHtml(item.author || 'Desconocido')}</span>
-            <span class="novel-card-chapters">${ICONS.fileText} Guardados: <strong>${item.downloaded_chapters}</strong> / ${item.total_chapters || '?'}</span>
-            <div class="novel-card-meta-chips">
-              ${langBadges}
-            </div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 8px; flex-direction: column;">
-          ${continueBtnHtml}
-          <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
-            ${ICONS.fileTextSm}
-            <span>Ver Capítulos (${item.downloaded_chapters})</span>
-          </button>
-        </div>
-      `;
-
-      if (item.last_read_chapter_no) {
-        card.querySelector('.btn-continue-novel')?.addEventListener('click', async () => {
-          let lang = item.last_read_language || (item.languages ? item.languages.split(',')[0].trim() : 'en');
-          let chapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, lang);
-          if (!chapters || chapters.length === 0) {
-            const altLang = lang === 'es' ? 'en' : 'es';
-            const altChapters = await window.wtrApi.getDownloadedChapters(item.raw_id || item.id, altLang);
-            if (altChapters && altChapters.length > 0) {
-              lang = altLang;
-              chapters = altChapters;
-            }
-          }
-          currentReadingChaptersList = chapters || [];
-          let targetChNo = item.last_read_chapter_no;
-          if (chapters && chapters.length > 0 && !chapters.some(c => c.chapter_no === targetChNo)) {
-            targetChNo = chapters[0].chapter_no;
-          }
-          openReaderModal(item, targetChNo, lang);
-        });
-      }
-
-      card.querySelector('.btn-view-chapters').addEventListener('click', () => {
-        openChaptersModal(item);
-      });
-
-      grid.appendChild(card);
-    });
-
+    applyLibraryFiltersAndSort();
     updateLastReadWidget();
   } catch (err) {
     console.error('Error loading library:', err);
@@ -1102,6 +1211,18 @@ function initChaptersModal() {
     }
   });
 
+  const sortSelect = document.getElementById('chapters-sort-select');
+  if (sortSelect) {
+    const savedSort = localStorage.getItem('chapters_sort_order') || 'asc';
+    sortSelect.value = savedSort;
+    sortSelect.addEventListener('change', async () => {
+      localStorage.setItem('chapters_sort_order', sortSelect.value);
+      if (currentChaptersNovel) {
+        await loadChaptersListForNovel(currentChaptersNovel, langFilter.value);
+      }
+    });
+  }
+
   langFilter?.addEventListener('change', async () => {
     if (currentChaptersNovel) {
       await loadChaptersListForNovel(currentChaptersNovel, langFilter.value);
@@ -1172,6 +1293,11 @@ async function openChaptersModal(novelItem) {
     langFilter.value = 'en';
   }
 
+  const sortSelect = document.getElementById('chapters-sort-select');
+  if (sortSelect) {
+    sortSelect.value = localStorage.getItem('chapters_sort_order') || 'asc';
+  }
+
   await loadChaptersListForNovel(novelItem, langFilter.value);
   await updateModalActionButtons(novelItem, langFilter.value);
   modal.classList.remove('hidden');
@@ -1192,6 +1318,15 @@ async function loadChaptersListForNovel(novelItem, lang) {
       </div>
     `;
     return;
+  }
+
+  // Ordenar capítulos según selector de orden
+  const sortSelect = document.getElementById('chapters-sort-select');
+  const sortOrder = sortSelect?.value || localStorage.getItem('chapters_sort_order') || 'asc';
+  if (sortOrder === 'desc') {
+    chapters.sort((a, b) => b.chapter_no - a.chapter_no);
+  } else {
+    chapters.sort((a, b) => a.chapter_no - b.chapter_no);
   }
 
   // Asegurar tamaño de paginación/agrupación configurado

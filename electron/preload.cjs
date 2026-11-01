@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld('wtrApi', {
   cancelDownload: () => ipcRenderer.invoke('novel:cancelDownload'),
 
   // Biblioteca SQLite
-  getLibrary: () => ipcRenderer.invoke('library:list'),
+  getLibrary: (sortBy = 'last_read') => ipcRenderer.invoke('library:list', sortBy),
   getStorageStats: () => ipcRenderer.invoke('library:getStorageStats'),
   getNovelStats: (slug) => ipcRenderer.invoke('library:getNovelStats', slug),
   getLastRead: () => ipcRenderer.invoke('library:getLastRead'),

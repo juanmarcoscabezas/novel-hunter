@@ -256,8 +256,40 @@ export class NovelRepository {
 
   /**
    * Lista todas las novelas en la base de datos con conteo de capítulos descargados por idioma.
+   * Soporta ordenamiento configurable: last_read, title_asc, title_desc, chapters_desc, chapters_asc, author_asc, progress_desc.
    */
-  listLibrary() {
+  listLibrary(sortBy = 'last_read') {
+    let orderByClause = 'COALESCE(rp.last_read_at, \'1970-01-01\') DESC, n.updated_at DESC';
+    switch (sortBy) {
+      case 'last_read':
+        orderByClause = 'COALESCE(rp.last_read_at, \'1970-01-01\') DESC, n.updated_at DESC';
+        break;
+      case 'title_asc':
+        orderByClause = 'n.title COLLATE NOCASE ASC';
+        break;
+      case 'title_desc':
+        orderByClause = 'n.title COLLATE NOCASE DESC';
+        break;
+      case 'chapters_desc':
+        orderByClause = 'downloaded_chapters DESC, n.title COLLATE NOCASE ASC';
+        break;
+      case 'chapters_asc':
+        orderByClause = 'downloaded_chapters ASC, n.title COLLATE NOCASE ASC';
+        break;
+      case 'author_asc':
+        orderByClause = 'COALESCE(a.name, \'zzz\') COLLATE NOCASE ASC, n.title COLLATE NOCASE ASC';
+        break;
+      case 'progress_desc':
+        orderByClause = '(CAST(COUNT(DISTINCT c.chapter_no) AS REAL) / NULLIF(n.total_chapters, 0)) DESC, downloaded_chapters DESC, n.title COLLATE NOCASE ASC';
+        break;
+      case 'updated_desc':
+        orderByClause = 'n.updated_at DESC';
+        break;
+      default:
+        orderByClause = 'COALESCE(rp.last_read_at, \'1970-01-01\') DESC, n.updated_at DESC';
+        break;
+    }
+
     const stmt = this.db.prepare(`
       SELECT 
         n.id as raw_id,
@@ -278,7 +310,7 @@ export class NovelRepository {
       LEFT JOIN chapter_translations ct ON ct.chapter_id = c.id
       LEFT JOIN reading_progress rp ON rp.novel_id = n.id
       GROUP BY n.id
-      ORDER BY n.updated_at DESC
+      ORDER BY ${orderByClause}
     `);
     return stmt.all();
   }
@@ -346,11 +378,11 @@ export class NovelRepository {
   updateReadingProgress(novelRawId, chapterNo, language = 'en') {
     const stmt = this.db.prepare(`
       INSERT INTO reading_progress (novel_id, last_read_chapter_no, last_read_language, last_read_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
       ON CONFLICT(novel_id) DO UPDATE SET
         last_read_chapter_no = excluded.last_read_chapter_no,
         last_read_language = excluded.last_read_language,
-        last_read_at = CURRENT_TIMESTAMP
+        last_read_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
     `);
     stmt.run(novelRawId, chapterNo, language);
   }

@@ -415,9 +415,9 @@ function setupIpcHandlers() {
   });
 
   // 5. Biblioteca Local SQLite
-  ipcMain.handle('library:list', async () => {
+  ipcMain.handle('library:list', async (_event, sortBy = 'last_read') => {
     try {
-      return repository.listLibrary();
+      return repository.listLibrary(sortBy);
     } catch (err) {
       console.error('Error in library:list:', err);
       return [];

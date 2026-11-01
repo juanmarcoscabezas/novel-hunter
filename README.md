@@ -45,11 +45,14 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
   - Botón directo **"Seguir Leyendo (Cap. X)"** en la biblioteca y en el modal de detalle de la novela.
   - **Descarga al vuelo del capítulo siguiente**: Cuando llegas al último capítulo descargado, el botón *"Siguiente"* se transforma en *"Descargar Sig. (Cap. X+1)"* permitiendo continuar la historia sin interrupciones.
   - Tarjeta interactiva al pie del texto para descargar el siguiente capítulo o los próximos 5 en lote.
-  - Botón *"Descargar Más..."* integrado tanto en el lector como en el detalle de la novela con sugerencia de rangos inteligentes.
-- 🎙️ **Narración Auditiva Neural (TTS)**: Motor `node-edge-tts` con 11 voces neurales naturales multilingües (ES, MX, AR, CO, US, GB), sincronización por palabra (`WordBoundary`), salto de narración al hacer clic sobre cualquier palabra (`.reader-word`) y exportación a audiolibro en MP3.
+  - **Apertura Universal de "Descargar Más..."**: Botón *"Descargar Más..."* accesible tanto en el lector como en el menú *"Más ▾"* del detalle de la novela, desacoplado de las pestañas (`#global-modals`) para emerger con apilamiento Z-Index jerárquico independiente de la vista activa, con preselección inteligente de idioma (`en`/`es`) y cálculo reactivo del siguiente capítulo pendiente. Al completarse la descarga, la biblioteca, el detalle y la navegación del lector se sincronizan automáticamente.
+- 🎙️ **Narración Auditiva Neural (TTS)**: Motor `node-edge-tts` con 25 voces neurales naturales multilingües (prioridad en acentos de Colombia y Latinoamérica), sincronización por palabra (`WordBoundary`), salto de narración al hacer clic sobre cualquier palabra (`.reader-word`) y exportación a audiolibro en MP3.
 - 🌐 **Traducción Híbrida Inteligente**: Gemini 1.5 Flash (usando API Key configurable en Ajustes) con fallback automático y gratuito a Google Translate RPC. Traducción bajo demanda tanto individual como por lotes.
-- 🗂️ **Agrupación y Gestión de Capítulos**:
+- 🗂️ **Agrupación, Filtros y Ordenamiento Completo**:
+  - **Barra de Herramientas en Mi Biblioteca**: Controles reactivos de filtrado por idioma (`Todos`, `Solo Español`, `Solo Inglés`), buscador en tiempo real y selector de ordenamiento relacional (`Último leído`, `Título A - Z`, `Título Z - A`, `Más capítulos descargados`, `Menos capítulos descargados`, `Autor A - Z`, `Mayor progreso de lectura`), persistidos automáticamente en `localStorage`.
   - **Experiencia de Usuario Optimizada en Detalle de Novela**: Encabezado limpio con las 3 acciones prioritarias visibles (`Seguir Leyendo`, `Descargar Sig.`, `Traducir a Español`) y un menú desplegable **"Más ▾"** para acciones secundarias (`Descargar Más...`, `Exportar TXT/PDF`, `Abrir Carpeta`) y acciones destructivas protegidas con estilo de advertencia (`Borrar Capítulos...`, `Eliminar Novela Completa`).
+  - **Ordenamiento Configurable de Capítulos**: Selector de orden ascendente (`1 a N`) o descendente (`N a 1`) dentro del detalle de la novela, adaptando los bloques de acordeones y preservando la preferencia del usuario.
+  - **Ordenamiento en Tabla de Contenidos (TOC)**: Selector de orden `1 a N` o `N a 1` dentro del modal de descarga para explorar capítulos en el orden deseado.
   - Acordeón de capítulos agrupados en bloques configurables (por defecto 20 capítulos por grupo) con botones para expandir/colapsar todos.
   - Diálogo de borrado selectivo de capítulos por idioma y eliminación de novelas completas en cascada 3NF.
 - ⚡ **Caché Inteligente y Cero Re-Descargas**: Capítulos descargados se leen en milisegundos desde SQLite sin peticiones a internet ni consumo de cuotas.
@@ -353,8 +356,8 @@ nasser_18/
 ├── data/                    # Base de datos SQLite (novels.db) y settings.json
 ├── exports/                 # Directorio de salida de novelas exportadas (TXT / PDF / MP3)
 ├── test/
-│   ├── verify.js            # Suite integral de verificación (26 pruebas)
-│   └── test_db.js           # Suite unitaria SQLite 3NF (14 pruebas)
+│   ├── verify.js            # Suite integral de verificación (31 pruebas)
+│   └── test_db.js           # Suite unitaria SQLite 3NF (16 pruebas)
 ├── AGENTS.md                # Reglas mandatorias para LLMs y asistentes
 ├── GEMINI.md                # Directrices específicas para Gemini / Antigravity
 ├── package.json             # Manifiesto y dependencias del proyecto
@@ -367,7 +370,7 @@ nasser_18/
 
 El proyecto cuenta con dos suites de pruebas automatizadas completas:
 
-1. **Suite de Integración** (`test/verify.js` - 26 pruebas):
+1. **Suite de Integración** (`test/verify.js` - 31 pruebas):
    - Parseo de URLs, búsqueda en vivo, lista de capítulos y glosario Gemini.
    - Descifrado AES-GCM y traductor por lotes Google Translate RPC.
    - Generación de TXT, fusión y PDF con portadas incrustadas.
@@ -375,13 +378,19 @@ El proyecto cuenta con dos suites de pruebas automatizadas completas:
    - Traducción local bajo demanda a español (individual y lotes).
    - Opciones de seguir leyendo y descarga al vuelo de capítulos siguientes.
    - Eliminación selectiva de capítulos y borrado completo de novela.
+   - Paginación y acordeones desplegables configurables.
+   - Menú desplegable "Más opciones" y UI armonizada a 36px.
+   - Reubicación global de modales y apilamiento Z-Index.
+   - Opciones de ordenamiento y filtros en Biblioteca, Capítulos y TOC.
 
-2. **Suite Unitaria SQLite 3NF** (`test/test_db.js` - 14 pruebas):
+2. **Suite Unitaria SQLite 3NF** (`test/test_db.js` - 16 pruebas):
    - Normalización relacional de autores, novelas, glosarios y capítulos.
    - Párrafos atómicos en 1NF y versiones independientes por idioma (`en`, `es`).
-   - Registro de progreso de lectura y último leído global.
+   - Registro de progreso de lectura y último leído global con marcas de tiempo precisas.
    - Detección de capítulos pendientes de traducir.
    - Borrado selectivo por idioma y eliminación en cascada completa.
+   - Sanitización de párrafos con espacios y líneas en blanco.
+   - Opciones de ordenamiento SQL en `listLibrary` (`last_read`, `title_asc`, `title_desc`, `chapters_desc`, `author_asc`, `progress_desc`).
 
 Para ejecutar ambas suites:
 ```bash

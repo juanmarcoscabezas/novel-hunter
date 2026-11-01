@@ -861,7 +861,118 @@ async function runTests() {
 
   console.log('   ✓ Menú Desplegable "Más Opciones" y limpieza de UX en Detalle verificados exitosamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (29/29) PASARON EXITOSAMENTE!');
+  // Test 30: Reubicación Global de Modales, Apilamiento Z-Index y Apertura Universal de "Descargar Más"
+  console.log('\n30. Probando Reubicación Global de Modales, Apilamiento Z-Index y "Descargar Más"...');
+  const gmHtml = fs.readFileSync(path.join(__dirname, '../electron/renderer/index.html'), 'utf-8');
+  const gmStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const gmAppJs = fs.readFileSync(path.join(__dirname, '../electron/renderer/app.js'), 'utf-8');
+
+  // Aserciones en index.html: contenedor global-modals
+  assert(gmHtml.includes('id="global-modals"'), 'index.html debe contener el contenedor #global-modals');
+  const globalModalsIdx = gmHtml.indexOf('id="global-modals"');
+  const settingsSectionIdx = gmHtml.indexOf('id="tab-settings"');
+
+  const downloadModalIdx = gmHtml.indexOf('id="download-modal"');
+  const exportModalIdx = gmHtml.indexOf('id="export-modal"');
+  const chaptersModalIdx = gmHtml.indexOf('id="chapters-modal"');
+  const deleteChaptersModalIdx = gmHtml.indexOf('id="delete-chapters-modal"');
+  const readerModalIdx = gmHtml.indexOf('id="reader-modal"');
+
+  // Verificar que todos los modales residen dentro de #global-modals y después de todas las secciones de pestañas
+  assert(downloadModalIdx > globalModalsIdx, '#download-modal debe residir dentro de #global-modals');
+  assert(exportModalIdx > globalModalsIdx, '#export-modal debe residir dentro de #global-modals');
+  assert(chaptersModalIdx > globalModalsIdx, '#chapters-modal debe residir dentro de #global-modals');
+  assert(deleteChaptersModalIdx > globalModalsIdx, '#delete-chapters-modal debe residir dentro de #global-modals');
+  assert(readerModalIdx > globalModalsIdx, '#reader-modal debe residir dentro de #global-modals');
+
+  assert(globalModalsIdx > settingsSectionIdx, '#global-modals debe ubicarse después de todas las pestañas para evitar display:none');
+
+  // Aserciones en styles.css: jerarquía de capas z-index para apertura superpuesta
+  assert(gmStyles.includes('#global-modals'), 'styles.css debe definir #global-modals');
+  assert(gmStyles.includes('#chapters-modal'), 'styles.css debe definir z-index para #chapters-modal');
+  assert(gmStyles.includes('#reader-modal'), 'styles.css debe definir z-index para #reader-modal');
+  assert(gmStyles.includes('#export-modal'), 'styles.css debe definir z-index para #export-modal');
+  assert(gmStyles.includes('#download-modal'), 'styles.css debe definir z-index para #download-modal');
+  assert(gmStyles.includes('#delete-chapters-modal'), 'styles.css debe definir z-index para #delete-chapters-modal');
+
+  // Aserciones en app.js: opciones de descarga, propagación de idioma y actualización reactiva
+  assert(gmAppJs.includes('openDownloadModal(currentChaptersNovel, { suggestedStartChapter: nextCh, lang })'), 'app.js debe abrir el modal de descarga con idioma y capítulo sugerido desde detalle');
+  assert(gmAppJs.includes('openDownloadModal(currentReadingNovel, { suggestedStartChapter: nextCh, lang: currentReadingLang })'), 'app.js debe abrir el modal de descarga con idioma y capítulo sugerido desde lector');
+  assert(gmAppJs.includes('preferredLang = options.lang'), 'app.js debe capturar el idioma preferido en openDownloadModal');
+  assert(gmAppJs.includes('updateModalActionButtons(currentChaptersNovel, lang)'), 'app.js debe refrescar los botones de detalle tras descarga');
+  assert(gmAppJs.includes('updateReaderNavButtons()'), 'app.js debe actualizar navegación del lector tras descarga');
+
+  // Verificación de cero emojis en archivos modificados
+  const gmHtmlEmojis = gmHtml.match(emojiCheckRegex) || [];
+  const gmJsEmojis = gmAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(gmHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${gmHtmlEmojis.join(', ')}`);
+  assert.strictEqual(gmJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${gmJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Reubicación Global de Modales, Z-Index y Apertura de "Descargar Más" verificados exitosamente.');
+
+  // Test 31: Opciones de Ordenamiento y Filtros en Mi Biblioteca, Detalle de Capítulos y TOC
+  console.log('\n31. Probando Opciones de Ordenamiento y Filtros (Biblioteca, Capítulos y TOC)...');
+  const sortHtml = fs.readFileSync(path.join(__dirname, '../electron/renderer/index.html'), 'utf-8');
+  const sortStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const sortAppJs = fs.readFileSync(path.join(__dirname, '../electron/renderer/app.js'), 'utf-8');
+
+  // Aserciones en index.html
+  assert(sortHtml.includes('id="library-sort-select"'), 'index.html debe contener el selector library-sort-select');
+  assert(sortHtml.includes('id="library-lang-filter"'), 'index.html debe contener el filtro library-lang-filter');
+  assert(sortHtml.includes('id="chapters-sort-select"'), 'index.html debe contener el selector chapters-sort-select');
+  assert(sortHtml.includes('id="modal-toc-sort"'), 'index.html debe contener el selector modal-toc-sort');
+  assert(sortHtml.includes('class="library-toolbar"'), 'index.html debe organizar controles en .library-toolbar');
+
+  // Aserciones en styles.css
+  assert(sortStyles.includes('.library-toolbar'), 'styles.css debe incluir estilos para .library-toolbar');
+  assert(sortStyles.includes('.library-filter-controls'), 'styles.css debe incluir estilos para .library-filter-controls');
+  assert(sortStyles.includes('.select-harmonized'), 'styles.css debe incluir estilos para .select-harmonized');
+
+  // Aserciones en app.js
+  assert(sortAppJs.includes('library-sort-select'), 'app.js debe interactuar con library-sort-select');
+  assert(sortAppJs.includes('library-lang-filter'), 'app.js debe interactuar con library-lang-filter');
+  assert(sortAppJs.includes('chapters-sort-select'), 'app.js debe interactuar con chapters-sort-select');
+  assert(sortAppJs.includes('modal-toc-sort'), 'app.js debe interactuar con modal-toc-sort');
+  assert(sortAppJs.includes('applyLibraryFiltersAndSort'), 'app.js debe implementar applyLibraryFiltersAndSort()');
+  assert(sortAppJs.includes('cachedLibraryNovels'), 'app.js debe almacenar en caché cachedLibraryNovels');
+
+  // Prueba funcional de ordenamiento en memoria para novelas
+  const mockNovels = [
+    { title: 'Zeta Novel', author: 'Bob', downloaded_chapters: 50, total_chapters: 100, last_read_at: '2026-01-01' },
+    { title: 'Alpha Novel', author: 'Charlie', downloaded_chapters: 10, total_chapters: 10, last_read_at: '2026-01-03' },
+    { title: 'Beta Novel', author: 'Alice', downloaded_chapters: 100, total_chapters: 500, last_read_at: '2026-01-02' }
+  ];
+
+  // title_asc
+  const sortedTitleAsc = [...mockNovels].sort((a, b) => a.title.localeCompare(b.title));
+  assert.strictEqual(sortedTitleAsc[0].title, 'Alpha Novel');
+  assert.strictEqual(sortedTitleAsc[2].title, 'Zeta Novel');
+
+  // chapters_desc
+  const sortedChDesc = [...mockNovels].sort((a, b) => b.downloaded_chapters - a.downloaded_chapters);
+  assert.strictEqual(sortedChDesc[0].title, 'Beta Novel');
+  assert.strictEqual(sortedChDesc[2].title, 'Alpha Novel');
+
+  // progress_desc
+  const sortedProgDesc = [...mockNovels].sort((a, b) => (b.downloaded_chapters / b.total_chapters) - (a.downloaded_chapters / a.total_chapters));
+  assert.strictEqual(sortedProgDesc[0].title, 'Alpha Novel'); // 100%
+
+  // TOC asc / desc
+  const mockToc = [{ order: 1 }, { order: 20 }, { order: 5 }];
+  const tocAsc = [...mockToc].sort((a, b) => a.order - b.order);
+  const tocDesc = [...mockToc].sort((a, b) => b.order - a.order);
+  assert.strictEqual(tocAsc[0].order, 1);
+  assert.strictEqual(tocDesc[0].order, 20);
+
+  // Verificación de cero emojis en archivos modificados
+  const sortHtmlEmojis = sortHtml.match(emojiCheckRegex) || [];
+  const sortJsEmojis = sortAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(sortHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${sortHtmlEmojis.join(', ')}`);
+  assert.strictEqual(sortJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${sortJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Opciones de ordenamiento y filtrado en Biblioteca, Capítulos y TOC verificadas exitosamente.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (31/31) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

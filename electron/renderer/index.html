@@ -107,119 +107,6 @@
           </div>
         </div>
 
-        <!-- Modal / Panel de Descarga de Novela Seleccionada -->
-        <div id="download-modal" class="modal hidden">
-          <div class="modal-backdrop"></div>
-          <div class="modal-card modal-lg download-modal-card">
-            <header class="modal-header">
-              <h2 id="modal-novel-title">Configurar Descarga</h2>
-              <button id="close-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </header>
-
-            <div class="modal-body">
-              <div class="novel-meta-preview">
-                <img id="modal-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
-                <div class="novel-meta-details">
-                  <p><strong>Autor:</strong> <span id="modal-novel-author">-</span></p>
-                  <p><strong>Capítulos en WTR-Lab:</strong> <span id="modal-novel-chapters">-</span></p>
-                  <p id="modal-novel-desc" class="novel-desc-clamped"></p>
-                </div>
-              </div>
-
-              <div class="download-config-panel">
-                <div class="form-group">
-                  <label for="chapter-range-input">Rango de Capítulos:</label>
-                  <div class="input-with-chips">
-                    <input type="text" id="chapter-range-input" value="1-5" placeholder="Ej: 1-10, 15, 20-30">
-                    <div class="chips-row">
-                      <button class="chip" data-range="1-5">1-5</button>
-                      <button class="chip" data-range="1-10">1-10</button>
-                      <button class="chip" data-range="1-25">1-25</button>
-                      <button class="chip" data-range="1-50">1-50</button>
-                      <button class="chip" data-range="all">Todos</button>
-                    </div>
-                  </div>
-                  <small class="form-hint">Capítulos disponibles: <span id="modal-total-avail">-</span></small>
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group half">
-                    <label for="lang-select">Idioma de Traducción:</label>
-                    <select id="lang-select" class="form-control">
-                      <option value="en" selected>Inglés (Gemini AI MTL con Glosario)</option>
-                      <option value="es">Español (Gemini AI + Google Translate)</option>
-                    </select>
-                  </div>
-
-                  <div class="form-group half checkboxes-group">
-                    <label class="checkbox-container">
-                      <input type="checkbox" id="merge-checkbox" checked>
-                      <span class="checkmark"></span>
-                      Fusionar en un solo archivo
-                    </label>
-                    <label class="checkbox-container">
-                      <input type="checkbox" id="pdf-checkbox" checked>
-                      <span class="checkmark"></span>
-                      Exportar a libro digital PDF
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Sección Tabla de Contenidos -->
-              <div class="download-toc-section">
-                <div class="download-toc-header">
-                  <div class="download-toc-title-area">
-                    <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                    <h3>Tabla de Contenidos</h3>
-                    <span id="modal-toc-count" class="badge badge-secondary">0 capítulos</span>
-                  </div>
-                  <div class="download-toc-controls">
-                    <div class="toc-search-wrapper">
-                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                      <input type="text" id="modal-toc-search" placeholder="Buscar por título o #..." autocomplete="off">
-                      <button type="button" id="modal-toc-clear-btn" class="btn-clear hidden" title="Limpiar"><svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                    </div>
-                    <button type="button" id="toggle-expand-toc-btn" class="btn btn-outline btn-xs" title="Expandir o compactar tabla de contenidos">
-                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-                      <span id="toggle-expand-toc-text">Expandir</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="toc-hint-bar">
-                  <span class="text-muted text-xs">Haz clic en un capítulo para seleccionarlo o agrégalo a tu rango de descarga.</span>
-                  <span id="modal-toc-filter-status" class="text-muted text-xs hidden"></span>
-                </div>
-
-                <div id="modal-toc-list" class="modal-toc-list">
-                  <div class="toc-loading-placeholder">
-                    <span class="btn-loader"></span>
-                    <span>Cargando tabla de contenidos...</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Barra de Progreso Activa -->
-              <div id="progress-container" class="progress-box hidden">
-                <div class="progress-header">
-                  <span id="progress-status-label">Iniciando descarga...</span>
-                  <span id="progress-percent-label">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                  <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
-                </div>
-                <div class="progress-subtext" id="progress-subtext"></div>
-              </div>
-            </div>
-
-            <footer class="modal-footer">
-              <button id="cancel-download-btn" class="btn btn-danger hidden">Detener</button>
-              <button id="close-modal-bottom-btn" class="btn btn-secondary">Cerrar</button>
-              <button id="start-download-btn" class="btn btn-primary">Iniciar Descarga</button>
-            </footer>
-          </div>
-        </div>
       </section>
 
       <!-- PESTAÑA 2: MI BIBLIOTECA (SQLITE) -->
@@ -261,10 +148,34 @@
           </div>
         </div>
 
-        <div class="search-box-container library-search">
-          <div class="search-input-wrapper">
-            <span class="search-icon"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-            <input type="text" id="library-filter-input" placeholder="Filtrar por título o autor en la base de datos...">
+        <div class="library-toolbar">
+          <div class="search-box-container library-search">
+            <div class="search-input-wrapper">
+              <span class="search-icon"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+              <input type="text" id="library-filter-input" placeholder="Filtrar por título o autor en la base de datos...">
+            </div>
+          </div>
+          <div class="library-filter-controls">
+            <div class="filter-group">
+              <label for="library-lang-filter" class="filter-label">Idioma:</label>
+              <select id="library-lang-filter" class="form-control form-control-sm select-harmonized">
+                <option value="all">Todos los idiomas</option>
+                <option value="es">Solo Español (ES)</option>
+                <option value="en">Solo Inglés (EN)</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="library-sort-select" class="filter-label">Ordenar por:</label>
+              <select id="library-sort-select" class="form-control form-control-sm select-harmonized">
+                <option value="last_read">Último leído (Recientes)</option>
+                <option value="title_asc">Título (A - Z)</option>
+                <option value="title_desc">Título (Z - A)</option>
+                <option value="chapters_desc">Más capítulos descargados</option>
+                <option value="chapters_asc">Menos capítulos descargados</option>
+                <option value="author_asc">Autor (A - Z)</option>
+                <option value="progress_desc">Mayor progreso de lectura</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -272,301 +183,6 @@
           <!-- Tarjetas renderizadas dinámicamente -->
         </div>
 
-        <!-- Modal de Exportación Offline desde SQLite -->
-        <div id="export-modal" class="modal hidden">
-          <div class="modal-backdrop"></div>
-          <div class="modal-card">
-            <header class="modal-header">
-              <h2 id="export-modal-title">Exportar desde SQLite</h2>
-              <button id="close-export-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </header>
-
-            <div class="modal-body">
-              <p>Exporta capítulos directamente desde la base de datos SQLite sin conexión a internet ni consumo de cuota.</p>
-              
-              <div class="form-group">
-                <label for="export-range-input">Capítulos a exportar:</label>
-                <input type="text" id="export-range-input" value="all" placeholder="Ej: 1-10, 15 o 'all'">
-                <small class="form-hint" id="export-avail-hint">Capítulos descargados: -</small>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group half">
-                  <label for="export-lang-select">Idioma:</label>
-                  <select id="export-lang-select" class="form-control">
-                    <option value="en">Inglés (EN)</option>
-                    <option value="es">Español (ES)</option>
-                  </select>
-                </div>
-                <div class="form-group half checkboxes-group">
-                  <label class="checkbox-container">
-                    <input type="checkbox" id="export-merge-checkbox" checked>
-                    <span class="checkmark"></span>
-                    Fusionar en un solo archivo
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" id="export-pdf-checkbox" checked>
-                    <span class="checkmark"></span>
-                    Exportar a libro digital PDF
-                  </label>
-                </div>
-              </div>
-
-              <div id="export-progress-box" class="progress-box hidden">
-                <div class="progress-header">
-                  <span id="export-progress-status">Exportando...</span>
-                  <span id="export-progress-percent">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                  <div id="export-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
-                </div>
-              </div>
-            </div>
-
-            <footer class="modal-footer">
-              <button id="cancel-export-btn" class="btn btn-secondary">Cerrar</button>
-              <button id="start-export-btn" class="btn btn-primary">Exportar Ahora</button>
-            </footer>
-          </div>
-        </div>
-
-        <!-- Modal para Explorar Capítulos Guardados en SQLite -->
-        <div id="chapters-modal" class="modal hidden">
-          <div class="modal-backdrop"></div>
-          <div class="modal-card modal-lg">
-            <header class="modal-header">
-              <div>
-                <h2 id="chapters-modal-title">Capítulos Guardados</h2>
-                <span id="chapters-modal-subtitle" class="text-muted text-xs">Catálogo SQLite</span>
-              </div>
-              <button id="close-chapters-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </header>
-
-            <div class="modal-body">
-              <div class="novel-meta-preview">
-                <img id="chapters-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
-                <div class="novel-meta-details">
-                  <p><strong>Autor:</strong> <span id="chapters-novel-author">-</span></p>
-                  <p><strong>Total en WTR-Lab:</strong> <span id="chapters-novel-total">-</span></p>
-                  <div class="novel-meta-actions">
-                    <button id="detail-continue-btn" class="btn btn-primary btn-sm btn-action-harmonized" title="Seguir leyendo donde te quedaste">
-                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                      <span id="detail-continue-btn-text">Seguir Leyendo</span>
-                    </button>
-                    <button id="detail-download-next-btn" class="btn btn-outline btn-sm btn-action-harmonized" title="Descargar siguiente capítulo">
-                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-                      <span id="detail-download-next-text">Descargar Sig. (Cap. ?)</span>
-                    </button>
-                    <button id="detail-translate-btn" class="btn btn-outline btn-sm btn-translate-novel" title="Traducir capítulos en inglés a español">
-                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                      <span id="detail-translate-btn-text">Traducir a Español</span>
-                    </button>
-
-                    <!-- Menú Desplegable de Más Opciones -->
-                    <div class="dropdown-wrapper">
-                      <button id="detail-more-btn" class="btn btn-outline btn-sm btn-action-harmonized" title="Más opciones de la novela">
-                        <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
-                        <span>Más ▾</span>
-                      </button>
-                      <div id="detail-more-dropdown" class="dropdown-menu hidden">
-                        <button id="detail-download-more-btn" class="dropdown-item" title="Descargar más capítulos para esta novela">
-                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                          <span>Descargar Más...</span>
-                        </button>
-                        <button id="detail-export-btn" class="dropdown-item" title="Exportar novela a TXT o PDF">
-                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                          <span>Exportar (TXT / PDF)</span>
-                        </button>
-                        <button id="detail-open-folder-btn" class="dropdown-item" title="Abrir carpeta de la novela">
-                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                          <span>Abrir Carpeta</span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button id="detail-delete-chapters-btn" class="dropdown-item dropdown-item-danger" title="Borrar capítulos guardados de esta novela">
-                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                          <span>Borrar Capítulos...</span>
-                        </button>
-                        <button id="detail-delete-novel-btn" class="dropdown-item dropdown-item-danger" title="Eliminar novela completa de la biblioteca">
-                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                          <span>Eliminar Novela Completa</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                    <label for="chapters-lang-filter" style="margin-bottom: 0; font-size: 13px;">Idioma:</label>
-                    <select id="chapters-lang-filter" class="form-control" style="width: auto; padding: 4px 10px; font-size: 13px;">
-                      <option value="en">Inglés (EN)</option>
-                      <option value="es">Español (ES)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Barra de progreso para traducción de capítulos -->
-              <div id="chapters-translate-progress" class="translate-progress-box hidden">
-                <div class="translate-progress-header">
-                  <span id="translate-progress-status">Traduciendo capítulos a español...</span>
-                  <span id="translate-progress-percent">0%</span>
-                </div>
-                <div class="progress-bar-container">
-                  <div id="translate-progress-fill" style="width: 0%;"></div>
-                </div>
-              </div>
-
-              <div id="chapters-list-container" class="chapters-list-wrapper">
-                <!-- Se llena dinámicamente con los capítulos -->
-              </div>
-            </div>
-
-            <footer class="modal-footer">
-              <button id="close-chapters-bottom-btn" class="btn btn-secondary">Cerrar</button>
-            </footer>
-          </div>
-        </div>
-
-        <!-- Modal para Borrar Capítulos de la Novela -->
-        <div id="delete-chapters-modal" class="modal hidden">
-          <div class="modal-backdrop"></div>
-          <div class="modal-card">
-            <header class="modal-header">
-              <h2 id="delete-chapters-modal-title">Borrar Capítulos</h2>
-              <button id="close-delete-chapters-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </header>
-
-            <div class="modal-body">
-              <p>Selecciona los capítulos que deseas eliminar de la base de datos local SQLite.</p>
-              
-              <div class="form-group">
-                <label for="delete-range-input">Capítulos a borrar:</label>
-                <input type="text" id="delete-range-input" value="all" placeholder="Ej: 1-10, 15 o 'all'">
-                <small class="form-hint" id="delete-avail-hint">Capítulos guardados: -</small>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group half">
-                  <label for="delete-lang-select">Idioma a borrar:</label>
-                  <select id="delete-lang-select" class="form-control">
-                    <option value="all" selected>Todos los idiomas</option>
-                    <option value="en">Solo Inglés (EN)</option>
-                    <option value="es">Solo Español (ES)</option>
-                  </select>
-                </div>
-                <div class="form-group half checkboxes-group">
-                  <label class="checkbox-container">
-                    <input type="checkbox" id="delete-files-checkbox" checked>
-                    <span class="checkmark"></span>
-                    Borrar también archivos en disco (.txt, .mp3)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <footer class="modal-footer">
-              <button id="cancel-delete-chapters-btn" class="btn btn-secondary">Cancelar</button>
-              <button id="confirm-delete-chapters-btn" class="btn btn-danger">Borrar Capítulos</button>
-            </footer>
-          </div>
-        </div>
-
-        <!-- Modal de Lectura Integrada (Reader View) -->
-        <div id="reader-modal" class="modal hidden">
-          <div class="modal-backdrop"></div>
-          <div class="modal-card modal-xl reader-card">
-            <header class="modal-header reader-header">
-              <div class="reader-header-left">
-                <h2 id="reader-chapter-title">Título del Capítulo</h2>
-                <span id="reader-novel-title" class="reader-novel-subtitle">Nombre de la novela</span>
-              </div>
-              <div class="reader-header-controls">
-                <button id="reader-translate-btn" class="btn btn-outline btn-sm btn-reader-translate" title="Traducir este capítulo a Español">
-                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                  <span id="reader-translate-label">Traducir a Español</span>
-                </button>
-                <button id="reader-delete-btn" class="btn btn-outline-danger btn-sm" title="Borrar este capítulo">
-                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                  <span>Borrar</span>
-                </button>
-                <div class="font-size-controls">
-                  <button id="reader-font-decrease" class="btn-icon" title="Reducir fuente">A-</button>
-                  <button id="reader-font-increase" class="btn-icon" title="Aumentar fuente">A+</button>
-                </div>
-                <button id="close-reader-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-              </div>
-            </header>
-
-            <!-- Barra de Audio y Lectura en Voz Alta Natural (TTS) -->
-            <div class="reader-audio-bar">
-              <div class="audio-controls-left">
-                <button id="tts-play-btn" class="btn btn-primary btn-sm btn-tts" title="Reproducir narración en voz alta">
-                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span id="tts-play-label">Escuchar</span>
-                </button>
-                <button id="tts-stop-btn" class="btn btn-outline btn-sm btn-tts hidden" title="Detener narración">
-                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"></rect></svg>
-                  <span>Detener</span>
-                </button>
-              </div>
-
-              <div class="audio-controls-center">
-                <div class="tts-voice-wrapper">
-                  <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                  <select id="tts-voice-select" class="tts-select" title="Selecciona la voz y acento natural">
-                    <!-- Opciones de voces cargadas dinámicamente -->
-                  </select>
-                </div>
-                <div class="tts-rate-wrapper">
-                  <select id="tts-rate-select" class="tts-select-rate" title="Velocidad de reproducción">
-                    <option value="-20%">0.8x</option>
-                    <option value="default" selected>1.0x</option>
-                    <option value="+20%">1.2x</option>
-                    <option value="+40%">1.4x</option>
-                    <option value="+60%">1.6x</option>
-                    <option value="+80%">1.8x</option>
-                    <option value="+100%">2.0x (2x)</option>
-                    <option value="+150%">2.5x</option>
-                    <option value="+200%">3.0x (3x)</option>
-                  </select>
-                </div>
-                <span id="tts-status-text" class="tts-status-text">Clic en cualquier palabra para iniciar</span>
-              </div>
-
-              <div class="audio-controls-right">
-                <button id="tts-export-btn" class="btn btn-outline btn-sm btn-tts" title="Exportar audio completo del capítulo a archivo MP3">
-                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Exportar MP3</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="modal-body reader-body">
-              <div class="reader-meta-bar">
-                <span id="reader-model-badge" class="badge badge-primary">Gemini AI</span>
-                <span id="reader-lang-badge" class="badge badge-secondary">EN</span>
-                <span id="reader-paragraphs-info" class="text-muted text-xs">Párrafos: -</span>
-              </div>
-              <article id="reader-article-content" class="reader-article">
-                <!-- Párrafos del capítulo -->
-              </article>
-            </div>
-
-            <footer class="modal-footer reader-footer">
-              <button id="reader-prev-btn" class="btn btn-outline btn-sm">
-                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>Anterior</span>
-              </button>
-              <button id="reader-download-more-btn" class="btn btn-outline btn-sm" title="Descargar más capítulos para esta novela">
-                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Descargar Más...</span>
-              </button>
-              <button id="close-reader-bottom-btn" class="btn btn-secondary btn-sm">Cerrar Lector</button>
-              <button id="reader-next-btn" class="btn btn-outline btn-sm">
-                <span id="reader-next-label">Siguiente</span>
-                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-              </button>
-            </footer>
-          </div>
-        </div>
       </section>
 
       <!-- PESTAÑA 3: TERMINAL CLI -->
@@ -753,6 +369,436 @@
           </div>
         </div>
       </section>
+
+      <!-- ====================================================================
+           MODALES GLOBALES DE LA APLICACIÓN
+           (Ubicados fuera de los paneles de pestañas para visibilidad universal y apilamiento Z-Index)
+           ==================================================================== -->
+      <div id="global-modals">
+        <!-- Modal / Panel de Descarga de Novela Seleccionada -->
+        <div id="download-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card modal-lg download-modal-card">
+            <header class="modal-header">
+              <h2 id="modal-novel-title">Configurar Descarga</h2>
+              <button id="close-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </header>
+
+            <div class="modal-body">
+              <div class="novel-meta-preview">
+                <img id="modal-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
+                <div class="novel-meta-details">
+                  <p><strong>Autor:</strong> <span id="modal-novel-author">-</span></p>
+                  <p><strong>Capítulos en WTR-Lab:</strong> <span id="modal-novel-chapters">-</span></p>
+                  <p id="modal-novel-desc" class="novel-desc-clamped"></p>
+                </div>
+              </div>
+
+              <div class="download-config-panel">
+                <div class="form-group">
+                  <label for="chapter-range-input">Rango de Capítulos:</label>
+                  <div class="input-with-chips">
+                    <input type="text" id="chapter-range-input" value="1-5" placeholder="Ej: 1-10, 15, 20-30">
+                    <div class="chips-row">
+                      <button class="chip" data-range="1-5">1-5</button>
+                      <button class="chip" data-range="1-10">1-10</button>
+                      <button class="chip" data-range="1-25">1-25</button>
+                      <button class="chip" data-range="1-50">1-50</button>
+                      <button class="chip" data-range="all">Todos</button>
+                    </div>
+                  </div>
+                  <small class="form-hint">Capítulos disponibles: <span id="modal-total-avail">-</span></small>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group half">
+                    <label for="lang-select">Idioma de Traducción:</label>
+                    <select id="lang-select" class="form-control">
+                      <option value="en" selected>Inglés (Gemini AI MTL con Glosario)</option>
+                      <option value="es">Español (Gemini AI + Google Translate)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group half checkboxes-group">
+                    <label class="checkbox-container">
+                      <input type="checkbox" id="merge-checkbox" checked>
+                      <span class="checkmark"></span>
+                      Fusionar en un solo archivo
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" id="pdf-checkbox" checked>
+                      <span class="checkmark"></span>
+                      Exportar a libro digital PDF
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección Tabla de Contenidos -->
+              <div class="download-toc-section">
+                <div class="download-toc-header">
+                  <div class="download-toc-title-area">
+                    <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <h3>Tabla de Contenidos</h3>
+                    <span id="modal-toc-count" class="badge badge-secondary">0 capítulos</span>
+                  </div>
+                  <div class="download-toc-controls">
+                    <div class="toc-search-wrapper">
+                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input type="text" id="modal-toc-search" placeholder="Buscar por título o #..." autocomplete="off">
+                      <button type="button" id="modal-toc-clear-btn" class="btn-clear hidden" title="Limpiar"><svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>
+                    <select id="modal-toc-sort" class="form-control form-control-xs" style="width: auto; padding: 2px 6px; font-size: 11px; height: 26px;">
+                      <option value="asc">1 a N</option>
+                      <option value="desc">N a 1</option>
+                    </select>
+                    <button type="button" id="toggle-expand-toc-btn" class="btn btn-outline btn-xs" title="Expandir o compactar tabla de contenidos">
+                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                      <span id="toggle-expand-toc-text">Expandir</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="toc-hint-bar">
+                  <span class="text-muted text-xs">Haz clic en un capítulo para seleccionarlo o agrégalo a tu rango de descarga.</span>
+                  <span id="modal-toc-filter-status" class="text-muted text-xs hidden"></span>
+                </div>
+
+                <div id="modal-toc-list" class="modal-toc-list">
+                  <div class="toc-loading-placeholder">
+                    <span class="btn-loader"></span>
+                    <span>Cargando tabla de contenidos...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barra de Progreso Activa -->
+              <div id="progress-container" class="progress-box hidden">
+                <div class="progress-header">
+                  <span id="progress-status-label">Iniciando descarga...</span>
+                  <span id="progress-percent-label">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-subtext" id="progress-subtext"></div>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="cancel-download-btn" class="btn btn-danger hidden">Detener</button>
+              <button id="close-modal-bottom-btn" class="btn btn-secondary">Cerrar</button>
+              <button id="start-download-btn" class="btn btn-primary">Iniciar Descarga</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Modal de Exportación Offline desde SQLite -->
+        <div id="export-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card">
+            <header class="modal-header">
+              <h2 id="export-modal-title">Exportar desde SQLite</h2>
+              <button id="close-export-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </header>
+
+            <div class="modal-body">
+              <p>Exporta capítulos directamente desde la base de datos SQLite sin conexión a internet ni consumo de cuota.</p>
+              
+              <div class="form-group">
+                <label for="export-range-input">Capítulos a exportar:</label>
+                <input type="text" id="export-range-input" value="all" placeholder="Ej: 1-10, 15 o 'all'">
+                <small class="form-hint" id="export-avail-hint">Capítulos descargados: -</small>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="export-lang-select">Idioma:</label>
+                  <select id="export-lang-select" class="form-control">
+                    <option value="en">Inglés (EN)</option>
+                    <option value="es">Español (ES)</option>
+                  </select>
+                </div>
+                <div class="form-group half checkboxes-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="export-merge-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Fusionar en un solo archivo
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="export-pdf-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Exportar a libro digital PDF
+                  </label>
+                </div>
+              </div>
+
+              <div id="export-progress-box" class="progress-box hidden">
+                <div class="progress-header">
+                  <span id="export-progress-status">Exportando...</span>
+                  <span id="export-progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="export-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="cancel-export-btn" class="btn btn-secondary">Cerrar</button>
+              <button id="start-export-btn" class="btn btn-primary">Exportar Ahora</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Modal para Explorar Capítulos Guardados en SQLite -->
+        <div id="chapters-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card modal-lg">
+            <header class="modal-header">
+              <div>
+                <h2 id="chapters-modal-title">Capítulos Guardados</h2>
+                <span id="chapters-modal-subtitle" class="text-muted text-xs">Catálogo SQLite</span>
+              </div>
+              <button id="close-chapters-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </header>
+
+            <div class="modal-body">
+              <div class="novel-meta-preview">
+                <img id="chapters-novel-cover" src="" alt="Portada" class="cover-thumb hidden" referrerpolicy="no-referrer">
+                <div class="novel-meta-details">
+                  <p><strong>Autor:</strong> <span id="chapters-novel-author">-</span></p>
+                  <p><strong>Total en WTR-Lab:</strong> <span id="chapters-novel-total">-</span></p>
+                  <div class="novel-meta-actions">
+                    <button id="detail-continue-btn" class="btn btn-primary btn-sm btn-action-harmonized" title="Seguir leyendo donde te quedaste">
+                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      <span id="detail-continue-btn-text">Seguir Leyendo</span>
+                    </button>
+                    <button id="detail-download-next-btn" class="btn btn-outline btn-sm btn-action-harmonized" title="Descargar siguiente capítulo">
+                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                      <span id="detail-download-next-text">Descargar Sig. (Cap. ?)</span>
+                    </button>
+                    <button id="detail-translate-btn" class="btn btn-outline btn-sm btn-translate-novel" title="Traducir capítulos en inglés a español">
+                      <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      <span id="detail-translate-btn-text">Traducir a Español</span>
+                    </button>
+
+                    <!-- Menú Desplegable de Más Opciones -->
+                    <div class="dropdown-wrapper">
+                      <button id="detail-more-btn" class="btn btn-outline btn-sm btn-action-harmonized" title="Más opciones de la novela">
+                        <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
+                        <span>Más ▾</span>
+                      </button>
+                      <div id="detail-more-dropdown" class="dropdown-menu hidden">
+                        <button id="detail-download-more-btn" class="dropdown-item" title="Descargar más capítulos para esta novela">
+                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          <span>Descargar Más...</span>
+                        </button>
+                        <button id="detail-export-btn" class="dropdown-item" title="Exportar novela a TXT o PDF">
+                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                          <span>Exportar (TXT / PDF)</span>
+                        </button>
+                        <button id="detail-open-folder-btn" class="dropdown-item" title="Abrir carpeta de la novela">
+                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                          <span>Abrir Carpeta</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button id="detail-delete-chapters-btn" class="dropdown-item dropdown-item-danger" title="Borrar capítulos guardados de esta novela">
+                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                          <span>Borrar Capítulos...</span>
+                        </button>
+                        <button id="detail-delete-novel-btn" class="dropdown-item dropdown-item-danger" title="Eliminar novela completa de la biblioteca">
+                          <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <span>Eliminar Novela Completa</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chapters-filter-bar" style="display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <label for="chapters-lang-filter" style="margin-bottom: 0; font-size: 13px; color: var(--text-muted);">Idioma:</label>
+                      <select id="chapters-lang-filter" class="form-control" style="width: auto; padding: 4px 10px; font-size: 13px;">
+                        <option value="en">Inglés (EN)</option>
+                        <option value="es">Español (ES)</option>
+                      </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <label for="chapters-sort-select" style="margin-bottom: 0; font-size: 13px; color: var(--text-muted);">Orden:</label>
+                      <select id="chapters-sort-select" class="form-control" style="width: auto; padding: 4px 10px; font-size: 13px;">
+                        <option value="asc">Ascendente (1 a N)</option>
+                        <option value="desc">Descendente (N a 1)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barra de progreso para traducción de capítulos -->
+              <div id="chapters-translate-progress" class="translate-progress-box hidden">
+                <div class="translate-progress-header">
+                  <span id="translate-progress-status">Traduciendo capítulos a español...</span>
+                  <span id="translate-progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div id="translate-progress-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div id="chapters-list-container" class="chapters-list-wrapper">
+                <!-- Se llena dinámicamente con los capítulos -->
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="close-chapters-bottom-btn" class="btn btn-secondary">Cerrar</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Modal para Borrar Capítulos de la Novela -->
+        <div id="delete-chapters-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card">
+            <header class="modal-header">
+              <h2 id="delete-chapters-modal-title">Borrar Capítulos</h2>
+              <button id="close-delete-chapters-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </header>
+
+            <div class="modal-body">
+              <p>Selecciona los capítulos que deseas eliminar de la base de datos local SQLite.</p>
+              
+              <div class="form-group">
+                <label for="delete-range-input">Capítulos a borrar:</label>
+                <input type="text" id="delete-range-input" value="all" placeholder="Ej: 1-10, 15 o 'all'">
+                <small class="form-hint" id="delete-avail-hint">Capítulos guardados: -</small>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="delete-lang-select">Idioma a borrar:</label>
+                  <select id="delete-lang-select" class="form-control">
+                    <option value="all" selected>Todos los idiomas</option>
+                    <option value="en">Solo Inglés (EN)</option>
+                    <option value="es">Solo Español (ES)</option>
+                  </select>
+                </div>
+                <div class="form-group half checkboxes-group">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="delete-files-checkbox" checked>
+                    <span class="checkmark"></span>
+                    Borrar también archivos en disco (.txt, .mp3)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button id="cancel-delete-chapters-btn" class="btn btn-secondary">Cancelar</button>
+              <button id="confirm-delete-chapters-btn" class="btn btn-danger">Borrar Capítulos</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Modal de Lectura Integrada (Reader View) -->
+        <div id="reader-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card modal-xl reader-card">
+            <header class="modal-header reader-header">
+              <div class="reader-header-left">
+                <h2 id="reader-chapter-title">Título del Capítulo</h2>
+                <span id="reader-novel-title" class="reader-novel-subtitle">Nombre de la novela</span>
+              </div>
+              <div class="reader-header-controls">
+                <button id="reader-translate-btn" class="btn btn-outline btn-sm btn-reader-translate" title="Traducir este capítulo a Español">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  <span id="reader-translate-label">Traducir a Español</span>
+                </button>
+                <button id="reader-delete-btn" class="btn btn-outline-danger btn-sm" title="Borrar este capítulo">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  <span>Borrar</span>
+                </button>
+                <div class="font-size-controls">
+                  <button id="reader-font-decrease" class="btn-icon" title="Reducir fuente">A-</button>
+                  <button id="reader-font-increase" class="btn-icon" title="Aumentar fuente">A+</button>
+                </div>
+                <button id="close-reader-modal-btn" class="btn-close" title="Cerrar"><svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+              </div>
+            </header>
+
+            <!-- Barra de Audio y Lectura en Voz Alta Natural (TTS) -->
+            <div class="reader-audio-bar">
+              <div class="audio-controls-left">
+                <button id="tts-play-btn" class="btn btn-primary btn-sm btn-tts" title="Reproducir narración en voz alta">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span id="tts-play-label">Escuchar</span>
+                </button>
+                <button id="tts-stop-btn" class="btn btn-outline btn-sm btn-tts hidden" title="Detener narración">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                  <span>Detener</span>
+                </button>
+              </div>
+
+              <div class="audio-controls-center">
+                <div class="tts-voice-wrapper">
+                  <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                  <select id="tts-voice-select" class="tts-select" title="Selecciona la voz y acento natural">
+                    <!-- Opciones de voces cargadas dinámicamente -->
+                  </select>
+                </div>
+                <div class="tts-rate-wrapper">
+                  <select id="tts-rate-select" class="tts-select-rate" title="Velocidad de reproducción">
+                    <option value="-20%">0.8x</option>
+                    <option value="default" selected>1.0x</option>
+                    <option value="+20%">1.2x</option>
+                    <option value="+40%">1.4x</option>
+                    <option value="+60%">1.6x</option>
+                    <option value="+80%">1.8x</option>
+                    <option value="+100%">2.0x (2x)</option>
+                    <option value="+150%">2.5x</option>
+                    <option value="+200%">3.0x (3x)</option>
+                  </select>
+                </div>
+                <span id="tts-status-text" class="tts-status-text">Clic en cualquier palabra para iniciar</span>
+              </div>
+
+              <div class="audio-controls-right">
+                <button id="tts-export-btn" class="btn btn-outline btn-sm btn-tts" title="Exportar audio completo del capítulo a archivo MP3">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Exportar MP3</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-body reader-body">
+              <div class="reader-meta-bar">
+                <span id="reader-model-badge" class="badge badge-primary">Gemini AI</span>
+                <span id="reader-lang-badge" class="badge badge-secondary">EN</span>
+                <span id="reader-paragraphs-info" class="text-muted text-xs">Párrafos: -</span>
+              </div>
+              <article id="reader-article-content" class="reader-article">
+                <!-- Párrafos del capítulo -->
+              </article>
+            </div>
+
+            <footer class="modal-footer reader-footer">
+              <button id="reader-prev-btn" class="btn btn-outline btn-sm">
+                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Anterior</span>
+              </button>
+              <button id="reader-download-more-btn" class="btn btn-outline btn-sm" title="Descargar más capítulos para esta novela">
+                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Descargar Más...</span>
+              </button>
+              <button id="close-reader-bottom-btn" class="btn btn-secondary btn-sm">Cerrar Lector</button>
+              <button id="reader-next-btn" class="btn btn-outline btn-sm">
+                <span id="reader-next-label">Siguiente</span>
+                <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </footer>
+          </div>
+        </div>
+
+      </div>
     </main>
   </div>
 
