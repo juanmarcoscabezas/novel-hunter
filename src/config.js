@@ -118,23 +118,31 @@ export function clearSession() {
 }
 
 /**
- * Obtiene la API Key de Gemini configurada.
+ * Obtiene la configuración general de la aplicación desde settings.json.
  */
-export function getGeminiApiKey() {
+export function getAppSettings() {
   try {
     const settingsPath = path.join(CONFIG.dataDir, 'settings.json');
     if (fs.existsSync(settingsPath)) {
       const data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      return data.geminiApiKey || process.env.GEMINI_API_KEY || null;
+      const parsedGrouping = parseInt(data.chapterGrouping, 10);
+      return {
+        geminiApiKey: data.geminiApiKey || process.env.GEMINI_API_KEY || null,
+        chapterGrouping: !isNaN(parsedGrouping) && parsedGrouping > 0 ? parsedGrouping : 20,
+        ...data
+      };
     }
   } catch {}
-  return process.env.GEMINI_API_KEY || null;
+  return {
+    geminiApiKey: process.env.GEMINI_API_KEY || null,
+    chapterGrouping: 20
+  };
 }
 
 /**
- * Guarda la API Key de Gemini para uso con IA.
+ * Guarda o actualiza configuraciones en settings.json preservando las demás propiedades.
  */
-export function saveGeminiApiKey(key) {
+export function saveAppSettings(newSettings = {}) {
   const settingsPath = path.join(CONFIG.dataDir, 'settings.json');
   let current = {};
   try {
@@ -142,6 +150,51 @@ export function saveGeminiApiKey(key) {
       current = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     }
   } catch {}
-  current.geminiApiKey = (key || '').trim();
-  fs.writeFileSync(settingsPath, JSON.stringify(current, null, 2), 'utf8');
+
+  if (!fs.existsSync(CONFIG.dataDir)) {
+    fs.mkdirSync(CONFIG.dataDir, { recursive: true });
+  }
+
+  const merged = { ...current, ...newSettings };
+  if (merged.chapterGrouping !== undefined) {
+    const parsed = parseInt(merged.chapterGrouping, 10);
+    merged.chapterGrouping = !isNaN(parsed) && parsed > 0 ? parsed : 20;
+  }
+
+  fs.writeFileSync(settingsPath, JSON.stringify(merged, null, 2), 'utf8');
+  return merged;
+}
+
+/**
+ * Obtiene la cantidad de capítulos por grupo para el acordeón (por defecto 20).
+ */
+export function getChapterGrouping() {
+  const settings = getAppSettings();
+  return settings.chapterGrouping || 20;
+}
+
+/**
+ * Guarda la cantidad de capítulos por grupo para el acordeón.
+ * Acepta cualquier valor numérico válido (10, 20, etc.). Si no es válido o es <= 0, usa 20.
+ */
+export function saveChapterGrouping(size) {
+  const parsed = parseInt(size, 10);
+  const validatedSize = !isNaN(parsed) && parsed > 0 ? parsed : 20;
+  const updated = saveAppSettings({ chapterGrouping: validatedSize });
+  return { success: true, chapterGrouping: updated.chapterGrouping };
+}
+
+/**
+ * Obtiene la API Key de Gemini configurada.
+ */
+export function getGeminiApiKey() {
+  const settings = getAppSettings();
+  return settings.geminiApiKey || process.env.GEMINI_API_KEY || null;
+}
+
+/**
+ * Guarda la API Key de Gemini para uso con IA.
+ */
+export function saveGeminiApiKey(key) {
+  return saveAppSettings({ geminiApiKey: (key || '').trim() });
 }

@@ -13,6 +13,14 @@ const ICONS = {
   edit: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
   globe: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
   xCircle: '<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+  arrowRight: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+  arrowLeft: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
+  downloadSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+  downloadXs: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+  playSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+  trash: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
+  trashSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
+  chevronRight: '<svg class="svg-icon icon-xs chapter-accordion-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>',
 };
 
 let currentSelectedNovel = null;
@@ -27,6 +35,7 @@ let currentReadingChapterNo = 1;
 let currentReadingLang = 'en';
 let currentReadingChaptersList = [];
 let readerFontSize = 16;
+let chapterGroupingSize = 20;
 
 // Historial de comandos en la terminal
 const commandHistory = [];
@@ -38,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDownloadModal();
   initLibrary();
   initChaptersModal();
+  initDeleteChaptersModal();
   initReaderModal();
   initTtsControls();
   initTerminal();
@@ -271,22 +281,33 @@ function initDownloadModal() {
   });
 }
 
-async function openDownloadModal(novel) {
+async function openDownloadModal(novel, suggestedStartChapter = null) {
   currentSelectedNovel = novel;
   const modal = document.getElementById('download-modal');
 
   document.getElementById('modal-novel-title').textContent = novel.title;
   document.getElementById('modal-novel-author').textContent = novel.author || 'Desconocido';
-  document.getElementById('modal-novel-chapters').textContent = novel.chapterCount || 'Cargando...';
-  document.getElementById('modal-novel-desc').textContent = novel.description || 'Sin sinopsis disponible.';
+  document.getElementById('modal-novel-chapters').textContent = novel.chapterCount || novel.total_chapters || 'Cargando...';
+  document.getElementById('modal-novel-desc').textContent = novel.description || novel.synopsis || 'Sin sinopsis disponible.';
 
   const coverImg = document.getElementById('modal-novel-cover');
-  if (novel.image) {
+  const coverUrl = novel.image || novel.cover_url || novel.coverUrl;
+  if (coverUrl) {
     coverImg.referrerPolicy = 'no-referrer';
-    coverImg.src = novel.image;
+    coverImg.src = coverUrl;
     coverImg.classList.remove('hidden');
   } else {
     coverImg.classList.add('hidden');
+  }
+
+  const rangeInput = document.getElementById('chapter-range-input');
+  if (rangeInput) {
+    if (suggestedStartChapter) {
+      const end = suggestedStartChapter + 9;
+      rangeInput.value = `${suggestedStartChapter}-${end}`;
+    } else if (!rangeInput.value) {
+      rangeInput.value = '1-5';
+    }
   }
 
   resetDownloadProgress();
@@ -295,7 +316,7 @@ async function openDownloadModal(novel) {
   // Cargar lista oficial de capítulos desde la API
   document.getElementById('modal-total-avail').textContent = 'Consultando WTR-Lab...';
   try {
-    currentNovelChapters = await window.wtrApi.getChapters(novel.rawId || novel.id);
+    currentNovelChapters = await window.wtrApi.getChapters(novel.rawId || novel.id || novel.raw_id);
     document.getElementById('modal-total-avail').textContent = `${currentNovelChapters.length} capítulos disponibles`;
     document.getElementById('modal-novel-chapters').textContent = currentNovelChapters.length;
   } catch (err) {
@@ -503,10 +524,15 @@ async function loadLibrary() {
         </div>
         <div style="display: flex; gap: 8px; flex-direction: column;">
           ${continueBtnHtml}
-          <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
-            ${ICONS.fileTextSm}
-            <span>Ver Capítulos (${item.downloaded_chapters})</span>
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1;">
+              ${ICONS.fileTextSm}
+              <span>Ver Capítulos (${item.downloaded_chapters})</span>
+            </button>
+            <button class="btn btn-outline-danger btn-sm btn-delete-novel-card" title="Eliminar novela completa" style="padding: 0 10px;">
+              ${ICONS.trash}
+            </button>
+          </div>
         </div>
       `;
 
@@ -535,6 +561,20 @@ async function loadLibrary() {
         openChaptersModal(item);
       });
 
+      card.querySelector('.btn-delete-novel-card')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente la novela "${item.title}" y todos sus capítulos descargados? Esta acción no se puede deshacer.`;
+        if (confirm(confirmMsg)) {
+          const res = await window.wtrApi.deleteNovel(item.raw_id || item.id);
+          if (res && res.success) {
+            showFeedback(`Novela "${item.title}" eliminada con éxito.`, 'info');
+            await loadLibrary();
+          } else {
+            alert(res?.error || 'No se pudo eliminar la novela.');
+          }
+        }
+      });
+
       grid.appendChild(card);
     });
 
@@ -561,9 +601,117 @@ function initChaptersModal() {
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
 
+  const continueBtn = document.getElementById('detail-continue-btn');
+  const downloadNextBtn = document.getElementById('detail-download-next-btn');
+  const downloadMoreBtn = document.getElementById('detail-download-more-btn');
   const exportBtn = document.getElementById('detail-export-btn');
   const openFolderBtn = document.getElementById('detail-open-folder-btn');
   const translateBtn = document.getElementById('detail-translate-btn');
+  const deleteChaptersBtn = document.getElementById('detail-delete-chapters-btn');
+  const deleteNovelBtn = document.getElementById('detail-delete-novel-btn');
+
+  deleteChaptersBtn?.addEventListener('click', () => {
+    if (currentChaptersNovel) {
+      openDeleteChaptersModal(currentChaptersNovel);
+    }
+  });
+
+  deleteNovelBtn?.addEventListener('click', async () => {
+    if (!currentChaptersNovel) return;
+    const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente la novela "${currentChaptersNovel.title}" y todos sus capítulos descargados? Esta acción no se puede deshacer.`;
+    if (confirm(confirmMsg)) {
+      deleteNovelBtn.disabled = true;
+      try {
+        const res = await window.wtrApi.deleteNovel(currentChaptersNovel.raw_id || currentChaptersNovel.id);
+        if (res && res.success) {
+          showFeedback(`Novela "${currentChaptersNovel.title}" eliminada con éxito.`, 'info');
+          closeModal();
+          await loadLibrary();
+        } else {
+          alert(res?.error || 'No se pudo eliminar la novela.');
+        }
+      } catch (err) {
+        alert(`Error al eliminar novela: ${err.message}`);
+      } finally {
+        deleteNovelBtn.disabled = false;
+      }
+    }
+  });
+
+  continueBtn?.addEventListener('click', async () => {
+    if (!currentChaptersNovel) return;
+    const novelId = currentChaptersNovel.raw_id || currentChaptersNovel.id;
+    const progress = await window.wtrApi.getReadingProgress(novelId);
+    let targetChNo = progress?.last_read_chapter_no;
+    let targetLang = progress?.last_read_language || langFilter.value || 'en';
+
+    let chapters = await window.wtrApi.getDownloadedChapters(novelId, targetLang);
+    if (!chapters || chapters.length === 0) {
+      const altLang = targetLang === 'es' ? 'en' : 'es';
+      const altChapters = await window.wtrApi.getDownloadedChapters(novelId, altLang);
+      if (altChapters && altChapters.length > 0) {
+        targetLang = altLang;
+        chapters = altChapters;
+      }
+    }
+
+    if (!chapters || chapters.length === 0) {
+      alert('No hay capítulos disponibles para leer. Por favor descarga capítulos primero.');
+      return;
+    }
+
+    currentReadingChaptersList = chapters;
+    if (!targetChNo || !chapters.some(c => c.chapter_no === targetChNo)) {
+      targetChNo = chapters[0].chapter_no;
+    }
+
+    openReaderModal(currentChaptersNovel, targetChNo, targetLang);
+  });
+
+  downloadNextBtn?.addEventListener('click', async () => {
+    if (!currentChaptersNovel) return;
+    const novelId = currentChaptersNovel.raw_id || currentChaptersNovel.id;
+    const lang = langFilter.value;
+    const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, lang);
+    const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : 1;
+
+    const originalContent = downloadNextBtn.innerHTML;
+    downloadNextBtn.disabled = true;
+    downloadNextBtn.innerHTML = `<span class="spinner-sm"></span> <span>Descargando Cap. ${nextCh}...</span>`;
+
+    try {
+      const res = await window.wtrApi.downloadChapters({
+        novel: currentChaptersNovel,
+        chapterNumbers: [nextCh],
+        lang,
+        merge: false,
+        pdf: false
+      });
+
+      if (res && res.successCount > 0) {
+        await loadChaptersListForNovel(currentChaptersNovel, lang);
+        await updateModalActionButtons(currentChaptersNovel, lang);
+        loadLibrary();
+      } else {
+        alert(res?.cancelled ? 'Descarga cancelada.' : `No se pudo descargar el Capítulo ${nextCh}.`);
+      }
+    } catch (err) {
+      alert(`Error al descargar Capítulo ${nextCh}: ${err.message}`);
+    } finally {
+      downloadNextBtn.disabled = false;
+      downloadNextBtn.innerHTML = originalContent;
+      await updateModalActionButtons(currentChaptersNovel, lang);
+    }
+  });
+
+  downloadMoreBtn?.addEventListener('click', async () => {
+    if (!currentChaptersNovel) return;
+    const novelId = currentChaptersNovel.raw_id || currentChaptersNovel.id;
+    const lang = langFilter.value;
+    const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, lang);
+    const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : 1;
+    openDownloadModal(currentChaptersNovel, nextCh);
+  });
 
   exportBtn?.addEventListener('click', () => {
     if (currentChaptersNovel) {
@@ -620,6 +768,7 @@ function initChaptersModal() {
 
         langFilter.value = 'es';
         await loadChaptersListForNovel(currentChaptersNovel, 'es');
+        await updateModalActionButtons(currentChaptersNovel, 'es');
         loadLibrary();
 
         setTimeout(() => {
@@ -633,11 +782,47 @@ function initChaptersModal() {
     }
   });
 
-  langFilter?.addEventListener('change', () => {
+  langFilter?.addEventListener('change', async () => {
     if (currentChaptersNovel) {
-      loadChaptersListForNovel(currentChaptersNovel, langFilter.value);
+      await loadChaptersListForNovel(currentChaptersNovel, langFilter.value);
+      await updateModalActionButtons(currentChaptersNovel, langFilter.value);
     }
   });
+}
+
+async function updateModalActionButtons(novelItem, lang) {
+  if (!novelItem) return;
+  const novelId = novelItem.raw_id || novelItem.id;
+  const progress = await window.wtrApi.getReadingProgress(novelId);
+  const continueBtn = document.getElementById('detail-continue-btn');
+  const continueBtnText = document.getElementById('detail-continue-btn-text');
+  const downloadNextBtn = document.getElementById('detail-download-next-btn');
+  const downloadNextText = document.getElementById('detail-download-next-text');
+
+  const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, lang);
+  const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : 1;
+
+  if (downloadNextText) {
+    downloadNextText.textContent = `Descargar Sig. (Cap. ${nextCh})`;
+  }
+  if (downloadNextBtn) {
+    downloadNextBtn.title = `Descargar el Capítulo ${nextCh} en [${lang.toUpperCase()}]`;
+  }
+
+  if (continueBtn && continueBtnText) {
+    if (progress && progress.last_read_chapter_no) {
+      continueBtnText.textContent = `Seguir Leyendo (Cap. ${progress.last_read_chapter_no})`;
+      continueBtn.title = `Retomar lectura desde el Capítulo ${progress.last_read_chapter_no} (${(progress.last_read_language || lang).toUpperCase()})`;
+      continueBtn.classList.remove('hidden');
+    } else if (downloadedNums.length > 0) {
+      continueBtnText.textContent = `Comenzar Lectura (Cap. ${downloadedNums[0]})`;
+      continueBtn.title = `Comenzar a leer desde el primer capítulo disponible`;
+      continueBtn.classList.remove('hidden');
+    } else {
+      continueBtnText.textContent = 'Seguir Leyendo';
+      continueBtn.title = 'No hay capítulos descargados todavía';
+    }
+  }
 }
 
 async function openChaptersModal(novelItem) {
@@ -648,9 +833,10 @@ async function openChaptersModal(novelItem) {
   document.getElementById('chapters-novel-total').textContent = `${novelItem.total_chapters || '?'} en WTR-Lab`;
 
   const coverImg = document.getElementById('chapters-novel-cover');
-  if (novelItem.cover_url) {
+  const coverUrl = novelItem.cover_url || novelItem.coverUrl || novelItem.image;
+  if (coverUrl) {
     coverImg.referrerPolicy = 'no-referrer';
-    coverImg.src = novelItem.cover_url;
+    coverImg.src = coverUrl;
     coverImg.classList.remove('hidden');
   } else {
     coverImg.classList.add('hidden');
@@ -665,6 +851,7 @@ async function openChaptersModal(novelItem) {
   }
 
   await loadChaptersListForNovel(novelItem, langFilter.value);
+  await updateModalActionButtons(novelItem, langFilter.value);
   modal.classList.remove('hidden');
 }
 
@@ -709,6 +896,9 @@ async function loadChaptersListForNovel(novelItem, lang) {
         <button class="btn btn-primary btn-sm btn-read-ch">
           ${ICONS.bookOpenSm} <span>Leer</span>
         </button>
+        <button class="btn btn-outline-danger btn-sm btn-delete-ch" title="Borrar este capítulo">
+          ${ICONS.trash} <span>Borrar</span>
+        </button>
       </div>
     `;
 
@@ -742,6 +932,30 @@ async function loadChaptersListForNovel(novelItem, lang) {
       openReaderModal(novelItem, ch.chapter_no, lang);
     });
 
+    const deleteChBtn = itemEl.querySelector('.btn-delete-ch');
+    deleteChBtn?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const confirmMsg = `¿Eliminar el Capítulo ${ch.chapter_no} (${lang.toUpperCase()}) de "${novelItem.title}"?`;
+      if (confirm(confirmMsg)) {
+        deleteChBtn.disabled = true;
+        try {
+          const res = await window.wtrApi.deleteChapters(novelItem.raw_id || novelItem.id, [ch.chapter_no], { language: lang });
+          if (res && res.success) {
+            showFeedback(`Capítulo ${ch.chapter_no} eliminado correctamente.`, 'info');
+            await loadChaptersListForNovel(novelItem, lang);
+            await updateModalActionButtons(novelItem, lang);
+            loadLibrary();
+          } else {
+            alert(res?.error || 'No se pudo eliminar el capítulo.');
+            deleteChBtn.disabled = false;
+          }
+        } catch (err) {
+          alert(`Error al eliminar capítulo: ${err.message}`);
+          deleteChBtn.disabled = false;
+        }
+      }
+    });
+
     container.appendChild(itemEl);
   });
 }
@@ -753,12 +967,12 @@ function initReaderModal() {
   const modal = document.getElementById('reader-modal');
   const closeBtn = document.getElementById('close-reader-modal-btn');
   const closeBottomBtn = document.getElementById('close-reader-bottom-btn');
-  const prevBtn = document.getElementById('reader-prev-btn');
-  const nextBtn = document.getElementById('reader-next-btn');
   const decFontBtn = document.getElementById('reader-font-decrease');
   const incFontBtn = document.getElementById('reader-font-increase');
   const translateBtn = document.getElementById('reader-translate-btn');
   const translateLabel = document.getElementById('reader-translate-label');
+  const readerDeleteBtn = document.getElementById('reader-delete-btn');
+  const downloadMoreBtn = document.getElementById('reader-download-more-btn');
 
   const closeModal = () => {
     stopTts();
@@ -767,6 +981,44 @@ function initReaderModal() {
   };
   closeBtn?.addEventListener('click', closeModal);
   closeBottomBtn?.addEventListener('click', closeModal);
+
+  readerDeleteBtn?.addEventListener('click', async () => {
+    if (!currentReadingNovel || !currentReadingChapterNo) return;
+    const confirmMsg = `¿Eliminar el Capítulo ${currentReadingChapterNo} (${currentReadingLang.toUpperCase()}) de "${currentReadingNovel.title}"?`;
+    if (confirm(confirmMsg)) {
+      readerDeleteBtn.disabled = true;
+      try {
+        const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
+        const res = await window.wtrApi.deleteChapters(novelId, [currentReadingChapterNo], { language: currentReadingLang });
+        if (res && res.success) {
+          showFeedback(`Capítulo ${currentReadingChapterNo} eliminado.`, 'info');
+          const remaining = await window.wtrApi.getDownloadedChapters(novelId, currentReadingLang);
+          if (remaining && remaining.length > 0) {
+            currentReadingChaptersList = remaining;
+            const next = remaining.find(c => c.chapter_no > currentReadingChapterNo) || remaining[remaining.length - 1];
+            await openReaderModal(currentReadingNovel, next.chapter_no, currentReadingLang);
+          } else {
+            closeModal();
+          }
+          await loadLibrary();
+        } else {
+          alert(res?.error || 'No se pudo eliminar el capítulo.');
+        }
+      } catch (err) {
+        alert(`Error al eliminar capítulo: ${err.message}`);
+      } finally {
+        readerDeleteBtn.disabled = false;
+      }
+    }
+  });
+
+  downloadMoreBtn?.addEventListener('click', async () => {
+    if (!currentReadingNovel) return;
+    const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
+    const downloadedNums = await window.wtrApi.getDownloadedChapterNumbers(novelId, currentReadingLang);
+    const nextCh = downloadedNums.length > 0 ? (Math.max(...downloadedNums) + 1) : (currentReadingChapterNo + 1);
+    openDownloadModal(currentReadingNovel, nextCh);
+  });
 
   translateBtn?.addEventListener('click', async () => {
     if (!currentReadingNovel || !currentReadingChapterNo) return;
@@ -821,22 +1073,63 @@ function initReaderModal() {
       if (art) art.style.fontSize = `${readerFontSize}px`;
     }
   });
+}
 
-  prevBtn?.addEventListener('click', () => {
-    const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
-    if (idx > 0) {
-      const prevCh = currentReadingChaptersList[idx - 1];
-      openReaderModal(currentReadingNovel, prevCh.chapter_no, currentReadingLang);
-    }
-  });
+async function downloadAndOpenReaderChapter(targetChapterNo, batchCount = 1) {
+  if (!currentReadingNovel) return;
+  const novelId = currentReadingNovel.raw_id || currentReadingNovel.id;
+  const lang = currentReadingLang || 'en';
+  const chapterNumbers = [];
+  for (let i = 0; i < batchCount; i++) {
+    chapterNumbers.push(targetChapterNo + i);
+  }
 
-  nextBtn?.addEventListener('click', () => {
-    const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
-    if (idx !== -1 && idx < currentReadingChaptersList.length - 1) {
-      const nextCh = currentReadingChaptersList[idx + 1];
-      openReaderModal(currentReadingNovel, nextCh.chapter_no, currentReadingLang);
+  const nextBtn = document.getElementById('reader-next-btn');
+  const prevNextHtml = nextBtn ? nextBtn.innerHTML : '';
+  if (nextBtn) {
+    nextBtn.disabled = true;
+    nextBtn.innerHTML = `<span class="spinner-sm"></span> <span>Descargando...</span>`;
+  }
+
+  const endProgress = document.querySelector('.reader-end-progress');
+  const endStatus = document.querySelector('.reader-end-status');
+  if (endProgress) endProgress.classList.remove('hidden');
+  if (endStatus) {
+    endStatus.textContent = batchCount > 1
+      ? `Descargando ${batchCount} capítulos (${chapterNumbers[0]}-${chapterNumbers[chapterNumbers.length - 1]})...`
+      : `Descargando Capítulo ${targetChapterNo}...`;
+  }
+
+  try {
+    const res = await window.wtrApi.downloadChapters({
+      novel: currentReadingNovel,
+      chapterNumbers,
+      lang,
+      merge: false,
+      pdf: false
+    });
+
+    if (res && res.successCount > 0) {
+      const updatedChapters = await window.wtrApi.getDownloadedChapters(novelId, lang);
+      currentReadingChaptersList = updatedChapters || [];
+      loadLibrary();
+      await openReaderModal(currentReadingNovel, targetChapterNo, lang);
+    } else {
+      alert(res?.cancelled ? 'Descarga cancelada.' : `No se pudo descargar el Capítulo ${targetChapterNo}.`);
+      if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = prevNextHtml;
+      }
     }
-  });
+  } catch (err) {
+    alert(`Error al descargar: ${err.message}`);
+    if (nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.innerHTML = prevNextHtml;
+    }
+  } finally {
+    if (endProgress) endProgress.classList.add('hidden');
+  }
 }
 
 async function openReaderModal(novelItem, chapterNo, lang) {
@@ -969,6 +1262,58 @@ async function openReaderModal(novelItem, chapterNo, lang) {
       articleEl.appendChild(p);
     });
 
+    // Tarjeta o barra interactiva al final del capítulo
+    const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === chapterNo);
+    const hasNext = (idx !== -1 && idx < currentReadingChaptersList.length - 1);
+    const nextChapterNo = chapterNo + 1;
+
+    if (hasNext) {
+      const nextCh = currentReadingChaptersList[idx + 1];
+      const endNav = document.createElement('div');
+      endNav.className = 'reader-chapter-end-nav';
+      endNav.innerHTML = `
+        <div>
+          <span style="color: var(--text-muted); font-size: 13px;">Fin del Capítulo ${chapterNo}</span>
+          <div style="font-weight: 600; color: var(--text-main); font-size: 15px;">Siguiente: Capítulo ${nextCh.chapter_no} - ${escapeHtml(nextCh.title || '')}</div>
+        </div>
+        <button class="btn btn-primary btn-sm btn-jump-next">
+          <span>Leer Siguiente</span>
+          ${ICONS.arrowRight}
+        </button>
+      `;
+      endNav.querySelector('.btn-jump-next')?.addEventListener('click', () => {
+        openReaderModal(novelItem, nextCh.chapter_no, lang);
+      });
+      articleEl.appendChild(endNav);
+    } else {
+      const endBox = document.createElement('div');
+      endBox.className = 'reader-chapter-end-box';
+      endBox.innerHTML = `
+        <div class="reader-end-header">
+          <h4>${ICONS.bookOpenSm} Fin del Capítulo ${chapterNo}</h4>
+          <p>Has alcanzado el último capítulo descargado en tu biblioteca.</p>
+        </div>
+        <div class="reader-end-actions">
+          <button class="btn btn-primary btn-end-dl-next">
+            ${ICONS.downloadSm} <span>Descargar y leer Capítulo ${nextChapterNo}</span>
+          </button>
+          <button class="btn btn-outline btn-end-dl-batch">
+            ${ICONS.downloadSm} <span>Descargar siguientes 5 capítulos (${nextChapterNo}-${nextChapterNo + 4})</span>
+          </button>
+        </div>
+        <div class="reader-end-progress hidden">
+          <span class="spinner-sm"></span> <span class="reader-end-status">Descargando...</span>
+        </div>
+      `;
+      endBox.querySelector('.btn-end-dl-next')?.addEventListener('click', () => {
+        downloadAndOpenReaderChapter(nextChapterNo, 1);
+      });
+      endBox.querySelector('.btn-end-dl-batch')?.addEventListener('click', () => {
+        downloadAndOpenReaderChapter(nextChapterNo, 5);
+      });
+      articleEl.appendChild(endBox);
+    }
+
     document.querySelector('.reader-body')?.scrollTo({ top: 0, behavior: 'instant' });
     updateReaderNavButtons();
     updateLastReadWidget();
@@ -983,20 +1328,44 @@ function updateReaderNavButtons() {
   const nextBtn = document.getElementById('reader-next-btn');
 
   const idx = currentReadingChaptersList.findIndex(c => c.chapter_no === currentReadingChapterNo);
+
+  // Botón Anterior
   if (idx > 0) {
+    const prevCh = currentReadingChaptersList[idx - 1];
     prevBtn.disabled = false;
     prevBtn.style.opacity = '1';
+    prevBtn.title = `Ir al Capítulo ${prevCh.chapter_no}`;
+    prevBtn.onclick = () => {
+      openReaderModal(currentReadingNovel, prevCh.chapter_no, currentReadingLang);
+    };
   } else {
     prevBtn.disabled = true;
     prevBtn.style.opacity = '0.4';
+    prevBtn.onclick = null;
+    prevBtn.title = 'No hay capítulos anteriores descargados';
   }
 
+  // Botón Siguiente: Si existe el siguiente descargado, navega; si no, ofrece descargarlo y leerlo
   if (idx !== -1 && idx < currentReadingChaptersList.length - 1) {
+    const nextCh = currentReadingChaptersList[idx + 1];
+    nextBtn.className = 'btn btn-outline btn-sm';
     nextBtn.disabled = false;
     nextBtn.style.opacity = '1';
+    nextBtn.title = `Ir al Capítulo ${nextCh.chapter_no}`;
+    nextBtn.innerHTML = `<span>Siguiente</span>${ICONS.arrowRight}`;
+    nextBtn.onclick = () => {
+      openReaderModal(currentReadingNovel, nextCh.chapter_no, currentReadingLang);
+    };
   } else {
-    nextBtn.disabled = true;
-    nextBtn.style.opacity = '0.4';
+    const nextChapterNo = currentReadingChapterNo + 1;
+    nextBtn.className = 'btn btn-primary btn-sm';
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+    nextBtn.title = `Descargar y leer Capítulo ${nextChapterNo}`;
+    nextBtn.innerHTML = `${ICONS.downloadSm} <span>Descargar Sig. (Cap. ${nextChapterNo})</span>`;
+    nextBtn.onclick = () => {
+      downloadAndOpenReaderChapter(nextChapterNo, 1);
+    };
   }
 }
 
@@ -1677,7 +2046,12 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-function showFeedback(el, type, msg) {
+function showFeedback(el, type = 'info', msg = '') {
+  if (typeof el === 'string') {
+    msg = el;
+    type = typeof type === 'string' ? type : 'info';
+    el = document.getElementById('search-feedback') || document.querySelector('.feedback-banner');
+  }
   if (!el) return;
   el.className = `feedback-banner ${type}`;
   el.textContent = msg;

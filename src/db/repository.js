@@ -43,7 +43,7 @@ export class NovelRepository {
     `);
 
     stmt.run(
-      novel.rawId || novel.id,
+      novel.rawId || novel.id || novel.raw_id,
       novel.slug,
       novel.title,
       authorId,
@@ -420,6 +420,121 @@ export class NovelRepository {
     } catch {
       return { bytes: 0, formatted: '0 KB', path: 'data' };
     }
+  }
+
+  /**
+   * Elimina una novela completa y todos sus datos asociados por CASCADE en SQLite.
+   * @param {number|string} identifier ID raw o slug de la novela
+   * @returns {object|null} Metadatos de la novela eliminada o null si no existía
+   */
+  deleteNovel(identifier) {
+    const novel = this.getNovel(identifier);
+    if (!novel) return null;
+
+    this.db.prepare('DELETE FROM novels WHERE id = ?').run(novel.id);
+
+    // Opcional: limpiar autores huérfanos sin novelas asociadas
+    try {
+      this.db.prepare(`
+        DELETE FROM authors
+        WHERE id NOT IN (SELECT DISTINCT author_id FROM novels WHERE author_id IS NOT NULL)
+      `).run();
+    } catch {
+      // Ignorar si hay restricción
+    }
+
+    return novel;
+  }
+
+  /**
+   * Elimina uno, varios o todos los capítulos de una novela.
+   * Si se especifica un idioma, solo se elimina la traducción de dicho idioma.
+   * Si no tiene más traducciones, se elimina el capítulo canónico.
+   * 
+   * @param {number} novelRawId ID de la novela
+   * @param {number[]|string} chapterNumbers Array de números de capítulos o 'all'
+   * @param {string|null} [language] Idioma específico ('en', 'es') o null/'all' para borrar todos
+   * @returns {object} Resultado con conteo de capítulos eliminados
+   */
+  deleteChapters(novelRawId, chapterNumbers = 'all', language = null) {
+    const novel = this.getNovel(novelRawId);
+    if (!novel) return { success: false, deletedCount: 0 };
+
+    const isAll = !chapterNumbers || chapterNumbers === 'all';
+    let targetNumbers = [];
+
+    if (!isAll) {
+      targetNumbers = (Array.isArray(chapterNumbers) ? chapterNumbers : [chapterNumbers])
+        .map(n => parseInt(n, 10))
+        .filter(n => !isNaN(n));
+      if (targetNumbers.length === 0) {
+        return { success: true, deletedCount: 0 };
+      }
+    }
+
+    let deletedCount = 0;
+
+    if (language && language !== 'all') {
+      // Borrar solo las traducciones del idioma especificado
+      if (isAll) {
+        const transStmt = this.db.prepare(`
+          DELETE FROM chapter_translations
+          WHERE language = ? AND chapter_id IN (
+            SELECT id FROM chapters WHERE novel_id = ?
+          )
+        `);
+        const info = transStmt.run(language, novel.id);
+        deletedCount = info?.changes || 0;
+      } else {
+        const placeholders = targetNumbers.map(() => '?').join(',');
+        const transStmt = this.db.prepare(`
+          DELETE FROM chapter_translations
+          WHERE language = ? AND chapter_id IN (
+            SELECT id FROM chapters WHERE novel_id = ? AND chapter_no IN (${placeholders})
+          )
+        `);
+        const info = transStmt.run(language, novel.id, ...targetNumbers);
+        deletedCount = info?.changes || 0;
+      }
+
+      // Eliminar capítulos canónicos que hayan quedado huérfanos sin traducciones en ningún idioma
+      this.db.prepare(`
+        DELETE FROM chapters
+        WHERE novel_id = ? AND id NOT IN (SELECT DISTINCT chapter_id FROM chapter_translations)
+      `).run(novel.id);
+    } else {
+      // Borrar capítulos canónicos directamente (cascada automática a traducciones y párrafos)
+      if (isAll) {
+        const chStmt = this.db.prepare('DELETE FROM chapters WHERE novel_id = ?');
+        const info = chStmt.run(novel.id);
+        deletedCount = info?.changes || 0;
+      } else {
+        const placeholders = targetNumbers.map(() => '?').join(',');
+        const chStmt = this.db.prepare(`
+          DELETE FROM chapters
+          WHERE novel_id = ? AND chapter_no IN (${placeholders})
+        `);
+        const info = chStmt.run(novel.id, ...targetNumbers);
+        deletedCount = info?.changes || 0;
+      }
+    }
+
+    // Actualizar o limpiar progreso de lectura si apuntaba a un capítulo que ya no existe
+    const remaining = this.getDownloadedChapterNumbers(novel.id);
+    if (remaining.length === 0) {
+      this.db.prepare('DELETE FROM reading_progress WHERE novel_id = ?').run(novel.id);
+    } else {
+      const prog = this.getReadingProgress(novel.id);
+      if (prog && !remaining.includes(prog.last_read_chapter_no)) {
+        this.db.prepare(`
+          UPDATE reading_progress
+          SET last_read_chapter_no = ?, last_read_at = CURRENT_TIMESTAMP
+          WHERE novel_id = ?
+        `).run(remaining[0], novel.id);
+      }
+    }
+
+    return { success: true, deletedCount };
   }
 }
 

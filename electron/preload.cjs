@@ -14,10 +14,14 @@ contextBridge.exposeInMainWorld('wtrApi', {
   getStorageStats: () => ipcRenderer.invoke('library:getStorageStats'),
   getNovelStats: (slug) => ipcRenderer.invoke('library:getNovelStats', slug),
   getLastRead: () => ipcRenderer.invoke('library:getLastRead'),
+  getReadingProgress: (novelId) => ipcRenderer.invoke('library:getProgress', novelId),
+  getDownloadedChapterNumbers: (novelId, lang) => ipcRenderer.invoke('library:getDownloadedChapterNumbers', novelId, lang),
   updateProgress: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:updateProgress', novelId, chapterNo, lang),
   getDownloadedChapters: (novelId, lang) => ipcRenderer.invoke('library:getChapters', novelId, lang),
   readChapter: (novelId, chapterNo, lang) => ipcRenderer.invoke('library:readChapter', novelId, chapterNo, lang),
   exportLibrary: (payload) => ipcRenderer.invoke('library:export', payload),
+  deleteNovel: (novelId, options) => ipcRenderer.invoke('novel:delete', novelId, options),
+  deleteChapters: (novelId, chapterNumbers, options) => ipcRenderer.invoke('novel:deleteChapters', novelId, chapterNumbers, options),
 
   // Traducción on-demand a Español
   translateChapterToSpanish: (novelId, chapterNo) => ipcRenderer.invoke('chapter:translateToSpanish', novelId, chapterNo),
@@ -33,6 +37,10 @@ contextBridge.exposeInMainWorld('wtrApi', {
   // Configuración de Gemini AI Key
   getGeminiKey: () => ipcRenderer.invoke('settings:getGeminiKey'),
   saveGeminiKey: (key) => ipcRenderer.invoke('settings:saveGeminiKey', key),
+
+  // Configuración de Paginación y Acordeón de Capítulos
+  getChapterGrouping: () => ipcRenderer.invoke('settings:getChapterGrouping'),
+  saveChapterGrouping: (size) => ipcRenderer.invoke('settings:saveChapterGrouping', size),
 
   // Motor de Lectura en Voz Alta Natural (TTS) y Audio
   ttsGetVoices: () => ipcRenderer.invoke('tts:getVoices'),

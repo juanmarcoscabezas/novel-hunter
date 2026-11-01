@@ -462,7 +462,101 @@ async function runTests() {
 
   console.log('   ✓ Reglas claras universales para LLMs y asistentes de IA verificadas correctamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (24/24) PASARON EXITOSAMENTE!');
+  // Test 25: Continuación de Lectura y Descarga Directa de Capítulos (Detalle de Novela y Lector)
+  console.log('\n25. Probando Continuación de Lectura y Descarga Directa (Detalle de Novela y Detalle de Capítulo)...');
+
+  const verifyHtml = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'index.html'), 'utf8');
+  const verifyAppJs = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'app.js'), 'utf8');
+  const verifyStyles = fs.readFileSync(path.join(__dirname, '..', 'electron', 'renderer', 'styles.css'), 'utf8');
+  const verifyMain = fs.readFileSync(path.join(__dirname, '..', 'electron', 'main.js'), 'utf8');
+  const verifyPreload = fs.readFileSync(path.join(__dirname, '..', 'electron', 'preload.cjs'), 'utf8');
+
+  // Aserciones en index.html
+  assert(verifyHtml.includes('id="detail-continue-btn"'), 'index.html debe contener el botón detail-continue-btn');
+  assert(verifyHtml.includes('id="detail-download-next-btn"'), 'index.html debe contener el botón detail-download-next-btn');
+  assert(verifyHtml.includes('id="detail-download-more-btn"'), 'index.html debe contener el botón detail-download-more-btn');
+  assert(verifyHtml.includes('id="reader-download-more-btn"'), 'index.html debe contener el botón reader-download-more-btn en el lector');
+
+  // Aserciones en IPC (main.js y preload.cjs)
+  assert(verifyMain.includes("ipcMain.handle('library:getProgress'"), 'main.js debe registrar el handler library:getProgress');
+  assert(verifyMain.includes("ipcMain.handle('library:getDownloadedChapterNumbers'"), 'main.js debe registrar el handler library:getDownloadedChapterNumbers');
+  assert(verifyPreload.includes('getReadingProgress:'), 'preload.cjs debe exponer getReadingProgress');
+  assert(verifyPreload.includes('getDownloadedChapterNumbers:'), 'preload.cjs debe exponer getDownloadedChapterNumbers');
+
+  // Aserciones en estilos CSS
+  assert(verifyStyles.includes('.reader-chapter-end-box'), 'styles.css debe definir estilos para la tarjeta de fin de capítulo');
+  assert(verifyStyles.includes('.reader-chapter-end-nav'), 'styles.css debe definir estilos para la navegación de fin de capítulo');
+  assert(verifyStyles.includes('.reader-end-actions'), 'styles.css debe definir estilos para los botones de acción al fin del capítulo');
+  assert(verifyStyles.includes('.novel-meta-actions .btn-action-harmonized'), 'styles.css debe armonizar los botones del modal de detalle');
+
+  // Aserciones en app.js
+  assert(verifyAppJs.includes('detail-continue-btn'), 'app.js debe enlazar el botón detail-continue-btn');
+  assert(verifyAppJs.includes('detail-download-next-btn'), 'app.js debe enlazar el botón detail-download-next-btn');
+  assert(verifyAppJs.includes('detail-download-more-btn'), 'app.js debe enlazar el botón detail-download-more-btn');
+  assert(verifyAppJs.includes('reader-download-more-btn'), 'app.js debe enlazar el botón reader-download-more-btn');
+  assert(verifyAppJs.includes('downloadAndOpenReaderChapter'), 'app.js debe incluir la función downloadAndOpenReaderChapter');
+  assert(verifyAppJs.includes('updateModalActionButtons'), 'app.js debe incluir updateModalActionButtons');
+  assert(verifyAppJs.includes('reader-chapter-end-box'), 'app.js debe generar dinámicamente la tarjeta reader-chapter-end-box');
+
+  // Verificación funcional con SQLite (aislada)
+  const testFlowNovelId = 998877;
+  const testFlowMeta = {
+    id: testFlowNovelId,
+    rawId: testFlowNovelId,
+    slug: 'test-flow-novel',
+    title: 'Test Flow Novel',
+    author: 'Test Flow Author',
+    total_chapters: 20
+  };
+
+  const cleanupFlowTest = () => {
+    try {
+      const db = getDb();
+      db.prepare('DELETE FROM paragraphs WHERE translation_id IN (SELECT id FROM chapter_translations WHERE chapter_id IN (SELECT id FROM chapters WHERE novel_id = ?))').run(testFlowNovelId);
+      db.prepare('DELETE FROM chapter_translations WHERE chapter_id IN (SELECT id FROM chapters WHERE novel_id = ?)').run(testFlowNovelId);
+      db.prepare('DELETE FROM chapters WHERE novel_id = ?').run(testFlowNovelId);
+      db.prepare('DELETE FROM reading_progress WHERE novel_id = ?').run(testFlowNovelId);
+      db.prepare('DELETE FROM novels WHERE id = ?').run(testFlowNovelId);
+    } catch {}
+  };
+
+  cleanupFlowTest();
+  try {
+    repository.upsertNovel(testFlowMeta);
+    repository.saveChapterTranslation(testFlowNovelId, 1, {
+      language: 'en',
+      title: 'Chapter 1: The Beginning',
+      model: 'Gemini 3.5 Flash',
+      source: 'gemini',
+      paragraphs: ['First line of test novel.']
+    }, testFlowMeta);
+    repository.saveChapterTranslation(testFlowNovelId, 2, {
+      language: 'en',
+      title: 'Chapter 2: The Next Horizon',
+      model: 'Gemini 3.5 Flash',
+      source: 'gemini',
+      paragraphs: ['Second line of test novel.']
+    }, testFlowMeta);
+
+    // 1. Verificar capítulos descargados
+    const downloadedNums = repository.getDownloadedChapterNumbers(testFlowNovelId, 'en');
+    assert.deepStrictEqual(downloadedNums, [1, 2], 'Debe recuperar los capítulos 1 y 2 descargados');
+    const nextChapterToDownload = Math.max(...downloadedNums) + 1;
+    assert.strictEqual(nextChapterToDownload, 3, 'El siguiente capítulo a sugerir debe ser el 3');
+
+    // 2. Verificar progreso de lectura (Seguir leyendo)
+    repository.updateReadingProgress(testFlowNovelId, 2, 'en');
+    const progress = repository.getReadingProgress(testFlowNovelId);
+    assert(progress !== null, 'Debe registrar progreso de lectura');
+    assert.strictEqual(progress.last_read_chapter_no, 2, 'El último capítulo leído debe ser el 2');
+    assert.strictEqual(progress.last_read_language, 'en', 'El idioma debe coincidir con inglés');
+  } finally {
+    cleanupFlowTest();
+  }
+
+  console.log('   ✓ Opciones de continuar leyendo y descargar siguiente/más capítulos validadas.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (25/25) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

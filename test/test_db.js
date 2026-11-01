@@ -156,7 +156,44 @@ async function runDbTests() {
   assert.deepStrictEqual(untranslated, [2], 'El capítulo 2 debe ser detectado como pendiente de traducir a español');
   console.log(`   ✓ getUntranslatedChapterNumbers detectó correctamente los capítulos pendientes: [${untranslated.join(', ')}].`);
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (12/12) PASARON EXITOSAMENTE!');
+  // 13. Eliminación de capítulos (deleteChapters)
+  console.log('\n13. Probando deleteChapters...');
+  // Borrar solo la traducción al español del capítulo 1
+  const delEs = repo.deleteChapters(1001, [1], 'es');
+  assert(delEs.success);
+  assert.deepStrictEqual(repo.getDownloadedChapterNumbers(1001, 'es'), [], 'Ya no debe haber capítulos en español');
+  assert.deepStrictEqual(repo.getDownloadedChapterNumbers(1001, 'en'), [1, 2], 'Los capítulos en inglés deben mantenerse');
+
+  // Borrar el capítulo 2 completamente en todos los idiomas
+  const delCh2 = repo.deleteChapters(1001, [2]);
+  assert(delCh2.success);
+  assert.deepStrictEqual(repo.getDownloadedChapterNumbers(1001, 'en'), [1], 'Solo debe quedar el capítulo 1 en inglés');
+
+  // Verificar que el progreso de lectura se reajustó al capítulo disponible restante
+  const adjustedProg = repo.getReadingProgress(1001);
+  assert.strictEqual(adjustedProg.last_read_chapter_no, 1, 'El progreso de lectura debe reajustarse al capítulo restante');
+  console.log('   ✓ deleteChapters validado (borrado por idioma, borrado canónico y reajuste de progreso).');
+
+  // 14. Eliminación de novela completa (deleteNovel)
+  console.log('\n14. Probando deleteNovel...');
+  const delNovel = repo.deleteNovel('legendary-mechanic');
+  assert(delNovel !== null);
+  assert.strictEqual(delNovel.id, 1001);
+
+  // Verificar cascada 3NF completa: novela, capítulos, traducciones, párrafos, progreso y glosario
+  assert(!repo.getNovel(1001), 'La novela no debe existir');
+  assert.strictEqual(repo.listLibrary().length, 0, 'La biblioteca debe quedar vacía');
+  assert.strictEqual(repo.getDownloadedChapters(1001, 'en').length, 0, 'No deben quedar capítulos');
+  assert.strictEqual(repo.getReadingProgress(1001), null, 'El progreso debe eliminarse por cascada');
+
+  const termsCount = memDb.prepare('SELECT count(*) as count FROM glossary_terms WHERE novel_id = 1001').get().count;
+  assert.strictEqual(termsCount, 0, 'Los términos del glosario deben eliminarse en cascada');
+
+  const paragraphsCount = memDb.prepare('SELECT count(*) as count FROM paragraphs').get().count;
+  assert.strictEqual(paragraphsCount, 0, 'Los párrafos atómicos deben eliminarse en cascada');
+  console.log('   ✓ deleteNovel validado con cascada relacional 3NF completa (SQLite).');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (14/14) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {

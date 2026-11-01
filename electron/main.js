@@ -8,7 +8,7 @@ import { fetchChapter } from '../src/api/reader.js';
 import { saveChapterAsTxt } from '../src/storage/writer.js';
 import { mergeChaptersToTxt } from '../src/storage/merger.js';
 import { exportChaptersToPdf } from '../src/storage/pdf.js';
-import { CONFIG, getSavedSession, saveSession, clearSession, getGeminiApiKey, saveGeminiApiKey } from '../src/config.js';
+import { CONFIG, getSavedSession, saveSession, clearSession, getGeminiApiKey, saveGeminiApiKey, getChapterGrouping, saveChapterGrouping } from '../src/config.js';
 import { getAvailableVoices, synthesizeParagraph, exportChapterAudio } from '../src/services/tts.js';
 import { translateChapterToSpanish, batchTranslateNovelToSpanish } from '../src/services/translator.js';
 import { repository } from '../src/db/repository.js';
@@ -281,6 +281,20 @@ function setupIpcHandlers() {
       pdf = false
     } = payload;
 
+    let targetNovel = novel;
+    if (!targetNovel && payload.novelId) {
+      targetNovel = repository.getNovel(payload.novelId);
+    } else if (targetNovel) {
+      const existing = repository.getNovel(targetNovel.rawId || targetNovel.id || targetNovel.raw_id || targetNovel.slug);
+      if (existing) {
+        targetNovel = { ...existing, ...targetNovel };
+      }
+    }
+
+    const novelRawId = targetNovel ? (targetNovel.rawId || targetNovel.id || targetNovel.raw_id) : null;
+    const novelSlug = targetNovel?.slug || `novel-${novelRawId}`;
+    const novelTitle = targetNovel?.title || `Novela ${novelRawId}`;
+
     activeDownloadAbort = false;
     const total = chapterNumbers.length;
     const downloadedChapters = [];
@@ -295,9 +309,9 @@ function setupIpcHandlers() {
     };
 
     // Asegurar que la novela y sus metadatos existan en SQLite
-    if (novel) {
+    if (targetNovel) {
       try {
-        repository.upsertNovel(novel);
+        repository.upsertNovel(targetNovel);
       } catch (err) {
         console.warn('Aviso al registrar novela en SQLite:', err.message);
       }
@@ -330,23 +344,23 @@ function setupIpcHandlers() {
       });
 
       try {
-        const chapterData = await fetchChapter(novel.rawId || novel.id, chapterNo, {
+        const chapterData = await fetchChapter(novelRawId, chapterNo, {
           targetLang: lang,
-          novelMeta: novel
+          novelMeta: targetNovel
         });
 
         if (chapterData) {
           // Guardar archivo individual TXT
-          const txtPath = saveChapterAsTxt(novel.slug, chapterData, novel.title);
+          const txtPath = saveChapterAsTxt(novelSlug, chapterData, novelTitle);
           results.savedTxtFiles.push(txtPath);
           downloadedChapters.push(chapterData);
           results.successCount++;
 
           // Exportar PDF individual si se solicitó y no es fusión
           if (pdf && !merge) {
-            await exportChaptersToPdf(novel.slug, [chapterData], novel.title, {
-              coverUrl: novel.coverUrl || novel.image,
-              author: novel.author
+            await exportChaptersToPdf(novelSlug, [chapterData], novelTitle, {
+              coverUrl: targetNovel?.coverUrl || targetNovel?.cover_url || targetNovel?.image,
+              author: targetNovel?.author
             });
           }
         }
@@ -365,7 +379,7 @@ function setupIpcHandlers() {
         status: 'Fusionando capítulos compilados...'
       });
 
-      results.mergedTxt = mergeChaptersToTxt(novel.slug, downloadedChapters, novel.title);
+      results.mergedTxt = mergeChaptersToTxt(novelSlug, downloadedChapters, novelTitle);
 
       if (pdf) {
         sender.send('download:progress', {
@@ -374,9 +388,9 @@ function setupIpcHandlers() {
           percent: 98,
           status: 'Compilando documento PDF final...'
         });
-        results.mergedPdf = await exportChaptersToPdf(novel.slug, downloadedChapters, novel.title, {
-          coverUrl: novel.coverUrl || novel.image,
-          author: novel.author
+        results.mergedPdf = await exportChaptersToPdf(novelSlug, downloadedChapters, novelTitle, {
+          coverUrl: targetNovel?.coverUrl || targetNovel?.cover_url || targetNovel?.image,
+          author: targetNovel?.author
         });
       }
     } else if (pdf && !merge && downloadedChapters.length > 0) {
@@ -481,6 +495,26 @@ function setupIpcHandlers() {
     } catch (err) {
       console.error('Error in library:updateProgress:', err);
       return false;
+    }
+  });
+
+  // 6f. Obtener progreso de lectura de una novela específica
+  ipcMain.handle('library:getProgress', async (_event, novelId) => {
+    try {
+      return repository.getReadingProgress(novelId);
+    } catch (err) {
+      console.error('Error in library:getProgress:', err);
+      return null;
+    }
+  });
+
+  // 6g. Obtener números de capítulos descargados para una novela
+  ipcMain.handle('library:getDownloadedChapterNumbers', async (_event, novelId, lang = 'en') => {
+    try {
+      return repository.getDownloadedChapterNumbers(novelId, lang);
+    } catch (err) {
+      console.error('Error in library:getDownloadedChapterNumbers:', err);
+      return [];
     }
   });
 
@@ -592,6 +626,92 @@ function setupIpcHandlers() {
     );
   });
 
+  // 7c. Eliminación de novela completa y capítulos
+  ipcMain.handle('novel:delete', async (_event, novelId, options = {}) => {
+    try {
+      const novel = repository.getNovel(novelId);
+      if (!novel) return { success: false, error: 'Novela no encontrada' };
+
+      const deleted = repository.deleteNovel(novel.id);
+
+      // Eliminar archivos físicos en exports/ si deleteFiles !== false
+      if (options.deleteFiles !== false && novel.slug) {
+        const safeSlug = novel.slug.replace(/[\\/:*?"<>|]+/g, '_').trim();
+        const novelExportsDir = path.join(CONFIG.exportsDir, safeSlug);
+        if (fs.existsSync(novelExportsDir)) {
+          fs.rmSync(novelExportsDir, { recursive: true, force: true });
+        }
+      }
+
+      return { success: true, novel: deleted };
+    } catch (err) {
+      console.error('Error in novel:delete:', err);
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('novel:deleteChapters', async (_event, novelId, chapterNumbers, options = {}) => {
+    try {
+      const novel = repository.getNovel(novelId);
+      if (!novel) return { success: false, error: 'Novela no encontrada' };
+
+      const language = options.language || null;
+      const deleteFiles = options.deleteFiles !== false;
+
+      const result = repository.deleteChapters(novel.id, chapterNumbers, language);
+
+      // Eliminar archivos individuales de texto y audio en disco si correspondiera
+      if (deleteFiles && novel.slug) {
+        const safeSlug = novel.slug.replace(/[\\/:*?"<>|]+/g, '_').trim();
+        const novelExportsDir = path.join(CONFIG.exportsDir, safeSlug);
+        if (fs.existsSync(novelExportsDir)) {
+          const files = fs.readdirSync(novelExportsDir);
+          const chNums = Array.isArray(chapterNumbers) ? chapterNumbers : [];
+          const isAll = !chapterNumbers || chapterNumbers === 'all';
+
+          for (const f of files) {
+            if (isAll) {
+              if (f.startsWith('Capitulo_') && f.endsWith('.txt')) {
+                try { fs.unlinkSync(path.join(novelExportsDir, f)); } catch {}
+              }
+            } else {
+              for (const chNo of chNums) {
+                const padded = String(chNo).padStart(4, '0');
+                if (f.startsWith(`Capitulo_${padded} -`) || f === `Capitulo_${padded}.txt`) {
+                  try { fs.unlinkSync(path.join(novelExportsDir, f)); } catch {}
+                }
+              }
+            }
+          }
+
+          const audioDir = path.join(novelExportsDir, 'audio');
+          if (fs.existsSync(audioDir)) {
+            const audioFiles = fs.readdirSync(audioDir);
+            for (const af of audioFiles) {
+              if (isAll) {
+                if (af.startsWith('Capitulo_') && af.endsWith('.mp3')) {
+                  try { fs.unlinkSync(path.join(audioDir, af)); } catch {}
+                }
+              } else {
+                for (const chNo of chNums) {
+                  const padded = String(chNo).padStart(4, '0');
+                  if (af.startsWith(`Capitulo_${padded} -`) || af.startsWith(`Capitulo_${padded}.`)) {
+                    try { fs.unlinkSync(path.join(audioDir, af)); } catch {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return { success: true, ...result };
+    } catch (err) {
+      console.error('Error in novel:deleteChapters:', err);
+      return { success: false, error: err.message };
+    }
+  });
+
   // 8. Gestión de sesión y cookies
   ipcMain.handle('auth:get', () => {
     const session = getSavedSession();
@@ -677,7 +797,16 @@ function setupIpcHandlers() {
     return { success: true };
   });
 
-  // 12. Ejecución de comandos en la consola integrada (Terminal Tab)
+  // 12. Configuración de Paginación y Acordeón de Capítulos
+  ipcMain.handle('settings:getChapterGrouping', async () => {
+    return { chapterGrouping: getChapterGrouping() };
+  });
+
+  ipcMain.handle('settings:saveChapterGrouping', async (_event, size) => {
+    return saveChapterGrouping(size);
+  });
+
+  // 13. Ejecución de comandos en la consola integrada (Terminal Tab)
   ipcMain.handle('cli:exec', async (event, cmdLine) => {
     const sender = event.sender;
     const write = (text) => sender.send('cli:output', text);
@@ -726,6 +855,9 @@ async function executeCliCommand(cmdLine, write) {
       write('    -p, --pdf                  Exportar también a PDF\n');
       write('  \x1b[32mwtr library\x1b[0m                    Listar catálogo en SQLite\n');
       write('  \x1b[32mwtr export <novela> [opciones]\x1b[0m Exportar desde base de datos\n');
+      write('  \x1b[32mwtr delete <novela> [opciones]\x1b[0m Eliminar novela completa o capítulos\n');
+      write('    -c, --chapters <rango>     Borrar solo los capítulos indicados\n');
+      write('    -l, --lang <en|es>         Borrar solo la traducción de ese idioma\n');
       write('  \x1b[32mwtr status\x1b[0m                     Estado de sesión de usuario\n');
       write('  \x1b[32mwtr auth -c "<cookie>"\x1b[0m         Configurar cookies de sesión\n');
       write('  \x1b[32mwtr auth --clear\x1b[0m               Borrar cookies de sesión\n');
@@ -828,6 +960,61 @@ async function executeCliCommand(cmdLine, write) {
         }
       }
       write(`\x1b[32m✓ ¡${chapters.length} capítulos exportados exitosamente a la carpeta exports/${novel.slug}/\x1b[0m\n\n`);
+      break;
+    }
+
+    case 'delete':
+    case 'remove':
+    case 'rm': {
+      if (args.length === 0) {
+        write('\x1b[31m✖ Falta el identificador de la novela (slug o id).\x1b[0m\n');
+        write('Ejemplo: wtr delete lord-at-the-beginning\n');
+        write('O para capítulos: wtr delete lord-at-the-beginning -c 1-5\n\n');
+        return;
+      }
+      const targetSlug = args[0];
+      const novel = repository.getNovel(targetSlug);
+      if (!novel) {
+        write(`\x1b[31m✖ Novela no encontrada en SQLite: "${targetSlug}"\x1b[0m\n\n`);
+        return;
+      }
+
+      const chapSpec = getOptionValue(args, ['-c', '--chapters'], null);
+      const lang = getOptionValue(args, ['-l', '--lang'], null);
+
+      if (chapSpec) {
+        const downloaded = repository.getDownloadedChapterNumbers(novel.id, lang || 'en');
+        const targetNumbers = chapSpec === 'all'
+          ? downloaded
+          : parseChapterRange(chapSpec, downloaded.length ? Math.max(...downloaded) : 9999).filter(n => downloaded.includes(n));
+
+        repository.deleteChapters(novel.id, targetNumbers, lang);
+
+        // Limpiar archivos en disco
+        const safeSlug = novel.slug.replace(/[\\/:*?"<>|]+/g, '_').trim();
+        const novelExportsDir = path.join(CONFIG.exportsDir, safeSlug);
+        if (fs.existsSync(novelExportsDir)) {
+          const files = fs.readdirSync(novelExportsDir);
+          for (const f of files) {
+            for (const chNo of targetNumbers) {
+              const padded = String(chNo).padStart(4, '0');
+              if (f.startsWith(`Capitulo_${padded} -`) || f === `Capitulo_${padded}.txt`) {
+                try { fs.unlinkSync(path.join(novelExportsDir, f)); } catch {}
+              }
+            }
+          }
+        }
+
+        write(`\x1b[32m✓ Se borraron ${targetNumbers.length} capítulos de "${novel.title}".\x1b[0m\n\n`);
+      } else {
+        repository.deleteNovel(novel.id);
+        const safeSlug = novel.slug.replace(/[\\/:*?"<>|]+/g, '_').trim();
+        const novelExportsDir = path.join(CONFIG.exportsDir, safeSlug);
+        if (fs.existsSync(novelExportsDir)) {
+          try { fs.rmSync(novelExportsDir, { recursive: true, force: true }); } catch {}
+        }
+        write(`\x1b[32m✓ Novela "${novel.title}" y todos sus capítulos eliminados de la biblioteca y disco.\x1b[0m\n\n`);
+      }
       break;
     }
 
