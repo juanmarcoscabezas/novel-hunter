@@ -793,10 +793,12 @@ async function runTests() {
 
   // Aserciones en styles.css
   assert(accStyles.includes('.chapters-accordion-toolbar'), 'styles.css debe definir estilos para .chapters-accordion-toolbar');
+  assert(accStyles.includes('position: sticky'), 'styles.css debe fijar la barra de herramientas del acordeón con position: sticky');
   assert(accStyles.includes('.chapter-accordion'), 'styles.css debe definir estilos para .chapter-accordion');
   assert(accStyles.includes('.chapter-accordion-header'), 'styles.css debe definir estilos para .chapter-accordion-header');
   assert(accStyles.includes('.chapter-accordion-arrow'), 'styles.css debe definir estilos para la flecha giratoria .chapter-accordion-arrow');
   assert(accStyles.includes('.chapter-accordion-body'), 'styles.css debe definir estilos para el cuerpo desplegable .chapter-accordion-body');
+  assert(accStyles.includes('flex-shrink: 0'), 'styles.css debe evitar el aplastamiento de los elementos del acordeón con flex-shrink: 0');
 
   // Aserciones en IPC (main.js y preload.cjs)
   assert(accMain.includes("ipcMain.handle('settings:getChapterGrouping'"), 'main.js debe registrar el handler settings:getChapterGrouping');
@@ -810,6 +812,7 @@ async function runTests() {
   assert(accAppJs.includes('chapter-accordion'), 'app.js debe generar elementos de acordeón para los capítulos');
   assert(accAppJs.includes('accordion-expand-all'), 'app.js debe soportar expandir todos los acordeones');
   assert(accAppJs.includes('accordion-collapse-all'), 'app.js debe soportar colapsar todos los acordeones');
+  assert(accAppJs.includes('toggleAccordion'), 'app.js debe soportar alternar el estado del acordeón individual');
 
   // Verificación de cero emojis en archivos modificados
   const accHtmlEmojis = accHtml.match(emojiCheckRegex) || [];
@@ -1039,7 +1042,35 @@ async function runTests() {
 
   console.log('   ✓ Armonización de Botones (.btn-secondary, .btn-outline, .btn-translate-novel, .chip.active) verificada con éxito.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (33/33) PASARON EXITOSAMENTE!');
+  // Test 34: Unificación de Scroll Único en Tabla de Contenidos y Detalle de Capítulos (Cero Doble Scroll)
+  console.log('\n34. Probando Unificación de Scroll Único en Tabla de Contenidos y Detalle de Capítulos (Cero Doble Scroll)...');
+  const scrollStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+
+  // Aserciones para el modal de descarga y Tabla de Contenidos (TOC)
+  assert(scrollStyles.includes('.download-modal-card {') && scrollStyles.includes('height: 86vh;'),
+    'styles.css debe definir altura adaptable (86vh) y flexbox en .download-modal-card');
+  assert(scrollStyles.includes('.download-modal-card .modal-body {') && scrollStyles.includes('overflow: hidden;'),
+    'styles.css debe definir overflow: hidden en .download-modal-card .modal-body para eliminar el scroll externo duplicado');
+  assert(scrollStyles.includes('.modal-toc-list {') && scrollStyles.includes('overflow-y: auto;') && scrollStyles.includes('flex: 1;'),
+    'styles.css debe definir .modal-toc-list con flex: 1 y overflow-y: auto como único scrollbar');
+  assert(scrollStyles.includes('.download-modal-card.toc-expanded .modal-toc-list {') && scrollStyles.includes('max-height: none;'),
+    'styles.css debe permitir expansión vertical completa en .modal-toc-list al expandir');
+
+  // Aserciones para el modal de capítulos guardados
+  assert(scrollStyles.includes('#chapters-modal .modal-card {') && scrollStyles.includes('height: 86vh;'),
+    'styles.css debe estructurar #chapters-modal .modal-card con layout flex de altura fija');
+  assert(scrollStyles.includes('#chapters-modal .modal-body {') && scrollStyles.includes('overflow: hidden;'),
+    'styles.css debe evitar scroll externo duplicado en #chapters-modal .modal-body');
+  assert(scrollStyles.includes('.chapters-list-wrapper {') && scrollStyles.includes('overflow-y: auto;') && scrollStyles.includes('flex: 1;'),
+    'styles.css debe definir .chapters-list-wrapper con flex: 1 y overflow-y: auto como único contenedor de scroll');
+
+  // Aserciones para scrollbar estilizado
+  assert(scrollStyles.includes('::-webkit-scrollbar {') && scrollStyles.includes('::-webkit-scrollbar-thumb {'),
+    'styles.css debe definir barras de scroll personalizadas y limpias para toda la aplicación');
+
+  console.log('   ✓ Unificación de scroll único en Tabla de Contenidos y Capítulos (cero doble scroll) verificado con éxito.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (34/34) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

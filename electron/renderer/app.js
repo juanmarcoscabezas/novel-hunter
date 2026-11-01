@@ -20,7 +20,7 @@ const ICONS = {
   playSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
   trash: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
   trashSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
-  chevronRight: '<svg class="svg-icon icon-xs chapter-accordion-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+  chevronRight: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>',
   listSm: '<svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
   listXs: '<svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
 };
@@ -1370,7 +1370,12 @@ async function loadChaptersListForNovel(novelItem, lang) {
   `;
   container.appendChild(toolbar);
 
-  toolbar.querySelector('#accordion-expand-all').addEventListener('click', () => {
+  const expandAllBtn = toolbar.querySelector('#accordion-expand-all');
+  const collapseAllBtn = toolbar.querySelector('#accordion-collapse-all');
+
+  expandAllBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     container.querySelectorAll('.chapter-accordion').forEach(acc => {
       acc.classList.add('open');
       const hdr = acc.querySelector('.chapter-accordion-header');
@@ -1378,7 +1383,9 @@ async function loadChaptersListForNovel(novelItem, lang) {
     });
   });
 
-  toolbar.querySelector('#accordion-collapse-all').addEventListener('click', () => {
+  collapseAllBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     container.querySelectorAll('.chapter-accordion').forEach(acc => {
       acc.classList.remove('open');
       const hdr = acc.querySelector('.chapter-accordion-header');
@@ -1416,7 +1423,11 @@ async function loadChaptersListForNovel(novelItem, lang) {
       </div>
     `;
 
-    const toggleAccordion = () => {
+    const toggleAccordion = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       const isOpen = accordion.classList.toggle('open');
       header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     };
@@ -1425,7 +1436,7 @@ async function loadChaptersListForNovel(novelItem, lang) {
     header.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        toggleAccordion();
+        toggleAccordion(e);
       }
     });
 
@@ -1488,7 +1499,8 @@ async function loadChaptersListForNovel(novelItem, lang) {
         });
       }
 
-      itemEl.querySelector('.btn-read-ch').addEventListener('click', () => {
+      itemEl.querySelector('.btn-read-ch')?.addEventListener('click', (e) => {
+        e.stopPropagation();
         openReaderModal(novelItem, ch.chapter_no, lang);
       });
 

@@ -387,5 +387,60 @@ La compilación y distribución de Novel Hunter se gestiona mediante `electron-b
   - `portable`: Ejecutable autónomo sin instalación previa (`npm run dist:win`).
   - `nsis`: Instalador tradicional con opciones de directorio y accesos directos (`npm run dist:win:installer`).
 
+---
+
+## 19. Arquitectura de Scroll Único en Modales (Cero Doble Scroll)
+
+Para brindar una experiencia de usuario natural y eliminar los molestos conflictos de desplazamiento por rueda de ratón (*mouse wheel traps*) en ventanas modales complejas:
+
+- **Diagnóstico del Doble Scroll**:
+  - Anteriormente, la clase global `.modal-body` aplicaba `max-height: 70vh; overflow-y: auto;`.
+  - Cuando los componentes internos de listado (como `.modal-toc-list` en la Tabla de Contenidos o `.chapters-list-wrapper` en el catálogo de capítulos) acumulaban alturas superiores a `70vh` sumadas a los paneles de configuración y portada, el navegador generaba un scrollbar exterior en el cuerpo del modal y un segundo scrollbar interior dentro del listado.
+  - Esto provocaba que dos barras de scroll compitieran lado a lado y que el desplazamiento saltara bruscamente entre el contenedor general y la lista de capítulos.
+- **Estructura Flexbox Unificada (`display: flex`)**:
+  - Tanto `.download-modal-card` como `#chapters-modal .modal-card` se dimensionan con altura adaptable y límites seguros:
+    ```css
+    height: 86vh;
+    max-height: 860px;
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+    ```
+  - Sus respectivos `.modal-body` se configuran como flex items que absorben el espacio disponible pero bloquean el desbordamiento duplicado:
+    ```css
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: none;
+    ```
+- **Fijación de Controles y Canalización del Scroll**:
+  - Los encabezados (`.modal-header`), vistas previas (`.novel-meta-preview`), paneles de opciones (`.download-config-panel`, `.download-toc-header`) y pies de acción (`.modal-footer`) se marcan con `flex-shrink: 0;`. Permanecen siempre visibles y accesibles para el usuario.
+  - La lista de capítulos (`.modal-toc-list` y `.chapters-list-wrapper`) recibe `flex: 1; min-height: 0; max-height: none; overflow-y: auto;`, convirtiéndose en el **único y exclusivo scrollbar** del modal.
+  - En modo expandido (`.download-modal-card.toc-expanded`), el panel de opciones se oculta y la lista de la tabla de contenidos ocupa automáticamente el 100% del cuerpo del modal con un solo desplazamiento fluido.
+- **Barras de Scroll Estilizadas Globales**:
+  - Implementación transversal de `::-webkit-scrollbar` con esquinas redondeadas (`border-radius: 9999px`), ancho sutil (7px) y fondo translúcido coherente con los temas oscuros de la aplicación.
+
+---
+
+## 20. Arquitectura de Paginación y Acordeones de Capítulos
+
+Para optimizar la visualización de novelas con decenas o cientos de capítulos descargados:
+
+- **Chunking Paramétrico Configurable**:
+  - La función `loadChaptersListForNovel()` consulta la configuración activa mediante `window.wtrApi.getChapterGrouping()`.
+  - El array de capítulos descargados se divide en bloques uniformes mediante `chapters.slice(i, i + groupSize)`.
+  - Si una novela posee un capítulo leído previamente (`last_read_chapter_no`), el bloque correspondiente se marca como abierto por defecto (`activeChunkIndex`), facilitando la continuidad de lectura.
+- **Estructura Flexbox Anti-Aplastamiento (`flex-shrink: 0`)**:
+  - Dado que `.chapters-list-wrapper` opera bajo Flexbox en columna, todos los elementos hijos del acordeón (`.chapter-accordion`, `.chapter-accordion-header`, `.chapter-accordion-body`, `.chapter-item`, `.chapters-accordion-toolbar`) tienen definido `flex-shrink: 0;`.
+  - Esto garantiza que el contenido interno de cada acordeón nunca sea colapsado ni recortado por el motor de diseño del navegador, permitiendo la visualización íntegra de todos los capítulos que componen cada grupo.
+- **Barra de Herramientas Flotante (`position: sticky`)**:
+  - `.chapters-accordion-toolbar` utiliza `position: sticky; top: 0; z-index: 5; background-color: var(--bg-card);`, asegurando que el resumen de grupos y los botones *"Expandir todos"* y *"Colapsar todos"* permanezcan fijos y accesibles sin importar la profundidad del desplazamiento.
+- **Control de Estados y Eventos**:
+  - Los botones de *"Expandir todos"* y *"Colapsar todos"* recorren los nodos `.chapter-accordion`, actualizando sincronizadamente las clases `.open` y los atributos de accesibilidad `aria-expanded="true|false"`.
+  - Las cabeceras individuales gestionan clics y teclado (`Enter` / `Space`) con `stopPropagation()` para evitar interferencias con botones de lectura o eliminación.
+
+
 
 

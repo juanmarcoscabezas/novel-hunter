@@ -156,6 +156,27 @@ body {
   height: 100vh;
 }
 
+/* Barras de Desplazamiento Estilizadas (Unified Custom Scrollbars) */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
 /* SVG Icon System */
 .svg-icon {
   width: 18px;
@@ -1127,15 +1148,36 @@ body {
   color: var(--text-dim);
 }
 
-/* Tabla de Contenidos en Modal de Descarga */
+/* Tabla de Contenidos en Modal de Descarga (Diseño de Scroll Único) */
 .download-modal-card {
   width: 820px;
   max-width: 94vw;
-  max-height: 90vh;
+  height: 86vh;
+  max-height: 860px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
   transition: all 0.25s ease;
 }
 
+.download-modal-card .modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+  overflow: hidden;
+  max-height: none;
+}
+
+.download-modal-card .novel-meta-preview {
+  flex-shrink: 0;
+  padding: 10px 14px;
+}
+
 .download-config-panel {
+  flex-shrink: 0;
   transition: opacity 0.2s ease, max-height 0.2s ease;
 }
 
@@ -1143,23 +1185,22 @@ body {
   display: none;
 }
 
-.download-modal-card.toc-expanded .modal-toc-list {
-  max-height: 480px;
-  height: 52vh;
-}
-
 .download-toc-section {
-  margin-top: 14px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 0;
   background-color: rgba(15, 23, 42, 0.45);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  overflow: hidden;
 }
 
 .download-toc-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1217,6 +1258,7 @@ body {
 }
 
 .toc-hint-bar {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1226,12 +1268,23 @@ body {
 }
 
 .modal-toc-list {
-  max-height: 240px;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-right: 4px;
+  padding-right: 6px;
+}
+
+.download-modal-card.toc-expanded .modal-toc-list {
+  max-height: none;
+  height: auto;
+}
+
+.download-progress-container {
+  flex-shrink: 0;
 }
 
 .toc-chapter-item {
@@ -1651,7 +1704,7 @@ body {
 .term-yellow { color: #fbbf24; }
 .term-red { color: #f87171; }
 
-/* Modal Grandes & Lista de Capítulos */
+/* Modal Grandes & Lista de Capítulos (Diseño de Scroll Único) */
 .modal-card.modal-lg {
   width: 750px;
   max-width: 92vw;
@@ -1662,13 +1715,46 @@ body {
   max-width: 95vw;
 }
 
+#chapters-modal .modal-card {
+  width: 780px;
+  max-width: 92vw;
+  height: 86vh;
+  max-height: 860px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+#chapters-modal .modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  gap: 12px;
+  overflow: hidden;
+  max-height: none;
+}
+
+#chapters-modal .novel-meta-preview {
+  flex-shrink: 0;
+  padding: 10px 14px;
+}
+
+#chapters-modal .translate-progress-box {
+  flex-shrink: 0;
+}
+
 .chapters-list-wrapper {
-  max-height: 420px;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 4px;
+  padding-right: 6px;
 }
 
 /* Barra de herramientas y resumen de paginación/acordeón */
@@ -1676,11 +1762,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 6px;
+  padding: 8px 8px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--border-color);
   font-size: 12.5px;
   color: var(--text-muted);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--bg-card);
 }
 
 .chapters-accordion-summary {
@@ -1703,6 +1794,7 @@ body {
   margin-bottom: 4px;
   overflow: hidden;
   transition: border-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chapter-accordion.open {
@@ -1718,6 +1810,7 @@ body {
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chapter-accordion-header:hover {
@@ -1760,6 +1853,7 @@ body {
   padding: 10px;
   background-color: rgba(0, 0, 0, 0.12);
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .chapter-accordion.open .chapter-accordion-body {
@@ -1775,6 +1869,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chapter-item:hover {

@@ -97,6 +97,10 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
      - Botones de acción principales en tarjetas y modales: altura unificada de 36px (`.btn-sm` / `.btn-action-harmonized`, `box-sizing: border-box`).
      - Botones compactos: 28px (`.btn-xs`).
    - **Cero emojis**: Únicamente iconos vectoriales SVG en línea (`ICONS` en `app.js` o `<svg class="svg-icon">`).
+6. **Scroll Único en Modales Complejos (Cero Doble Scroll)**:
+   - En modales con listas de capítulos (`.download-modal-card`, `#chapters-modal`), el contenedor `.modal-body` debe configurarse con `overflow: hidden; max-height: none; flex: 1; min-height: 0;`.
+   - Los paneles superiores (portada, búsqueda, configuración) y los botones inferiores del pie deben mantenerse estables con `flex-shrink: 0;`.
+   - El desplazamiento debe residir exclusivamente en la lista interna (`.modal-toc-list` o `.chapters-list-wrapper`) con `flex: 1; min-height: 0; max-height: none; overflow-y: auto;`, erradicando barras de scroll duplicadas o conflictivas.
 
 ---
 

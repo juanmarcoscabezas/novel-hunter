@@ -40,6 +40,7 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
   - **Selección ágil de descarga**: Botón *"Seleccionar"* para descargar un capítulo individual y botón *"Hasta aquí"* para construir rangos de descarga con un solo clic.
   - **Modo expandido**: Botón *"Expandir"* para maximizar la tabla de contenidos a toda la altura del modal y explorar cientos de capítulos con total fluidez.
   - **Acciones duales en tarjetas**: Botón *"Tabla de Contenidos"* para explorar el índice y botón *"Descargar"* para configurar opciones de descarga directa.
+  - **Diseño de Scroll Único (Cero Doble Scroll)**: Estructura flexbox unificada en el modal de descarga (`.download-modal-card`) y en el detalle de capítulos (`#chapters-modal`), bloqueando el desbordamiento duplicado en `.modal-body` y canalizando el desplazamiento exclusivamente en la lista de capítulos (`.modal-toc-list` / `.chapters-list-wrapper`), manteniendo portada, filtros y botones siempre anclados y accesibles.
 - 💾 **Base de Datos SQLite en 3NF**: Esquema relacional normalizado con módulo nativo `node:sqlite` que almacena novelas, autores, capítulos canónicos, traducciones independientes (`en`, `es`), párrafos atómicos en 1NF y progreso de lectura en `data/novels.db`.
 - 📖 **Lector Offline con Lectura Ininterrumpida (*Binge Reading*)**:
   - Botón directo **"Seguir Leyendo (Cap. X)"** en la biblioteca y en el modal de detalle de la novela.
@@ -230,10 +231,10 @@ node bin/cli.js export <slug_o_id> --chapters 1-20 --lang es --merge --pdf
   ```
 
 #### Paginación y Acordeón Configurable de Capítulos:
-- **Agrupación Modular**: En el modal de detalle de cualquier novela guardada, los capítulos se organizan en bloques desplegables (acordeones) para una navegación cómoda y ágil sin sobrecargar la vista.
+- **Agrupación Modular y Renderizado Completo**: En el modal de detalle de cualquier novela guardada, los capítulos se organizan en bloques desplegables (acordeones) con renderizado completo de todos los capítulos por grupo (`flex-shrink: 0;`), evitando aplastamientos y mostrando de forma nítida la totalidad de episodios.
 - **Tamaño Configurable**: En la pestaña **Configuración**, ingresa cualquier valor numérico deseado (ej: `10`, `20`, `50`, etc.) o selecciona uno de los chips predefinidos. Los cambios se persisten de manera transparente en `settings.json`.
-- **Controles Globales**: La barra superior del listado incluye un resumen dinámico (`Total: X capítulos en Y grupos (N por acordeón)`) y botones para *"Expandir todos"* y *"Colapsar todos"*.
-- **Apertura Contextual**: Al abrir una novela, el acordeón que contiene el último capítulo leído se abre automáticamente para reanudar la lectura sin tener que desplazarse manualmente.
+- **Controles Globales y Barra Fija**: La barra superior del listado (`position: sticky`) permanece anclada durante el scroll e incluye un resumen dinámico (`X capítulos en Y grupos (N por acordeón)`) junto con botones interactivos *"Expandir todos"* y *"Colapsar todos"* con control de propagación de eventos para desplegar o plegar todos los bloques al instante.
+- **Apertura Contextual e Individual**: Al abrir una novela, el acordeón que contiene el último capítulo leído se abre automáticamente para reanudar la lectura sin tener que desplazarse manualmente. Además, hacer clic o presionar Enter/Espacio en cualquier cabecera alterna individualmente su estado con indicador giratorio de 90°.
 
 ---
 

@@ -18,3 +18,4 @@ Read and strictly follow [AGENTS.md](./AGENTS.md).
    - SVG vector icons only (no broken emojis).
    - 4 selectable themes in Settings aligned with app icon (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`).
    - Button harmonization: No hardcoded hex colors (`#334155`, `#3b82f6`) on buttons or controls. Always use theme CSS variables (`var(--primary-gradient)`, `var(--accent-glow)`, `var(--bg-card)`, `var(--border-color)`, `var(--border-focus)`).
+   - Single-scroll modals: In dialogs with lists (`.download-modal-card`, `#chapters-modal`), pin headers/controls with `flex-shrink: 0;`, set `.modal-body` to `overflow: hidden; max-height: none; flex: 1; min-height: 0;`, and direct the single scrollbar to the internal list (`flex: 1; min-height: 0; overflow-y: auto;`).
