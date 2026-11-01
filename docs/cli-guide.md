@@ -118,3 +118,10 @@ node bin/cli.js status
 ```bash
 node bin/cli.js auth --clear
 ```
+
+---
+
+## 6. Consola Integrada y Preferencias de Visualización
+
+- **Consola Terminal en la App de Escritorio**: La pestaña *Consola Terminal* permite ejecutar directamente comandos CLI (`wtr library`, `wtr status`, `wtr export`, etc.) con soporte para salida coloreada ANSI idéntica a la terminal del sistema.
+- **Paginación y Acordeones en el Catálogo**: En la pestaña *Configuración* de la app de escritorio, puedes definir la cantidad de capítulos por acordeón (10, 20, 50, etc.). El valor se almacena en `data/settings.json` y se aplica instantáneamente al explorar cualquier novela guardada.

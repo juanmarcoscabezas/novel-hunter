@@ -330,10 +330,10 @@ export class NovelRepository {
       FROM chapters c
       JOIN chapter_translations ct_src ON ct_src.chapter_id = c.id AND ct_src.language = ?
       WHERE c.novel_id = ?
-        AND c.id NOT IN (
-          SELECT ct_tgt.chapter_id
+        AND NOT EXISTS (
+          SELECT 1
           FROM chapter_translations ct_tgt
-          WHERE ct_tgt.language = ?
+          WHERE ct_tgt.chapter_id = c.id AND ct_tgt.language = ?
         )
       ORDER BY c.chapter_no ASC
     `);

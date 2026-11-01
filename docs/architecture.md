@@ -225,3 +225,18 @@ Para mantener limpia la biblioteca y optimizar el almacenamiento:
   - Botón individual *"Borrar"* en cada fila de capítulo (`.btn-delete-ch`).
   - Botón directo de eliminar en las tarjetas de la biblioteca (`.btn-delete-novel-card`).
   - Botón *"Borrar"* en los controles de cabecera del modo lector (`#reader-delete-btn`).
+
+---
+
+## 11. Paginación y Acordeón Configurable de Capítulos
+
+Para optimizar la visualización de novelas con cientos o miles de capítulos guardados, Novel Hunter implementa un sistema de particionado dinámico en acordeones:
+- **Configuración Numérica de Usuario**:
+  - Ubicada en la pestaña de *Configuración* (`#tab-settings`), permite definir la cantidad exacta de capítulos a agrupar en cada bloque desplegable mediante un selector numérico (`#chapter-group-size-input`) y chips de acceso rápido (`10`, `20`, `50`, `100`).
+  - Persistencia en `data/settings.json` mediante las funciones `getChapterGrouping()` y `saveChapterGrouping(size)` de `src/config.js`.
+  - Canales IPC dedicados: `settings:getChapterGrouping` y `settings:saveChapterGrouping`.
+- **Renderizado Dinámico de Acordeones**:
+  - Los capítulos recuperados de SQLite se segmentan en bloques del tamaño configurado (por ejemplo, 10 o 20 por bloque).
+  - Cada acordeón muestra su rango de capítulos (ej. `Capítulos 1 – 20`), un badge con el conteo de capítulos y un icono indicador con rotación CSS suave de 90°.
+  - **Barra de Herramientas**: Muestra un resumen general (`Total: X capítulos en Y grupos`) y controles rápidos para *"Expandir todos"* o *"Colapsar todos"*.
+  - **Apertura Inteligente**: Se abre automáticamente el acordeón correspondiente al último capítulo leído (`last_read_chapter_no`) para retomar la lectura sin necesidad de desplazamiento.

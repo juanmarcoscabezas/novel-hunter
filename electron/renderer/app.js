@@ -1866,10 +1866,10 @@ async function initTtsControls() {
       voiceSelect.innerHTML = '';
 
       const groups = [
-        { label: '🇨🇴 Colombia', filter: (v) => v.lang === 'es-CO' || v.id === 'es-ES-XimenaNeural' },
-        { label: '👩 Español (Mujeres)', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Mujer' && v.lang !== 'es-CO' && v.id !== 'es-ES-XimenaNeural' },
-        { label: '👨 Español (Hombres)', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Hombre' && v.lang !== 'es-CO' },
-        { label: '🇬🇧 Inglés', filter: (v) => v.lang.startsWith('en-') }
+        { label: 'Colombia', filter: (v) => v.lang === 'es-CO' || v.id === 'es-ES-XimenaNeural' },
+        { label: 'Español - Mujeres', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Mujer' && v.lang !== 'es-CO' && v.id !== 'es-ES-XimenaNeural' },
+        { label: 'Español - Hombres', filter: (v) => v.lang.startsWith('es-') && v.gender === 'Hombre' && v.lang !== 'es-CO' },
+        { label: 'Inglés', filter: (v) => v.lang.startsWith('en-') }
       ];
 
       const addedIds = new Set();
@@ -2042,7 +2042,7 @@ async function playParagraphTts(pIndex, targetWord = null) {
 
   const voiceSelect = document.getElementById('tts-voice-select');
   const rateSelect = document.getElementById('tts-rate-select');
-  const voice = voiceSelect ? voiceSelect.value : 'es-ES-AlvaroNeural';
+  const voice = voiceSelect ? voiceSelect.value : 'es-CO-SalomeNeural';
   const rate = rateSelect ? rateSelect.value : 'default';
 
   try {
@@ -2171,7 +2171,7 @@ async function exportCurrentChapterAudio() {
 
   const voiceSelect = document.getElementById('tts-voice-select');
   const rateSelect = document.getElementById('tts-rate-select');
-  const voice = voiceSelect ? voiceSelect.value : 'es-ES-AlvaroNeural';
+  const voice = voiceSelect ? voiceSelect.value : 'es-CO-SalomeNeural';
   const rate = rateSelect ? rateSelect.value : 'default';
 
   try {

@@ -193,7 +193,29 @@ async function runDbTests() {
   assert.strictEqual(paragraphsCount, 0, 'Los párrafos atómicos deben eliminarse en cascada');
   console.log('   ✓ deleteNovel validado con cascada relacional 3NF completa (SQLite).');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (14/14) PASARON EXITOSAMENTE!');
+  // 15. Probando sanitización de párrafos con espacios y líneas en blanco
+  console.log('\n15. Probando sanitización de párrafos con espacios y líneas en blanco...');
+  repo.upsertNovel({ rawId: 2002, slug: 'test-spaces', title: 'Spaces Test Novel' });
+  repo.saveChapterTranslation(2002, 1, {
+    language: 'en',
+    title: 'Chapter 1: Spaces',
+    model: 'Gemini',
+    paragraphs: [
+      '  First paragraph with   extra spaces.  ',
+      '',
+      '   ',
+      'Second paragraph with \n\n newlines and   spaces.  ',
+      '   \n\r   '
+    ]
+  });
+  const chSpaces = repo.getChapterTranslation(2002, 1, 'en');
+  assert.strictEqual(chSpaces.paragraphs.length, 2, 'Los párrafos vacíos deben ser filtrados');
+  assert.strictEqual(chSpaces.paragraphs[0], 'First paragraph with extra spaces.');
+  assert.strictEqual(chSpaces.paragraphs[1], 'Second paragraph with newlines and spaces.');
+  repo.deleteNovel('test-spaces');
+  console.log('   ✓ Párrafos vacíos eliminados y espacios normalizados correctamente en SQLite.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA BASE DE DATOS (15/15) PASARON EXITOSAMENTE!');
 }
 
 runDbTests().catch(err => {

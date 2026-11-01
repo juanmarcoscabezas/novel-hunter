@@ -190,3 +190,12 @@ Puedes abrir `data/novels.db` directamente con:
 - **DB Browser for SQLite** (Windows / Linux / macOS)
 - **DBeaver**
 - Extensión **SQLite Viewer** en VS Code o Cursor
+
+---
+
+## 6. Persistencia de Configuración y Proyección de Lectura
+
+- **Configuración de la Aplicación**: Los parámetros de usuario (API Key de Gemini, tamaño de paginación/agrupación en acordeones `chapterGrouping`) se persisten en `data/settings.json` mediante `getAppSettings()` y `saveAppSettings()` en `src/config.js`.
+- **Integración con Progreso de Lectura (`reading_progress`)**:
+  - Al abrir el modal de exploración de capítulos de una novela, la interfaz consulta `rp.last_read_chapter_no` para abrir por defecto el bloque de acordeón que contiene el último capítulo leído.
+  - Esto optimiza la experiencia de lectura continua incluso en catálogos extensos con miles de capítulos ordenados en 3NF.

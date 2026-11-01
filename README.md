@@ -188,6 +188,25 @@ node bin/cli.js export <slug_o_id> --chapters 1-50 --lang en --merge --pdf
 node bin/cli.js export <slug_o_id> --chapters 1-20 --lang es --merge --pdf
 ```
 
+#### Eliminar capítulos o novelas completas:
+- **Desde la interfaz gráfica de escritorio**:
+  - **Eliminar novela completa**: Pulsa el botón *"Eliminar Novela Completa"* en el modal de detalle o el icono de papelera en la tarjeta de *Mi Biblioteca*. Elimina en cascada relacional 3NF todos los registros y limpia la carpeta en `exports/`.
+  - **Borrar capítulos**: Usa el botón *"Borrar Capítulos"* en el modal de detalle para definir rangos e idioma, o el botón *"Borrar"* en cualquier fila de capítulo o en la cabecera del modo lector.
+- **Desde la consola integrada o CLI**:
+  ```bash
+  # Eliminar novela completa de la biblioteca y disco:
+  wtr delete <slug_o_id>
+
+  # Borrar capítulos específicos de una novela:
+  wtr delete <slug_o_id> -c 1-10 -l en
+  ```
+
+#### Paginación y Acordeón Configurable de Capítulos:
+- **Agrupación Modular**: En el modal de detalle de cualquier novela guardada, los capítulos se organizan en bloques desplegables (acordeones) para una navegación cómoda y ágil sin sobrecargar la vista.
+- **Tamaño Configurable**: En la pestaña **Configuración**, ingresa cualquier valor numérico deseado (ej: `10`, `20`, `50`, etc.) o selecciona uno de los chips predefinidos. Los cambios se persisten de manera transparente en `settings.json`.
+- **Controles Globales**: La barra superior del listado incluye un resumen dinámico (`Total: X capítulos en Y grupos (N por acordeón)`) y botones para *"Expandir todos"* y *"Colapsar todos"*.
+- **Apertura Contextual**: Al abrir una novela, el acordeón que contiene el último capítulo leído se abre automáticamente para reanudar la lectura sin tener que desplazarse manualmente.
+
 ---
 
 ### 4. Gestión de Sesión y Autenticación

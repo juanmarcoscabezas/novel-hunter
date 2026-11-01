@@ -269,17 +269,30 @@ async function runTests() {
   // Test 21: Motor de Lectura Natural (TTS), Voces multilingües, marcas de palabra y exportación de audio MP3
   console.log('\n21. Probando Motor de Lectura Natural (TTS), voces y exportación de audio MP3...');
   const voices = getAvailableVoices();
-  assert(Array.isArray(voices) && voices.length >= 8, 'Debe haber al menos 8 voces naturales disponibles');
+  assert(Array.isArray(voices) && voices.length >= 20, 'Debe haber un catálogo ampliado de voces naturales disponibles (>= 20)');
   const maleVoices = voices.filter(v => v.gender === 'Hombre' || v.gender === 'Male');
   const femaleVoices = voices.filter(v => v.gender === 'Mujer' || v.gender === 'Female');
   const esVoices = voices.filter(v => v.lang.startsWith('es-'));
   const enVoices = voices.filter(v => v.lang.startsWith('en-'));
+  const colombianVoices = voices.filter(v => v.lang === 'es-CO' || v.id === 'es-ES-XimenaNeural');
+  const femaleEsVoices = esVoices.filter(v => v.gender === 'Mujer' || v.gender === 'Female');
+
   assert(maleVoices.length > 0, 'Debe incluir voces masculinas');
   assert(femaleVoices.length > 0, 'Debe incluir voces femeninas');
-  assert(esVoices.length > 0, 'Debe incluir voces en español con diferentes acentos');
+  assert(esVoices.length >= 15, 'Debe incluir al menos 15 opciones de voz en español');
+  assert(femaleEsVoices.length >= 10, 'Debe dar preferencia a voces femeninas en español (al menos 10 disponibles)');
+  assert(femaleEsVoices.length > esVoices.filter(v => v.gender === 'Hombre').length, 'Debe haber mayor cantidad de voces femeninas en español');
+  assert(colombianVoices.length >= 2, 'Debe incluir opciones de voz colombiana');
+  assert(colombianVoices.some(v => v.id === 'es-CO-SalomeNeural'), 'Debe incluir la voz femenina colombiana Salomé');
   assert(enVoices.length > 0, 'Debe incluir voces en inglés');
 
-  console.log(`   ✓ Catálogo de ${voices.length} voces naturales validado (${maleVoices.length} masculinas, ${femaleVoices.length} femeninas, acentos ES/MX/AR/CO/US/GB).`);
+  console.log(`   ✓ Catálogo de ${voices.length} voces naturales validado (${maleVoices.length} masculinas, ${femaleVoices.length} femeninas, ${colombianVoices.length} colombianas).`);
+
+  console.log('   -> Probando síntesis con la voz femenina colombiana Salomé (es-CO-SalomeNeural)...');
+  const colRes = await synthesizeParagraph('Hola, esta es una prueba de narración con voz colombiana.', { voice: 'es-CO-SalomeNeural' });
+  assert(typeof colRes.audioBase64 === 'string' && colRes.audioBase64.length > 1000, 'Debe devolver audio en Base64 con es-CO-SalomeNeural');
+  assert(Array.isArray(colRes.words) && colRes.words.length > 0, 'Debe sincronizar marcas de tiempo por palabra con voz colombiana');
+  console.log(`   ✓ Síntesis con Salomé (Colombia) exitosa: ${Math.round(colRes.audioBase64.length / 1024)} KB con ${colRes.words.length} palabras.`);
 
   console.log('   -> Sintetizando fragmento de prueba con marcas temporales por palabra...');
   const ttsRes = await synthesizeParagraph('Prueba de audio para Novel Hunter.', { voice: 'es-ES-AlvaroNeural' });
@@ -287,6 +300,18 @@ async function runTests() {
   assert(Array.isArray(ttsRes.words) && ttsRes.words.length > 0, 'Debe devolver marcas de tiempo por palabra');
   assert(typeof ttsRes.words[0].start === 'number' && typeof ttsRes.words[0].end === 'number', 'Las marcas de palabra deben incluir start y end en ms');
   console.log(`   ✓ Síntesis exitosa: ${Math.round(ttsRes.audioBase64.length / 1024)} KB en base64 con ${ttsRes.words.length} palabras sincronizadas.`);
+
+  // Verificación de normalización de espacios y velocidades rápidas (2x y 3x)
+  console.log('   -> Verificando limpieza de espacios/saltos en blanco y velocidades 2x y 3x...');
+  const emptyRes = await synthesizeParagraph('   \n\n\r\n   ');
+  assert.strictEqual(emptyRes.audioBase64, '', 'Texto con solo espacios o saltos no debe sintetizarse');
+
+  const spaceCleanRes = await synthesizeParagraph('  Texto con   espacios múltiples  \n\n  y saltos.  ', { voice: 'es-ES-AlvaroNeural', rate: '+100%' });
+  assert(typeof spaceCleanRes.audioBase64 === 'string' && spaceCleanRes.audioBase64.length > 500, 'Debe sintetizar texto con espacios normalizados a velocidad 2x');
+
+  const fast3xRes = await synthesizeParagraph('Prueba rápida a triple velocidad.', { voice: 'es-ES-AlvaroNeural', rate: '+200%' });
+  assert(typeof fast3xRes.audioBase64 === 'string' && fast3xRes.audioBase64.length > 500, 'Debe sintetizar a velocidad 3x sin errores');
+  console.log('   ✓ Normalización de espacios en blanco y velocidades aceleradas (2x y 3x) validadas.');
 
   console.log('   -> Probando exportación de capítulo completo a archivo MP3...');
   const exportRes = await exportChapterAudio('audio-test-novel', 1, 'Capítulo de prueba', ['Primer párrafo narrado con voz fluida.', 'Segundo párrafo que continúa la historia.'], { voice: 'es-ES-AlvaroNeural' });
@@ -331,7 +356,15 @@ async function runTests() {
   assert(updatedAppJs.includes('playFromWord'), 'app.js debe permitir comenzar el audio desde cualquier palabra al hacer clic');
   assert(updatedAppJs.includes('exportCurrentChapterAudio'), 'app.js debe implementar la exportación de audio');
   assert(updatedAppJs.includes('reader-word'), 'app.js debe envolver cada palabra con clase reader-word para interacción');
-  console.log('   ✓ Barra de audio, sincronización por palabra, exportación MP3 y Gemini Key verificados en toda la app.');
+  assert(updatedHtml.includes('value="+100%">2.0x (2x)</option>'), 'index.html debe incluir opción de velocidad 2x / 2.0x');
+  assert(updatedHtml.includes('value="+200%">3.0x (3x)</option>'), 'index.html debe incluir opción de velocidad 3x / 3.0x');
+  assert(updatedAppJs.includes('ttsPrefetchCache'), 'app.js debe usar caché de precarga (ttsPrefetchCache) para eliminar pausas');
+  assert(updatedAppJs.includes('prefetchParagraphTts'), 'app.js debe implementar prefetchParagraphTts');
+  assert(updatedAppJs.includes('lastWord.end + 80'), 'app.js debe recortar el silencio muerto final de EdgeTTS para transiciones fluidas');
+  assert(updatedStyles.includes('.tts-select optgroup'), 'styles.css debe definir estilos para optgroup de voces');
+  assert(updatedAppJs.includes('optgroup'), 'app.js debe agrupar las voces naturalmente por categorías');
+  assert(updatedAppJs.includes('preferred_voice_'), 'app.js debe guardar la preferencia de voz del lector');
+  console.log('   ✓ Barra de audio, sincronización por palabra, opciones 2x/3x, reducción de pausas y Gemini Key verificados en toda la app.');
 
   // Test 23: Traducción on-demand de capítulos a español (Individual, Lote y UI)
   console.log('\n23. Probando Traducción de Capítulos a Español (Offline/Local desde inglés)...');
@@ -345,7 +378,12 @@ async function runTests() {
 
   const cleanupTestNovel = () => {
     try {
-      repository.db.prepare('DELETE FROM novels WHERE id = ?').run(testNovelId);
+      const db = repository.db;
+      db.prepare('DELETE FROM paragraphs WHERE translation_id IN (SELECT id FROM chapter_translations WHERE chapter_id IN (SELECT id FROM chapters WHERE novel_id = ?))').run(testNovelId);
+      db.prepare('DELETE FROM chapter_translations WHERE chapter_id IN (SELECT id FROM chapters WHERE novel_id = ?)').run(testNovelId);
+      db.prepare('DELETE FROM chapters WHERE novel_id = ?').run(testNovelId);
+      db.prepare('DELETE FROM reading_progress WHERE novel_id = ?').run(testNovelId);
+      db.prepare('DELETE FROM novels WHERE id = ?').run(testNovelId);
     } catch {}
   };
 
