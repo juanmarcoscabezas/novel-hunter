@@ -798,15 +798,10 @@ async function loadLibrary() {
         </div>
         <div style="display: flex; gap: 8px; flex-direction: column;">
           ${continueBtnHtml}
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="btn btn-primary btn-sm btn-view-chapters" style="flex: 1;">
-              ${ICONS.fileTextSm}
-              <span>Ver Capítulos (${item.downloaded_chapters})</span>
-            </button>
-            <button class="btn btn-outline-danger btn-sm btn-delete-novel-card" title="Eliminar novela completa" style="padding: 0 10px;">
-              ${ICONS.trash}
-            </button>
-          </div>
+          <button class="btn btn-primary btn-sm btn-view-chapters" style="width: 100%;">
+            ${ICONS.fileTextSm}
+            <span>Ver Capítulos (${item.downloaded_chapters})</span>
+          </button>
         </div>
       `;
 
@@ -833,20 +828,6 @@ async function loadLibrary() {
 
       card.querySelector('.btn-view-chapters').addEventListener('click', () => {
         openChaptersModal(item);
-      });
-
-      card.querySelector('.btn-delete-novel-card')?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente la novela "${item.title}" y todos sus capítulos descargados? Esta acción no se puede deshacer.`;
-        if (confirm(confirmMsg)) {
-          const res = await window.wtrApi.deleteNovel(item.raw_id || item.id);
-          if (res && res.success) {
-            showFeedback(`Novela "${item.title}" eliminada con éxito.`, 'info');
-            await loadLibrary();
-          } else {
-            alert(res?.error || 'No se pudo eliminar la novela.');
-          }
-        }
       });
 
       grid.appendChild(card);
