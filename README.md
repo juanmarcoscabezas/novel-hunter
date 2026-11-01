@@ -49,12 +49,17 @@ Soporta traducción prioritaria de **Google Gemini** con sustitución de glosari
 - 🎙️ **Narración Auditiva Neural (TTS)**: Motor `node-edge-tts` con 25 voces neurales naturales multilingües (prioridad en acentos de Colombia y Latinoamérica), sincronización por palabra (`WordBoundary`), salto de narración al hacer clic sobre cualquier palabra (`.reader-word`) y exportación a audiolibro en MP3.
 - 🌐 **Traducción Híbrida Inteligente**: Gemini 1.5 Flash (usando API Key configurable en Ajustes) con fallback automático y gratuito a Google Translate RPC. Traducción bajo demanda tanto individual como por lotes.
 - 🗂️ **Agrupación, Filtros y Ordenamiento Completo**:
-  - **Barra de Herramientas en Mi Biblioteca**: Controles reactivos de filtrado por idioma (`Todos`, `Solo Español`, `Solo Inglés`), buscador en tiempo real y selector de ordenamiento relacional (`Último leído`, `Título A - Z`, `Título Z - A`, `Más capítulos descargados`, `Menos capítulos descargados`, `Autor A - Z`, `Mayor progreso de lectura`), persistidos automáticamente en `localStorage`.
+  - **Barra de Herramientas en Mi Biblioteca**: Buscador en tiempo real por título o autor y selector de ordenamiento relacional (`Último leído`, `Título A - Z`, `Título Z - A`, `Más capítulos descargados`, `Menos capítulos descargados`, `Autor A - Z`, `Mayor progreso de lectura`), persistidos automáticamente en `localStorage`.
   - **Experiencia de Usuario Optimizada en Detalle de Novela**: Encabezado limpio con las 3 acciones prioritarias visibles (`Seguir Leyendo`, `Descargar Sig.`, `Traducir a Español`) y un menú desplegable **"Más ▾"** para acciones secundarias (`Descargar Más...`, `Exportar TXT/PDF`, `Abrir Carpeta`) y acciones destructivas protegidas con estilo de advertencia (`Borrar Capítulos...`, `Eliminar Novela Completa`).
   - **Ordenamiento Configurable de Capítulos**: Selector de orden ascendente (`1 a N`) o descendente (`N a 1`) dentro del detalle de la novela, adaptando los bloques de acordeones y preservando la preferencia del usuario.
   - **Ordenamiento en Tabla de Contenidos (TOC)**: Selector de orden `1 a N` o `N a 1` dentro del modal de descarga para explorar capítulos en el orden deseado.
   - Acordeón de capítulos agrupados en bloques configurables (por defecto 20 capítulos por grupo) con botones para expandir/colapsar todos.
   - Diálogo de borrado selectivo de capítulos por idioma y eliminación de novelas completas en cascada 3NF.
+- 🎨 **Personalización y Selector de Temas Visuales (4 Estilos)**: Selector interactivo en la pestaña de Configuración con cambio en vivo y persistencia en `localStorage`, alineado con la cromática del icono oficial:
+  - **Neon Hunter (Cyberpunk Gradient)** *(Predeterminado)*: Fiel al gradiente completo del icono (Rosa Neón `#ff0078` → Violeta `#8b5cf6` → Azul `#3b82f6`) con resplandores en elementos activos y botones.
+  - **Deep Violet (Dark Fantasy)**: Noche púrpura con violeta real (`#8b5cf6`) y lavanda, sobria y descansada para largas sesiones de lectura.
+  - **Midnight Velvet (Electric Magenta)**: Fondo negro carbón OLED (`#090a10`) con alto contraste en fucsia neón (`#f43f5e`).
+  - **Hybrid Slate & Indigo Glow**: Pizarra fría clásica (`#0b0f19`) con acentos sutiles en índigo (`#6366f1`).
 - ⚡ **Caché Inteligente y Cero Re-Descargas**: Capítulos descargados se leen en milisegundos desde SQLite sin peticiones a internet ni consumo de cuotas.
 - 📦 **Exportación Offline**: Exporta a archivos individuales `.txt` o libros digitales `.pdf` con tipografía limpia, portadas incrustadas y tabla de contenidos.
 - 🛡️ **Anti-Detección Cloudflare**: Cabeceras de navegador real (Chrome 130 Windows), *request throttling* con pausas aleatorias (*jitter*) y soporte para cookies de sesión.

@@ -7,5 +7,5 @@ Refer to [AGENTS.md](./AGENTS.md) for full project rules and architecture.
 - **Documentation**: Always update README.md, docs/ and workspace skills before committing.
 - **Testing**: Run and ensure 100% pass on both `npm test` and `node test/test_db.js` before any commit.
 - **Database**: SQLite 3NF relational structure (`node:sqlite`). Preserve foreign keys, do not duplicate canonical chapters for translations, isolate tests from user's `data/novels.db`.
-- **UI & UX**: Vanilla JS without bloated frameworks, SVG icons, unified 36px action buttons, page headers strictly aligned with sidebar menu titles.
+- **UI & UX**: Vanilla JS without bloated frameworks, SVG icons, unified 36px action buttons, page headers strictly aligned with sidebar menu titles, 4 switchable visual themes in Settings aligned with app icon (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`).
 - **Packaging**: Zero writes inside `app.asar`.

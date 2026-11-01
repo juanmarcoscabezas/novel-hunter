@@ -17,3 +17,4 @@ Consulta [AGENTS.md](./AGENTS.md) para la guía completa de desarrollo, arquitec
    - Vanilla JS modular, iconos SVG en línea, cero dependencias pesadas.
    - Acciones de tarjetas alineadas a 36px de altura exacta.
    - Títulos de vista idénticos a los botones de navegación del menú lateral.
+   - 4 temas visuales en cascada CSS (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`) seleccionables en Configuración y persistidos en `localStorage`.

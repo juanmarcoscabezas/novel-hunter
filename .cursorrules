@@ -16,3 +16,4 @@ Read and strictly follow [AGENTS.md](./AGENTS.md).
    - Screen headers must match menu button names exactly ("Buscador", "Mi biblioteca", "Consola Terminal", "Configuración").
    - Action buttons must maintain unified 36px height.
    - SVG vector icons only (no broken emojis).
+   - 4 selectable themes in Settings aligned with app icon (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`).

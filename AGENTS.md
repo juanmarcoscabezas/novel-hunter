@@ -82,6 +82,9 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 3. **Traducción On-Demand**:
    - Si el usuario descargó en inglés, debe tener disponible el botón `🌐 Traducir a Español` tanto en el lector (`#reader-modal`) como en el detalle de la novela (`#chapters-modal`).
    - Debe proveerse retroalimentación visual en tiempo real (barras de progreso, spinners, etiquetas de estado) durante operaciones asíncronas.
+4. **Temas y Cromática**:
+   - La aplicación implementa 4 temas visuales seleccionables desde Configuración (`neon-hunter`, `deep-violet`, `midnight-velvet`, `slate-indigo`), gestionados mediante variables CSS y el atributo `data-theme` en `<html>`.
+   - El tema predeterminado es `neon-hunter`, alineado con la cromática y gradiente del icono oficial. La preferencia del usuario se persiste en `localStorage` (`novel_hunter_theme`).
 
 ---
 

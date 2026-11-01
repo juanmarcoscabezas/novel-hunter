@@ -157,14 +157,6 @@
           </div>
           <div class="library-filter-controls">
             <div class="filter-group">
-              <label for="library-lang-filter" class="filter-label">Idioma:</label>
-              <select id="library-lang-filter" class="form-control form-control-sm select-harmonized">
-                <option value="all">Todos los idiomas</option>
-                <option value="es">Solo Español (ES)</option>
-                <option value="en">Solo Inglés (EN)</option>
-              </select>
-            </div>
-            <div class="filter-group">
               <label for="library-sort-select" class="filter-label">Ordenar por:</label>
               <select id="library-sort-select" class="form-control form-control-sm select-harmonized">
                 <option value="last_read">Último leído (Recientes)</option>
@@ -229,11 +221,64 @@
         <header class="content-header">
           <div>
             <h1>Configuración</h1>
-            <p class="subtitle">Administra la sesión de WTR-Lab, el bypass de Cloudflare y los directorios de almacenamiento</p>
+            <p class="subtitle">Personaliza la apariencia visual, la sesión de WTR-Lab, el bypass de Cloudflare y los ajustes generales</p>
           </div>
         </header>
 
         <div class="settings-grid">
+          <!-- Tarjeta de Tema y Apariencia Visual -->
+          <div class="card settings-card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <h3 style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path></svg>
+                <span>Tema & Apariencia Visual</span>
+              </h3>
+              <span id="current-theme-pill" class="badge badge-primary">Neon Hunter</span>
+            </div>
+            <div class="card-body">
+              <p>Elige el estilo y paleta visual de Novel Hunter alineado con el icono oficial de la aplicación:</p>
+              
+              <div class="theme-selector-grid">
+                <!-- Opción 1: Neon Hunter -->
+                <div class="theme-card active" data-theme-id="neon-hunter">
+                  <div class="theme-swatch" style="background: linear-gradient(135deg, #ff0078 0%, #8b5cf6 50%, #3b82f6 100%);"></div>
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Neon Hunter</span>
+                    <span class="badge badge-primary" style="font-size: 10px;">Recomendado</span>
+                  </div>
+                  <span class="theme-card-desc">Fiel al gradiente completo del icono (Rosa Neón a Violeta e Índigo) con resplandores cyberpunk.</span>
+                </div>
+
+                <!-- Opción 2: Deep Violet -->
+                <div class="theme-card" data-theme-id="deep-violet">
+                  <div class="theme-swatch" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);"></div>
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Deep Violet</span>
+                  </div>
+                  <span class="theme-card-desc">Dark Fantasy en violeta real y lavanda. Equilibrada y descansada para largas sesiones de lectura.</span>
+                </div>
+
+                <!-- Opción 3: Midnight Velvet -->
+                <div class="theme-card" data-theme-id="midnight-velvet">
+                  <div class="theme-swatch" style="background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);"></div>
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Midnight Velvet</span>
+                  </div>
+                  <span class="theme-card-desc">Alto contraste sobre fondo negro carbón OLED con protagonismo en fucsia neón.</span>
+                </div>
+
+                <!-- Opción 4: Hybrid Slate -->
+                <div class="theme-card" data-theme-id="slate-indigo">
+                  <div class="theme-swatch" style="background: linear-gradient(135deg, #6366f1 0%, #1e293b 100%);"></div>
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Hybrid Slate</span>
+                  </div>
+                  <span class="theme-card-desc">Base de pizarra fría clásica con acentos sutiles en índigo y brillo elegante.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Tarjeta de Sesión WTR-Lab -->
           <div class="card settings-card">
             <div class="card-header">

@@ -919,7 +919,7 @@ async function runTests() {
 
   // Aserciones en index.html
   assert(sortHtml.includes('id="library-sort-select"'), 'index.html debe contener el selector library-sort-select');
-  assert(sortHtml.includes('id="library-lang-filter"'), 'index.html debe contener el filtro library-lang-filter');
+  assert(!sortHtml.includes('id="library-lang-filter"'), 'index.html no debe contener filtro de idioma innecesario');
   assert(sortHtml.includes('id="chapters-sort-select"'), 'index.html debe contener el selector chapters-sort-select');
   assert(sortHtml.includes('id="modal-toc-sort"'), 'index.html debe contener el selector modal-toc-sort');
   assert(sortHtml.includes('class="library-toolbar"'), 'index.html debe organizar controles en .library-toolbar');
@@ -931,7 +931,7 @@ async function runTests() {
 
   // Aserciones en app.js
   assert(sortAppJs.includes('library-sort-select'), 'app.js debe interactuar con library-sort-select');
-  assert(sortAppJs.includes('library-lang-filter'), 'app.js debe interactuar con library-lang-filter');
+  assert(!sortAppJs.includes('library-lang-filter'), 'app.js no debe referenciar library-lang-filter');
   assert(sortAppJs.includes('chapters-sort-select'), 'app.js debe interactuar con chapters-sort-select');
   assert(sortAppJs.includes('modal-toc-sort'), 'app.js debe interactuar con modal-toc-sort');
   assert(sortAppJs.includes('applyLibraryFiltersAndSort'), 'app.js debe implementar applyLibraryFiltersAndSort()');
@@ -973,7 +973,44 @@ async function runTests() {
 
   console.log('   ✓ Opciones de ordenamiento y filtrado en Biblioteca, Capítulos y TOC verificadas exitosamente.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (31/31) PASARON EXITOSAMENTE!');
+  // Test 32: Selector de Temas y Apariencia Visual en Configuración (4 Opciones y Persistencia)
+  console.log('\n32. Probando Selector de Temas y Apariencia Visual en Configuración (4 Opciones y Persistencia)...');
+  const themeHtml = fs.readFileSync(path.join(__dirname, '../electron/renderer/index.html'), 'utf-8');
+  const themeStyles = fs.readFileSync(path.join(__dirname, '../electron/renderer/styles.css'), 'utf-8');
+  const themeAppJs = fs.readFileSync(path.join(__dirname, '../electron/renderer/app.js'), 'utf-8');
+
+  // Aserciones en index.html
+  assert(themeHtml.includes('id="current-theme-pill"'), 'index.html debe contener el badge indicador current-theme-pill');
+  assert(themeHtml.includes('class="theme-selector-grid"'), 'index.html debe estructurar la cuadrícula theme-selector-grid');
+  assert(themeHtml.includes('data-theme-id="neon-hunter"'), 'index.html debe incluir la opción de tema Neon Hunter');
+  assert(themeHtml.includes('data-theme-id="deep-violet"'), 'index.html debe incluir la opción de tema Deep Violet');
+  assert(themeHtml.includes('data-theme-id="midnight-velvet"'), 'index.html debe incluir la opción de tema Midnight Velvet');
+  assert(themeHtml.includes('data-theme-id="slate-indigo"'), 'index.html debe incluir la opción de tema Slate Indigo');
+
+  // Aserciones en styles.css
+  assert(themeStyles.includes('[data-theme="neon-hunter"]'), 'styles.css debe definir variables para neon-hunter');
+  assert(themeStyles.includes('[data-theme="deep-violet"]'), 'styles.css debe definir variables para deep-violet');
+  assert(themeStyles.includes('[data-theme="midnight-velvet"]'), 'styles.css debe definir variables para midnight-velvet');
+  assert(themeStyles.includes('[data-theme="slate-indigo"]'), 'styles.css debe definir variables para slate-indigo');
+  assert(themeStyles.includes('.theme-selector-grid'), 'styles.css debe definir estilos para .theme-selector-grid');
+  assert(themeStyles.includes('.theme-card'), 'styles.css debe definir estilos para .theme-card');
+  assert(themeStyles.includes('.theme-swatch'), 'styles.css debe definir estilos para .theme-swatch');
+
+  // Aserciones en app.js
+  assert(themeAppJs.includes('initThemeControls'), 'app.js debe implementar initThemeControls');
+  assert(themeAppJs.includes('applyAppTheme'), 'app.js debe implementar applyAppTheme');
+  assert(themeAppJs.includes('novel_hunter_theme'), 'app.js debe guardar la preferencia de tema en localStorage');
+  assert(themeAppJs.includes('THEME_NAMES'), 'app.js debe mantener el mapa de nombres de temas');
+
+  // Verificación de cero emojis en archivos modificados
+  const themeHtmlEmojis = themeHtml.match(emojiCheckRegex) || [];
+  const themeAppJsEmojis = themeAppJs.match(emojiCheckRegex) || [];
+  assert.strictEqual(themeHtmlEmojis.length, 0, `index.html no debe contener emojis rotos, encontrados: ${themeHtmlEmojis.join(', ')}`);
+  assert.strictEqual(themeAppJsEmojis.length, 0, `app.js no debe contener emojis rotos, encontrados: ${themeAppJsEmojis.join(', ')}`);
+
+  console.log('   ✓ Selector de Temas Visuales (Neon Hunter, Deep Violet, Midnight Velvet, Hybrid Slate) verificado con éxito.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (32/32) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

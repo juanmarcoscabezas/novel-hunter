@@ -306,7 +306,6 @@ Novel Hunter proporciona una arquitectura completa de filtrado y ordenamiento en
 
 ### 1. Barra de Herramientas de "Mi Biblioteca" (`.library-toolbar`)
 - **Búsqueda en Tiempo Real**: Input de texto (`#library-filter-input`) con filtrado por título y autor sin recargar la página.
-- **Filtro por Idioma (`#library-lang-filter`)**: Opciones para explorar todo el catálogo (`all`), solo novelas con traducción en español (`es`) o solo en inglés (`en`). Persistido en `localStorage` (`library_lang_filter`).
 - **Selector de Ordenamiento (`#library-sort-select`)**:
   - `last_read`: Último leído o más recientemente actualizado (por defecto).
   - `title_asc`: Orden alfabético por título ascendente (A - Z).
@@ -332,5 +331,25 @@ Novel Hunter proporciona una arquitectura completa de filtrado y ordenamiento en
   - Permite ordenar la tabla de contenidos interactiva en orden `1 a N` o `N a 1`.
   - Integrado en `.download-toc-controls` junto con el buscador en tiempo real de capítulos y el botón de expansión.
   - La preferencia se persiste en `localStorage` (`toc_sort_order`).
+
+---
+
+## 16. Sistema Dinámico de Temas y Apariencia Visual (Alineación con el Icono Oficial)
+
+Para asegurar armonía estética con el icono oficial de la aplicación ([electron/assets/icon.png](file:///home/juanmarcos/nasser_18/electron/assets/icon.png)), la interfaz implementa un motor de temas CSS en cascada mediante el atributo `data-theme` en el elemento raíz `<html>`:
+
+- **Temas Disponibles**:
+  1. `neon-hunter` (**Neon Hunter - Cyberpunk Gradient**, predeterminado): Emplea el degradado completo del icono (Rosa Neón `#ff0078` a Violeta `#8b5cf6` e Índigo `#3b82f6`) sobre fondo obsidiana (`#0c0d18`), con resplandores en botones primarios, marca y selector activo de navegación.
+  2. `deep-violet` (**Deep Violet - Dark Fantasy**): Centrado en violeta real (`#8b5cf6`) y lavanda sobre noche púrpura (`#0d0e18`), sobrio y descansado para la vista.
+  3. `midnight-velvet` (**Midnight Velvet - Electric Magenta**): Fondo negro carbón OLED (`#090a10`) con alto contraste en fucsia neón (`#f43f5e`).
+  4. `slate-indigo` (**Hybrid Slate & Indigo Glow**): Paleta de pizarra fría clásica (`#0b0f19`) con sutil resplandor en índigo (`#6366f1`).
+- **Arquitectura de Variables CSS**:
+  - Cada tema redefine de forma atómica: `--bg-main`, `--bg-sidebar`, `--bg-card`, `--border-color`, `--border-focus`, `--primary`, `--primary-gradient`, `--accent-glow`, `--brand-glow`, `--brand-title-gradient` y `--metric-icon-bg`.
+- **Selector Interactivo en Configuración**:
+  - Cuadrícula responsiva `.theme-selector-grid` en la pestaña de Configuración con tarjetas interactivas `.theme-card` que exhiben muestras de color reales (`.theme-swatch`) y estado activo.
+- **Persistencia y Rendimiento**:
+  - La preferencia se almacena en `localStorage` (`novel_hunter_theme`).
+  - Se ejecuta una evaluación temprana al inicio del script para inyectar `data-theme` antes del renderizado completo, eliminando cualquier destello visual (*FOUC*).
+
 
 

@@ -43,7 +43,14 @@ let chapterGroupingSize = 20;
 const commandHistory = [];
 let historyIndex = -1;
 
+// Aplicar tema guardado lo antes posible para evitar parpadeo visual
+try {
+  const initialTheme = localStorage.getItem('novel_hunter_theme') || 'neon-hunter';
+  document.documentElement.setAttribute('data-theme', initialTheme);
+} catch (_e) {}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeControls();
   initNavigation();
   initSearch();
   initDownloadModal();
@@ -771,7 +778,6 @@ let cachedLibraryNovels = [];
 function initLibrary() {
   const refreshBtn = document.getElementById('refresh-library-btn');
   const filterInput = document.getElementById('library-filter-input');
-  const langFilter = document.getElementById('library-lang-filter');
   const sortSelect = document.getElementById('library-sort-select');
 
   refreshBtn.addEventListener('click', loadLibrary);
@@ -785,15 +791,6 @@ function initLibrary() {
     });
   }
 
-  if (langFilter) {
-    const savedLang = localStorage.getItem('library_lang_filter') || 'all';
-    langFilter.value = savedLang;
-    langFilter.addEventListener('change', () => {
-      localStorage.setItem('library_lang_filter', langFilter.value);
-      applyLibraryFiltersAndSort();
-    });
-  }
-
   filterInput?.addEventListener('input', () => {
     applyLibraryFiltersAndSort();
   });
@@ -803,11 +800,9 @@ function initLibrary() {
 
 function applyLibraryFiltersAndSort() {
   const filterInput = document.getElementById('library-filter-input');
-  const langFilter = document.getElementById('library-lang-filter');
   const sortSelect = document.getElementById('library-sort-select');
 
   const filterText = (filterInput?.value || '').toLowerCase().trim();
-  const selectedLang = langFilter?.value || 'all';
   const selectedSort = sortSelect?.value || 'last_read';
 
   let list = [...cachedLibraryNovels];
@@ -821,15 +816,7 @@ function applyLibraryFiltersAndSort() {
     });
   }
 
-  // 2. Filtrar por idioma
-  if (selectedLang !== 'all') {
-    list = list.filter((item) => {
-      const langs = (item.languages || '').split(',').map(l => l.trim().toLowerCase());
-      return langs.includes(selectedLang.toLowerCase());
-    });
-  }
-
-  // 3. Ordenar
+  // 2. Ordenar
   list.sort((a, b) => {
     switch (selectedSort) {
       case 'title_asc':
@@ -2664,8 +2651,54 @@ function ansiToHtml(text) {
 }
 
 /* ==========================================================================
-   6. CONFIGURACIÓN
+   6. CONFIGURACIÓN Y TEMAS VISUALES
    ========================================================================== */
+const THEME_NAMES = {
+  'neon-hunter': 'Neon Hunter',
+  'deep-violet': 'Deep Violet',
+  'midnight-velvet': 'Midnight Velvet',
+  'slate-indigo': 'Hybrid Slate'
+};
+
+function applyAppTheme(themeId) {
+  const targetTheme = THEME_NAMES[themeId] ? themeId : 'neon-hunter';
+  document.documentElement.setAttribute('data-theme', targetTheme);
+  try {
+    localStorage.setItem('novel_hunter_theme', targetTheme);
+  } catch (_e) {}
+
+  const pill = document.getElementById('current-theme-pill');
+  if (pill) {
+    pill.textContent = THEME_NAMES[targetTheme];
+  }
+
+  document.querySelectorAll('.theme-card').forEach(card => {
+    if (card.getAttribute('data-theme-id') === targetTheme) {
+      card.classList.add('active');
+    } else {
+      card.classList.remove('active');
+    }
+  });
+}
+
+function initThemeControls() {
+  let savedTheme = 'neon-hunter';
+  try {
+    savedTheme = localStorage.getItem('novel_hunter_theme') || 'neon-hunter';
+  } catch (_e) {}
+
+  applyAppTheme(savedTheme);
+
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const themeId = card.getAttribute('data-theme-id');
+      if (themeId) {
+        applyAppTheme(themeId);
+      }
+    });
+  });
+}
+
 function initSettings() {
   const saveBtn = document.getElementById('save-cookie-btn');
   const testBtn = document.getElementById('test-session-btn');
