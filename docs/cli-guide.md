@@ -126,3 +126,31 @@ node bin/cli.js auth --clear
 - **Consola Terminal en la App de Escritorio**: La pestaña *Consola Terminal* permite ejecutar directamente comandos CLI (`wtr library`, `wtr status`, `wtr export`, etc.) con soporte para salida coloreada ANSI idéntica a la terminal del sistema.
 - **Paginación y Acordeones en el Catálogo**: En la pestaña *Configuración* de la app de escritorio, puedes definir la cantidad de capítulos por acordeón (10, 20, 50, etc.). El valor se almacena en `data/settings.json` y se aplica instantáneamente al explorar cualquier novela guardada.
 - **Búsqueda y Ordenamiento Reactivo**: En la pestaña *Mi Biblioteca*, la barra de herramientas permite buscar por palabras clave y ordenar por último leído, título A-Z / Z-A, capítulos descargados, autor y progreso de lectura. En los modales de detalle de novela y tabla de contenidos (TOC), se dispone de selectores de orden ascendente (`1 a N`) y descendente (`N a 1`).
+
+---
+
+## 7. Automatización de Compilación y Publicación de Releases (`npm run release`)
+
+Para generar el ejecutable portable de Windows y publicarlo automáticamente como una nueva versión en GitHub:
+
+```bash
+# Compilar el .exe y subir la release a GitHub:
+npm run release
+
+# Subir a GitHub reutilizando un ejecutable previamente compilado:
+npm run release:skip-build
+
+# Simular el proceso de release sin modificar GitHub (Dry-run):
+node scripts/release.mjs --dry-run
+
+# Forzar sobrescritura del asset si ya existía en la release:
+node scripts/release.mjs --force
+```
+
+### Flujo del comando:
+1. Inspecciona `package.json` para obtener la versión activa (ej. `1.1.0` -> `v1.1.0`).
+2. Resuelve la autenticación con GitHub (variables `GITHUB_TOKEN` / `GH_TOKEN` o mediante el helper `git credential fill`).
+3. Compila el ejecutable portable de Windows `dist/Novel_Hunter_<version>.exe`.
+4. Valida y sube el tag Git al repositorio remoto.
+5. Crea o actualiza la Release en GitHub con el historial de commits.
+6. Sube el binario portable a los assets de la release y muestra los enlaces directos de descarga.

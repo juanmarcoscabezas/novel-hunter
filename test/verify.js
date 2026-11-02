@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { searchNovels, parseNovelUrl, getChapterList } from '../src/api/novel.js';
 import { processGeminiContent } from '../src/translators/gemini.js';
@@ -1060,6 +1061,12 @@ async function runTests() {
     'styles.css debe definir .modal-toc-list con flex: 1 y overflow-y: auto como único scrollbar');
   assert(scrollStyles.includes('.download-modal-card.toc-expanded .modal-toc-list {') && scrollStyles.includes('max-height: none;'),
     'styles.css debe permitir expansión vertical completa en .modal-toc-list al expandir');
+  assert(scrollStyles.includes('.btn-expand-prominent') && scrollStyles.includes('box-shadow: 0 0 10px var(--accent-glow)'),
+    'styles.css debe definir el botón destacado .btn-expand-prominent con resplandor temático');
+  assert(scrollHtml.includes('class="btn btn-expand-prominent"'),
+    'index.html debe aplicar la clase .btn-expand-prominent al botón de expandir');
+  assert(scrollStyles.includes('.download-toc-section {') && scrollStyles.includes('min-height: 320px;'),
+    'styles.css debe garantizar un espacio vertical generoso (min-height: 320px) en la tabla de contenidos');
 
   // Aserciones para el modal de capítulos guardados
   assert(scrollStyles.includes('#chapters-modal .modal-card {') && scrollStyles.includes('height: 86vh;'),
@@ -1075,7 +1082,35 @@ async function runTests() {
 
   console.log('   ✓ Unificación de scroll único en Tabla de Contenidos y Capítulos (cero doble scroll) verificado con éxito.');
 
-  console.log('\n🎉 ¡TODAS LAS PRUEBAS (34/34) PASARON EXITOSAMENTE!');
+  // Test 35: Script Automatizado de Release y Publicación en GitHub (npm run release)
+  console.log('\n35. Probando Script Automatizado de Release y Publicación en GitHub (npm run release)...');
+  const releaseScriptPath = path.join(__dirname, '../scripts/release.mjs');
+  assert(fs.existsSync(releaseScriptPath), 'scripts/release.mjs debe existir en el repositorio');
+
+  const releaseScriptContent = fs.readFileSync(releaseScriptPath, 'utf-8');
+  assert(releaseScriptContent.includes('getGitHubToken()'), 'release.mjs debe implementar resolución de token GitHub');
+  assert(releaseScriptContent.includes('npm run dist:win'), 'release.mjs debe soportar compilación automática del ejecutable portable');
+  assert(releaseScriptContent.includes('git tag'), 'release.mjs debe validar y crear etiquetas git');
+  assert(releaseScriptContent.includes('api.github.com/repos/'), 'release.mjs debe interactuar con la API REST de GitHub');
+  assert(releaseScriptContent.includes('--skip-build') && releaseScriptContent.includes('--force') && releaseScriptContent.includes('--dry-run'),
+    'release.mjs debe soportar banderas CLI --skip-build, --force y --dry-run');
+
+  const pkgUpdated = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf-8'));
+  assert.strictEqual(pkgUpdated.scripts.release, 'node scripts/release.mjs',
+    'package.json debe registrar el script "release": "node scripts/release.mjs"');
+  assert.strictEqual(pkgUpdated.scripts['release:skip-build'], 'node scripts/release.mjs --skip-build',
+    'package.json debe registrar el script "release:skip-build"');
+
+  // Ejecutar prueba en modo dry-run para verificar que corra sin errores
+  const dryRunOutput = execSync('node scripts/release.mjs --dry-run', {
+    cwd: path.join(__dirname, '..'),
+    encoding: 'utf-8'
+  });
+  assert(dryRunOutput.includes('Release Automatizado'), 'release.mjs --dry-run debe ejecutarse limpiamente');
+  assert(dryRunOutput.includes('Simulación: Compilación omitida'), 'release.mjs --dry-run debe simular pasos sin efectos secundarios');
+  console.log('   ✓ Script automatizado de release y publicación en GitHub verificado con éxito.');
+
+  console.log('\n🎉 ¡TODAS LAS PRUEBAS (35/35) PASARON EXITOSAMENTE!');
 }
 
 runTests().catch(err => {

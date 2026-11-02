@@ -377,7 +377,7 @@ Todos los botones y controles de la interfaz deben estar rigurosamente armonizad
 
 ---
 
-## 18. Empaquetado y Distribución para Windows (`electron-builder`)
+## 18. Empaquetado, Distribución y Publicación de Releases (`electron-builder` & GitHub Releases)
 
 La compilación y distribución de Novel Hunter se gestiona mediante `electron-builder` en [`package.json`](file:///home/juanmarcos/nasser_18/package.json):
 - **Estandarización de Nombre y Versión con Guión Bajo**:
@@ -386,6 +386,13 @@ La compilación y distribución de Novel Hunter se gestiona mediante `electron-b
 - **Targets Soportados**:
   - `portable`: Ejecutable autónomo sin instalación previa (`npm run dist:win`).
   - `nsis`: Instalador tradicional con opciones de directorio y accesos directos (`npm run dist:win:installer`).
+- **Flujo de Publicación Automatizada (`npm run release`)**:
+  - Implementado en [`scripts/release.mjs`](file:///home/juanmarcos/nasser_18/scripts/release.mjs).
+  - Lee la versión de `package.json` y compila el ejecutable portable para Windows con `electron-builder`.
+  - Comprueba y sincroniza la etiqueta Git canónica (ej. `v1.1.0`).
+  - Conecta con la API REST de GitHub usando el token resuelto automáticamente desde el entorno o `git credential fill`.
+  - Genera la Release en GitHub con el changelog de commits e inyecta el binario compilado `Novel_Hunter_${version}.exe` a los assets de distribución pública.
+  - Soporta banderas de control: `--skip-build` (utiliza binario preexistente), `--force` (sobrescribe assets) y `--dry-run` (simula ejecución sin efectos de red).
 
 ---
 

@@ -133,6 +133,8 @@ Este documento contiene las reglas mandatorias, convenciones de arquitectura y d
 - **Archivos no deseados en Git**:
   - No añadir ejecutables pesados (`dist/*.exe`) al historial de git si no es explícitamente requerido.
   - No añadir archivos temporales de iconos en alta resolución o basura generada en `scratch/`.
+- **Publicación de Releases**:
+  - Usar `npm run release` (`scripts/release.mjs`) para compilar el binario portable oficial y subirlo automáticamente como asset a GitHub Releases mediante la API de GitHub, manteniendo el repositorio Git liviano.
 - **Flujo de Trabajo Obligatorio**:
   1. Modificar código respetando los lineamientos.
   2. Escribir o actualizar pruebas en `test/verify.js` o `test/test_db.js`.

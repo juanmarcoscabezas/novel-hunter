@@ -79,16 +79,28 @@ O para desarrollo con recarga en vivo de estilos y DevTools:
 npm run dev
 ```
 
-### Compilación y Empaquetado para Windows (`.exe`)
-Para compilar la versión distribuible de Windows:
+### Compilación, Empaquetado y Publicación de Releases (`.exe`)
+Para compilar y distribuir la versión para Windows:
 ```bash
 # Generar ejecutable portable de Windows:
 npm run dist:win
 
 # Generar instalador asistido (NSIS):
 npm run dist:win:installer
+
+# Compilar ejecutable y publicar automáticamente Release en GitHub:
+npm run release
+
+# Publicar en GitHub reutilizando un ejecutable previamente compilado:
+npm run release:skip-build
 ```
 Los ejecutables se generan en el directorio `dist/` siguiendo la convención estandarizada con guiones bajos entre nombre y versión: **`Novel_Hunter_1.1.0.exe`**.
+
+El comando `npm run release` automatiza el ciclo de publicación completo:
+1. **Compilación**: Genera el binario portable oficial de Windows mediante `electron-builder`.
+2. **Control de Versiones**: Verifica o genera el tag Git correspondiente (`v1.1.0`) y lo sincroniza con el repositorio remoto.
+3. **GitHub Release**: Crea o actualiza la Release en GitHub con el changelog de cambios.
+4. **Subida de Assets**: Sube el ejecutable portable (`Novel_Hunter_1.1.0.exe`) a los assets descargables de la Release usando la API de GitHub y las credenciales existentes de Git.
 
 ---
 

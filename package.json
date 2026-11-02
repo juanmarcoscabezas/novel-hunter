@@ -17,7 +17,9 @@
     "dist:win": "electron-builder --win portable --x64",
     "dist:win:installer": "electron-builder --win nsis --x64",
     "dist": "electron-builder --win --x64",
-    "open:dist": "explorer.exe dist"
+    "open:dist": "explorer.exe dist",
+    "release": "node scripts/release.mjs",
+    "release:skip-build": "node scripts/release.mjs --skip-build"
   },
   "build": {
     "appId": "com.novelhunter.app",

@@ -501,6 +501,10 @@
                     <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                     <h3>Tabla de Contenidos</h3>
                     <span id="modal-toc-count" class="badge badge-secondary">0 capítulos</span>
+                    <button type="button" id="toggle-expand-toc-btn" class="btn btn-expand-prominent" title="Expandir o compactar tabla de contenidos">
+                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                      <span id="toggle-expand-toc-text">Expandir</span>
+                    </button>
                   </div>
                   <div class="download-toc-controls">
                     <div class="toc-search-wrapper">
@@ -508,14 +512,10 @@
                       <input type="text" id="modal-toc-search" placeholder="Buscar por título o #..." autocomplete="off">
                       <button type="button" id="modal-toc-clear-btn" class="btn-clear hidden" title="Limpiar"><svg class="svg-icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
-                    <select id="modal-toc-sort" class="form-control form-control-xs" style="width: auto; padding: 2px 6px; font-size: 11px; height: 26px;">
+                    <select id="modal-toc-sort" class="form-control form-control-xs" style="width: auto; padding: 2px 6px; font-size: 11px; height: 30px;">
                       <option value="asc">1 a N</option>
                       <option value="desc">N a 1</option>
                     </select>
-                    <button type="button" id="toggle-expand-toc-btn" class="btn btn-outline btn-xs" title="Expandir o compactar tabla de contenidos">
-                      <svg class="svg-icon icon-xs" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-                      <span id="toggle-expand-toc-text">Expandir</span>
-                    </button>
                   </div>
                 </div>
 
